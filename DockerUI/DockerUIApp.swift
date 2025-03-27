@@ -33,16 +33,20 @@ class DockerEnvironmentDetector {
 class DockerManager: ObservableObject {
     @Published var containers: [DockerContainer] = []
     @Published var socketPath: String = UserDefaults.standard.string(forKey: "dockerHostPath") ?? DockerEnvironmentDetector.detectDockerHostPath() ?? ""
+    @Published var refreshInterval: Double = UserDefaults.standard.double(forKey: "refreshInterval") == 0 ? 10 : UserDefaults.standard.double(forKey: "refreshInterval")
 
     var executor: DockerExecutor? {
         socketPath.isEmpty ? nil : DockerExecutor(socketPath: socketPath)
     }
+
+    private var timer: Timer?
 
     init() {
         if socketPath.isEmpty, let detected = DockerEnvironmentDetector.detectDockerHostPath() {
             socketPath = detected
             saveDockerHostPath()
         }
+        startAutoRefresh()
     }
 
     func fetchContainers() {
@@ -82,6 +86,18 @@ class DockerManager: ObservableObject {
 
     func saveDockerHostPath() {
         UserDefaults.standard.set(socketPath, forKey: "dockerHostPath")
+    }
+
+    func saveRefreshInterval() {
+        UserDefaults.standard.set(refreshInterval, forKey: "refreshInterval")
+        startAutoRefresh()
+    }
+
+    private func startAutoRefresh() {
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: refreshInterval, repeats: true) { [weak self] _ in
+            self?.fetchContainers()
+        }
     }
 }
 

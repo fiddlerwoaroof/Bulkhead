@@ -41,6 +41,18 @@ struct SettingsView: View {
                         }
                     }
 
+                    Group {
+                        Text("Refresh Interval: \(Int(manager.refreshInterval)) seconds")
+                            .font(.headline)
+                            .padding(.top, 12)
+                        Slider(value: $manager.refreshInterval, in: 5...60, step: 1) {
+                            Text("Refresh Interval")
+                        } onEditingChanged: { _ in
+                            manager.saveRefreshInterval()
+                        }
+                        .frame(maxWidth: 300)
+                    }
+
                     if showSavedConfirmation {
                         Text("✔ Saved")
                             .foregroundColor(.green)
@@ -52,7 +64,7 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .frame(minWidth: 400, idealWidth: 480, maxWidth: 500, minHeight: 200, idealHeight: 200, maxHeight: 200)
+        .frame(minWidth: 400, idealWidth: 480, maxWidth: 500, minHeight: 250, idealHeight: 250, maxHeight: 300)
     }
 }
 
@@ -64,6 +76,6 @@ struct SettingsWindow: Scene {
             SettingsView(manager: manager)
         }
         .windowResizability(.contentSize)
-        .defaultSize(width: 480, height: 200)
+        .defaultSize(width: 480, height: 250)
     }
 }
