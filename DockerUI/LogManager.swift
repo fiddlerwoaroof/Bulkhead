@@ -19,11 +19,12 @@ class LogManager: ObservableObject {
     static let shared = LogManager()
     @Published var logs: [LogEntry] = []
 
-    // Example of adding logs with structured data
     func addLog(_ message: String, level: String = "INFO", source: String? = nil) {
         let timestamp = self.getCurrentTimestamp()
         let logEntry = LogEntry(timestamp: timestamp, message: message, level: level, source: source)
-        self.logs.append(logEntry)
+        DispatchQueue.main.async {
+            self.logs.append(logEntry)
+        }
     }
 
     private func getCurrentTimestamp() -> String {
