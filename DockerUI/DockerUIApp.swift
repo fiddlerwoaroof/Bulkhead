@@ -96,9 +96,28 @@ class DockerManager: ObservableObject {
     }
 }
 
+struct SettingsWindow: Scene {
+    @ObservedObject var manager: DockerManager
+
+    var body: some Scene {
+        Window("Settings", id: "Settings") {
+            SettingsView(manager: manager)
+        }
+        .windowStyle(HiddenTitleBarWindowStyle())
+    }
+}
+
+struct LogWindowScene: Scene {
+    var body: some Scene {
+        Window("Docker Log", id: "Log") {
+            LogWindow()
+        }
+        .windowStyle(HiddenTitleBarWindowStyle())
+    }
+}
+
 struct SettingsView: View {
     @ObservedObject var manager: DockerManager
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -124,10 +143,9 @@ struct SettingsView: View {
 
             HStack {
                 Spacer()
-                Button("Save & Close") {
+                Button("Save") {
                     manager.saveDockerHostPath()
                     manager.fetchContainers()
-                    dismiss()
                 }
                 .buttonStyle(.borderedProminent)
             }
@@ -136,26 +154,17 @@ struct SettingsView: View {
         .padding()
         .frame(width: 450, height: 250)
         .background(Color(NSColor.windowBackgroundColor))
-        .cornerRadius(12)
-        .shadow(radius: 10)
     }
 }
 
 struct LogWindow: View {
     @ObservedObject var logManager = LogManager.shared
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(alignment: .leading) {
-            HStack {
-                Text("Docker Log")
-                    .font(.title2)
-                Spacer()
-                Button("Close") {
-                    dismiss()
-                }
-            }
-            .padding(.bottom, 5)
+            Text("Docker Log")
+                .font(.title2)
+                .padding(.bottom, 5)
 
             ScrollView {
                 TextEditor(text: $logManager.log)
@@ -170,15 +179,11 @@ struct LogWindow: View {
         .padding()
         .frame(width: 600, height: 400)
         .background(Color(NSColor.windowBackgroundColor))
-        .cornerRadius(12)
-        .shadow(radius: 10)
     }
 }
 
 struct ContentView: View {
     @StateObject private var manager = DockerManager()
-    @Binding var showSettings: Bool
-    @Binding var showLog: Bool
 
     var body: some View {
         ZStack {
@@ -243,12 +248,6 @@ struct ContentView: View {
                 }
             }
         }
-        .sheet(isPresented: $showSettings) {
-            SettingsView(manager: manager)
-        }
-        .sheet(isPresented: $showLog) {
-            LogWindow()
-        }
         .frame(minWidth: 600, minHeight: 500)
         .onAppear {
             manager.fetchContainers()
@@ -259,24 +258,29 @@ struct ContentView: View {
 
 @main
 struct DockerUIApp: App {
-    @State private var showSettings = false
-    @State private var showLog = false
     @StateObject private var manager = DockerManager()
+    @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
         WindowGroup {
-            ContentView(showSettings: $showSettings, showLog: $showLog)
+            ContentView()
                 .environmentObject(manager)
         }
+
+        SettingsWindow(manager: manager)
+        LogWindowScene()
+
         .commands {
             CommandMenu("DockerUI") {
                 Button("Settings") {
-                    showSettings.toggle()
+                    openWindow(id: "Settings")
                 }
                 .keyboardShortcut(",")
+
                 Button("Show Logs") {
-                    showLog.toggle()
+                    openWindow(id: "Log")
                 }
+                .keyboardShortcut("l", modifiers: [.command, .shift])
             }
         }
     }
