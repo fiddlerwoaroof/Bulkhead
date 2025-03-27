@@ -38,7 +38,7 @@ class SocketConnection {
         var addr = sockaddr_un()
         addr.sun_family = sa_family_t(AF_UNIX)
         let socketPath = path.path
-        withUnsafeMutablePointer(to: &addr.sun_path) {
+        _ = withUnsafeMutablePointer(to: &addr.sun_path) {
             $0.withMemoryRebound(to: CChar.self, capacity: 104) { ptr in
                 strncpy(ptr, socketPath, 104)
             }
@@ -170,22 +170,22 @@ class DockerExecutor {
         try socket.write(requestData)
         let (statusLine, headers, bodyData) = try socket.readResponse()
 
-        LogManager.shared.addLog("Raw Response: \(statusLine)")
-        LogManager.shared.addLog("Parsed Body: \(String(data: bodyData, encoding: .utf8) ?? "<binary>")")
-
         return bodyData
     }
 
     func listContainers() throws -> [DockerContainer] {
+        LogManager.shared.addLog("listing containers", level: "INFO", source: "docker")
         let data = try makeRequest(path: "/v1.41/containers/json?all=true")
         return try JSONDecoder().decode([DockerContainer].self, from: data)
     }
 
     func startContainer(id: String) throws {
+        LogManager.shared.addLog("start container \(id)", level: "INFO", source: "docker")
         _ = try makeRequest(path: "/v1.41/containers/\(id)/start", method: "POST")
     }
 
     func stopContainer(id: String) throws {
+        LogManager.shared.addLog("stop container \(id)", level: "INFO", source: "docker")
         _ = try makeRequest(path: "/v1.41/containers/\(id)/stop", method: "POST")
     }
 }
