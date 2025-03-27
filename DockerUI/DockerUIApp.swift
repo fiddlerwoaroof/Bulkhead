@@ -85,11 +85,17 @@ class DockerManager: ObservableObject {
     }
 }
 
-
-
-
 struct ContentView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @StateObject private var manager = DockerManager()
+
+    var backgroundColor: Color {
+        colorScheme == .dark ? Color(NSColor.controlBackgroundColor) : Color.white
+    }
+
+    var shadowColor: Color {
+        colorScheme == .dark ? Color.black.opacity(0.2) : Color.black.opacity(0.05)
+    }
 
     var body: some View {
         ZStack {
@@ -127,9 +133,9 @@ struct ContentView: View {
                                 }
                             }
                             .padding()
-                            .background(Color.white)
+                            .background(backgroundColor)
                             .cornerRadius(10)
-                            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                            .shadow(color: shadowColor, radius: 2, x: 0, y: 1)
                             .padding(.horizontal)
                         }
                     }
