@@ -103,7 +103,6 @@ struct SettingsWindow: Scene {
         Window("Settings", id: "Settings") {
             SettingsView(manager: manager)
         }
-        .windowStyle(HiddenTitleBarWindowStyle())
     }
 }
 
@@ -112,7 +111,6 @@ struct LogWindowScene: Scene {
         Window("Docker Log", id: "Log") {
             LogWindow()
         }
-        .windowStyle(HiddenTitleBarWindowStyle())
     }
 }
 
@@ -120,18 +118,15 @@ struct SettingsView: View {
     @ObservedObject var manager: DockerManager
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Docker Socket Path")
-                .font(.headline)
-            TextField("Socket Path", text: $manager.socketPath)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+        VStack(alignment: .leading, spacing: 20) {
+            GroupBox(label: Text("Docker Socket Path").font(.headline)) {
+                TextField("Socket Path", text: $manager.socketPath)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.top, 4)
+            }
 
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Quick Configurations")
-                    .font(.subheadline)
-                    .bold()
-
-                HStack {
+            GroupBox(label: Text("Quick Configuration").font(.headline)) {
+                HStack(spacing: 12) {
                     Button("Use Rancher Desktop") {
                         manager.socketPath = "\(NSHomeDirectory())/.rd/docker.sock"
                     }
@@ -139,6 +134,7 @@ struct SettingsView: View {
                         manager.socketPath = "\(NSHomeDirectory())/.colima/docker.sock"
                     }
                 }
+                .padding(.top, 4)
             }
 
             HStack {
@@ -149,11 +145,11 @@ struct SettingsView: View {
                 }
                 .buttonStyle(.borderedProminent)
             }
+
             Spacer()
         }
         .padding()
-        .frame(width: 450, height: 250)
-        .background(Color(NSColor.windowBackgroundColor))
+        .frame(width: 460, height: 250)
     }
 }
 
@@ -191,14 +187,6 @@ struct ContentView: View {
                 .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Text("DockerUI")
-                        .font(.largeTitle)
-                        .bold()
-                    Spacer()
-                }
-                .padding()
-
                 ScrollView {
                     LazyVStack(spacing: 8) {
                         ForEach(manager.containers) { container in
@@ -237,15 +225,6 @@ struct ContentView: View {
                     }
                     .padding(.vertical)
                 }
-
-                HStack {
-                    Button("Refresh") {
-                        manager.fetchContainers()
-                    }
-                    .controlSize(.regular)
-                    .padding()
-                    Spacer()
-                }
             }
         }
         .frame(minWidth: 600, minHeight: 500)
@@ -271,7 +250,7 @@ struct DockerUIApp: App {
         LogWindowScene()
 
         .commands {
-            CommandMenu("DockerUI") {
+            CommandGroup(replacing: .appInfo) {
                 Button("Settings") {
                     openWindow(id: "Settings")
                 }
@@ -281,7 +260,17 @@ struct DockerUIApp: App {
                     openWindow(id: "Log")
                 }
                 .keyboardShortcut("l", modifiers: [.command, .shift])
+
+                Divider()
+
+                Button("Refresh Containers") {
+                    manager.fetchContainers()
+                }
+                .keyboardShortcut("r")
             }
+            CommandGroup(replacing: .help) {}
+            CommandGroup(replacing: .newItem) {}
+            CommandGroup(replacing: .saveItem) {}
         }
     }
 }
