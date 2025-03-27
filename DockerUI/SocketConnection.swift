@@ -67,7 +67,7 @@ class SocketConnection {
     }
 
     func readResponse(timeout: TimeInterval = 5.0) throws -> (statusLine: String, headers: [String: String], body: Data) {
-        LogManager.shared.append("Reading response from socket...")
+        LogManager.shared.addLog("Reading response from socket...")
 
         var buffer = [UInt8](repeating: 0, count: 4096)
         var response = Data()
@@ -89,7 +89,7 @@ class SocketConnection {
             }
         }
 
-        LogManager.shared.append("Raw response data: \(String(data: response, encoding: .utf8) ?? "<binary>")")
+        LogManager.shared.addLog("Raw response data: \(String(data: response, encoding: .utf8) ?? "<binary>")")
 
         guard let headerEndRange = response.range(of: "\r\n\r\n".data(using: .utf8)!) else {
             throw NSError(domain: "SocketConnection", code: -1, userInfo: [NSLocalizedDescriptionKey: "Malformed HTTP response"])
@@ -165,13 +165,13 @@ class DockerExecutor {
         let socket = try SocketConnection(path: URL(fileURLWithPath: socketPath))
         let request = DockerHTTPRequest(path: path, method: method, body: body)
         let requestData = request.rawData()
-        LogManager.shared.append("Request: \(String(data: requestData, encoding: .utf8) ?? "<invalid>")")
+        LogManager.shared.addLog("Request: \(String(data: requestData, encoding: .utf8) ?? "<invalid>")")
 
         try socket.write(requestData)
         let (statusLine, headers, bodyData) = try socket.readResponse()
 
-        LogManager.shared.append("Raw Response: \(statusLine)")
-        LogManager.shared.append("Parsed Body: \(String(data: bodyData, encoding: .utf8) ?? "<binary>")")
+        LogManager.shared.addLog("Raw Response: \(statusLine)")
+        LogManager.shared.addLog("Parsed Body: \(String(data: bodyData, encoding: .utf8) ?? "<binary>")")
 
         return bodyData
     }

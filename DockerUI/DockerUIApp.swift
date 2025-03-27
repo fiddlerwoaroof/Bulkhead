@@ -15,17 +15,6 @@ struct DockerContainer: Identifiable, Codable {
     }
 }
 
-class LogManager: ObservableObject {
-    static let shared = LogManager()
-    @Published var log: String = ""
-
-    func append(_ entry: String) {
-        DispatchQueue.main.async {
-            self.log += "\n\(Date()): \(entry)"
-        }
-    }
-}
-
 class DockerEnvironmentDetector {
     static func detectDockerHostPath() -> String? {
         let potentialPaths = [
@@ -65,7 +54,7 @@ class DockerManager: ObservableObject {
                     self.containers = list
                 }
             } catch {
-                LogManager.shared.append("Fetch error: \(error.localizedDescription)")
+                LogManager.shared.addLog("Fetch error: \(error.localizedDescription)")
             }
         }
     }
@@ -86,7 +75,7 @@ class DockerManager: ObservableObject {
                     self.fetchContainers()
                 }
             } catch {
-                LogManager.shared.append("Command error: \(error.localizedDescription)")
+                LogManager.shared.addLog("Command error: \(error.localizedDescription)")
             }
         }
     }
@@ -96,87 +85,8 @@ class DockerManager: ObservableObject {
     }
 }
 
-struct SettingsWindow: Scene {
-    @ObservedObject var manager: DockerManager
 
-    var body: some Scene {
-        Window("Settings", id: "Settings") {
-            SettingsView(manager: manager)
-        }
-    }
-}
 
-struct LogWindowScene: Scene {
-    var body: some Scene {
-        Window("Docker Log", id: "Log") {
-            LogWindow()
-        }
-    }
-}
-
-struct SettingsView: View {
-    @ObservedObject var manager: DockerManager
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            GroupBox(label: Text("Docker Socket Path").font(.headline)) {
-                TextField("Socket Path", text: $manager.socketPath)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.top, 4)
-            }
-
-            GroupBox(label: Text("Quick Configuration").font(.headline)) {
-                HStack(spacing: 12) {
-                    Button("Use Rancher Desktop") {
-                        manager.socketPath = "\(NSHomeDirectory())/.rd/docker.sock"
-                    }
-                    Button("Use Colima") {
-                        manager.socketPath = "\(NSHomeDirectory())/.colima/docker.sock"
-                    }
-                }
-                .padding(.top, 4)
-            }
-
-            HStack {
-                Spacer()
-                Button("Save") {
-                    manager.saveDockerHostPath()
-                    manager.fetchContainers()
-                }
-                .buttonStyle(.borderedProminent)
-            }
-
-            Spacer()
-        }
-        .padding()
-        .frame(width: 460, height: 250)
-    }
-}
-
-struct LogWindow: View {
-    @ObservedObject var logManager = LogManager.shared
-
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text("Docker Log")
-                .font(.title2)
-                .padding(.bottom, 5)
-
-            ScrollView {
-                TextEditor(text: $logManager.log)
-                    .font(.system(.body, design: .monospaced))
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(NSColor.textBackgroundColor))
-                    .cornerRadius(6)
-            }
-            .frame(maxHeight: .infinity)
-        }
-        .padding()
-        .frame(width: 600, height: 400)
-        .background(Color(NSColor.windowBackgroundColor))
-    }
-}
 
 struct ContentView: View {
     @StateObject private var manager = DockerManager()
