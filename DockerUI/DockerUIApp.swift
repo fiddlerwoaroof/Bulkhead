@@ -177,8 +177,8 @@ struct LogWindow: View {
 
 struct ContentView: View {
     @StateObject private var manager = DockerManager()
-    @State private var showingSettings = false
-    @State private var showingLog = false
+    @Binding var showSettings: Bool
+    @Binding var showLog: Bool
 
     var body: some View {
         ZStack {
@@ -191,12 +191,6 @@ struct ContentView: View {
                         .font(.largeTitle)
                         .bold()
                     Spacer()
-                    Button("Log") { showingLog.toggle() }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
-                    Button("Settings") { showingSettings.toggle() }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
                 }
                 .padding()
 
@@ -249,24 +243,41 @@ struct ContentView: View {
                 }
             }
         }
+        .sheet(isPresented: $showSettings) {
+            SettingsView(manager: manager)
+        }
+        .sheet(isPresented: $showLog) {
+            LogWindow()
+        }
         .frame(minWidth: 600, minHeight: 500)
         .onAppear {
             manager.fetchContainers()
         }
-        .sheet(isPresented: $showingSettings) {
-            SettingsView(manager: manager)
-        }
-        .sheet(isPresented: $showingLog) {
-            LogWindow()
-        }
+        .environmentObject(manager)
     }
 }
 
 @main
 struct DockerUIApp: App {
+    @State private var showSettings = false
+    @State private var showLog = false
+    @StateObject private var manager = DockerManager()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(showSettings: $showSettings, showLog: $showLog)
+                .environmentObject(manager)
+        }
+        .commands {
+            CommandMenu("DockerUI") {
+                Button("Settings") {
+                    showSettings.toggle()
+                }
+                .keyboardShortcut(",")
+                Button("Show Logs") {
+                    showLog.toggle()
+                }
+            }
         }
     }
 }
