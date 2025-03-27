@@ -130,7 +130,6 @@ class SocketConnection {
                   let size = Int(sizeString, radix: 16) else { break }
             index = crlfRange.upperBound
             if size == 0 {
-                // consume final CRLF if present
                 if let endCRLF = data[index...].range(of: "\r\n".data(using: .utf8)!) {
                     index = endCRLF.upperBound
                 }
@@ -177,6 +176,12 @@ class DockerExecutor {
         LogManager.shared.addLog("listing containers", level: "INFO", source: "docker")
         let data = try makeRequest(path: "/v1.41/containers/json?all=true")
         return try JSONDecoder().decode([DockerContainer].self, from: data)
+    }
+
+    func listImages() throws -> [DockerImage] {
+        LogManager.shared.addLog("listing images", level: "INFO", source: "docker")
+        let data = try makeRequest(path: "/v1.41/images/json")
+        return try JSONDecoder().decode([DockerImage].self, from: data)
     }
 
     func startContainer(id: String) throws {

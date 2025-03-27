@@ -15,6 +15,14 @@ struct DockerContainer: Identifiable, Codable, Hashable {
     }
 }
 
+struct DockerImage: Identifiable, Codable, Hashable {
+    var id: String { Id }
+    let Id: String
+    let RepoTags: [String]?
+    let Created: Int
+    let Size: Int
+}
+
 class DockerEnvironmentDetector {
     static func detectDockerHostPath() -> String? {
         let potentialPaths = [
@@ -32,6 +40,7 @@ class DockerEnvironmentDetector {
 
 class DockerManager: ObservableObject {
     @Published var containers: [DockerContainer] = []
+    @Published var images: [DockerImage] = []
     @Published var socketPath: String = UserDefaults.standard.string(forKey: "dockerHostPath") ?? DockerEnvironmentDetector.detectDockerHostPath() ?? ""
     @Published var refreshInterval: Double = UserDefaults.standard.double(forKey: "refreshInterval") == 0 ? 10 : UserDefaults.standard.double(forKey: "refreshInterval")
 
@@ -59,6 +68,20 @@ class DockerManager: ObservableObject {
                 }
             } catch {
                 LogManager.shared.addLog("Fetch error: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    func fetchImages() {
+        guard let executor = executor else { return }
+        DispatchQueue.global().async {
+            do {
+                let list = try executor.listImages()
+                DispatchQueue.main.async {
+                    self.images = list
+                }
+            } catch {
+                LogManager.shared.addLog("Image fetch error: \(error.localizedDescription)")
             }
         }
     }
@@ -97,6 +120,7 @@ class DockerManager: ObservableObject {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: refreshInterval, repeats: true) { [weak self] _ in
             self?.fetchContainers()
+            self?.fetchImages()
         }
     }
 }
@@ -115,65 +139,103 @@ struct ContentView: View {
     }
 
     var body: some View {
-        ZStack {
-            Color(NSColor.windowBackgroundColor)
-                .ignoresSafeArea()
-
-            VStack(alignment: .leading, spacing: 0) {
-                ScrollView {
-                    LazyVStack(spacing: 8) {
-                        ForEach(manager.containers) { container in
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(container.names.first ?? "Unnamed")
-                                        .font(.headline)
-                                    Text(container.image)
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                    Text(container.status.capitalized)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                VStack {
-                                    if container.status.lowercased().contains("up") {
-                                        Button("Stop") {
-                                            manager.stopContainer(id: container.id)
-                                        }
-                                        .buttonStyle(.bordered)
-                                        .controlSize(.small)
-                                    } else {
-                                        Button("Start") {
-                                            manager.startContainer(id: container.id)
-                                        }
-                                        .buttonStyle(.borderedProminent)
-                                        .controlSize(.small)
-                                    }
-                                    Button("Logs") {
-                                        openWindow(value: Optional(container))
-                                    }
-                                    .buttonStyle(.link)
-                                    .controlSize(.small)
-                                }
-                            }
-                            .padding()
-                            .background(backgroundColor)
-                            .cornerRadius(10)
-                            .shadow(color: shadowColor, radius: 2, x: 0, y: 1)
-                            .padding(.horizontal)
-                        }
-                    }
-                    .padding(.vertical)
+        TabView {
+            containerListView
+                .tabItem {
+                    Text("Containers")
                 }
-            }
+
+            imageListView
+                .tabItem {
+                    Text("Images")
+                }
         }
         .frame(minWidth: 600, minHeight: 500)
         .onAppear {
             manager.fetchContainers()
+            manager.fetchImages()
         }
         .environmentObject(manager)
     }
+
+    var containerListView: some View {
+        ScrollView {
+            LazyVStack(spacing: 8) {
+                ForEach(manager.containers) { container in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(container.names.first ?? "Unnamed")
+                                .font(.headline)
+                            Text(container.image)
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                            Text(container.status.capitalized)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        VStack {
+                            if container.status.lowercased().contains("up") {
+                                Button("Stop") {
+                                    manager.stopContainer(id: container.id)
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            } else {
+                                Button("Start") {
+                                    manager.startContainer(id: container.id)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.small)
+                            }
+                            Button("Logs") {
+                                openWindow(value: Optional(container))
+                            }
+                            .buttonStyle(.link)
+                            .controlSize(.small)
+                        }
+                    }
+                    .padding()
+                    .background(backgroundColor)
+                    .cornerRadius(10)
+                    .shadow(color: shadowColor, radius: 2, x: 0, y: 1)
+                    .padding(.horizontal)
+                }
+            }
+            .padding(.vertical)
+        }
+    }
+
+    var imageListView: some View {
+        ScrollView {
+            LazyVStack(spacing: 8) {
+                ForEach(manager.images) { image in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(image.RepoTags?.first ?? "<none>")
+                                .font(.headline)
+                            Text("Size: \(image.Size / (1024 * 1024)) MB")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                            Text("Created: \(Date(timeIntervalSince1970: TimeInterval(image.Created)))")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .padding()
+                    .background(backgroundColor)
+                    .cornerRadius(10)
+                    .shadow(color: shadowColor, radius: 2, x: 0, y: 1)
+                    .padding(.horizontal)
+                }
+            }
+            .padding(.vertical)
+        }
+    }
 }
+
+
 
 @main
 struct DockerUIApp: App {
@@ -213,6 +275,7 @@ struct DockerUIApp: App {
 
                 Button("Refresh Containers") {
                     manager.fetchContainers()
+                    manager.fetchImages()
                 }
                 .keyboardShortcut("r")
             }
