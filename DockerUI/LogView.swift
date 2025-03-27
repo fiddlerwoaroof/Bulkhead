@@ -2,7 +2,14 @@ import SwiftUI
 import AppKit
 
 class LogTableViewCoordinator: NSObject, NSTableViewDataSource, NSTableViewDelegate {
-    var entries: [LogEntry] = []
+    var entries: [LogEntry] = [] {
+        didSet {
+            DispatchQueue.main.async {
+                self.tableView?.reloadData()
+            }
+        }
+    }
+    weak var tableView: NSTableView?
 
     func numberOfRows(in tableView: NSTableView) -> Int {
         return entries.count
@@ -52,9 +59,11 @@ class LogTableViewCoordinator: NSObject, NSTableViewDataSource, NSTableViewDeleg
 }
 
 struct LogTableView: NSViewRepresentable {
+    @ObservedObject private var logManager = LogManager.shared
+
     func makeCoordinator() -> LogTableViewCoordinator {
         let coordinator = LogTableViewCoordinator()
-        coordinator.entries = LogManager.shared.logs
+        coordinator.entries = logManager.logs
         return coordinator
     }
 
@@ -63,10 +72,13 @@ struct LogTableView: NSViewRepresentable {
         scrollView.hasVerticalScroller = true
 
         let tableView = NSTableView()
+        context.coordinator.tableView = tableView
+
         tableView.usesAlternatingRowBackgroundColors = true
         tableView.allowsColumnReordering = false
         tableView.allowsColumnResizing = true
         tableView.allowsMultipleSelection = false
+        tableView.headerView = NSTableHeaderView()
 
         let timestampColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("Timestamp"))
         timestampColumn.title = "Timestamp"
@@ -97,12 +109,18 @@ struct LogTableView: NSViewRepresentable {
         tableView.dataSource = context.coordinator
 
         scrollView.documentView = tableView
+
+        // Observe log changes
+        _ = logManager.$logs.sink { logs in
+            context.coordinator.entries = logs
+        }
+
         return scrollView
     }
 
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         guard let tableView = nsView.documentView as? NSTableView else { return }
-        context.coordinator.entries = LogManager.shared.logs
+        context.coordinator.entries = logManager.logs
         tableView.reloadData()
     }
 }
