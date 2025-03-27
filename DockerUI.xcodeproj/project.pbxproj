@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		A37061362D95117C0091DC02 /* ContainerLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37061352D95117C0091DC02 /* ContainerLogsView.swift */; };
-		A37061392D95227E0091DC02 /* Rainbow in Frameworks */ = {isa = PBXBuildFile; productRef = A37061382D95227E0091DC02 /* Rainbow */; };
 		A370613C2D9525ED0091DC02 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = A370613B2D9525ED0091DC02 /* SwiftTerm */; };
 /* End PBXBuildFile section */
 
@@ -31,7 +30,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A370613C2D9525ED0091DC02 /* SwiftTerm in Frameworks */,
-				A37061392D95227E0091DC02 /* Rainbow in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,7 +73,6 @@
 			);
 			name = DockerUI;
 			packageProductDependencies = (
-				A37061382D95227E0091DC02 /* Rainbow */,
 				A370613B2D9525ED0091DC02 /* SwiftTerm */,
 			);
 			productName = DockerUI;
@@ -107,7 +104,6 @@
 			mainGroup = A3B602A82D94D89700BE8D6A;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				A37061372D95227E0091DC02 /* XCRemoteSwiftPackageReference "Rainbow" */,
 				A370613A2D9525ED0091DC02 /* XCRemoteSwiftPackageReference "SwiftTerm" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -265,7 +261,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = DockerUI/DockerUI.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -280,6 +278,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = co.fwoar.dockerui.DockerUI;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -293,7 +292,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = DockerUI/DockerUI.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -308,6 +309,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = co.fwoar.dockerui.DockerUI;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -340,14 +342,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		A37061372D95227E0091DC02 /* XCRemoteSwiftPackageReference "Rainbow" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/onevcat/Rainbow.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 4.1.0;
-			};
-		};
 		A370613A2D9525ED0091DC02 /* XCRemoteSwiftPackageReference "SwiftTerm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/migueldeicaza/SwiftTerm.git";
@@ -359,11 +353,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A37061382D95227E0091DC02 /* Rainbow */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A37061372D95227E0091DC02 /* XCRemoteSwiftPackageReference "Rainbow" */;
-			productName = Rainbow;
-		};
 		A370613B2D9525ED0091DC02 /* SwiftTerm */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A370613A2D9525ED0091DC02 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
