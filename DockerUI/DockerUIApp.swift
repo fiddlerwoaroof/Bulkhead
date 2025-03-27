@@ -1,7 +1,7 @@
 import SwiftUI
 import Foundation
 
-struct DockerContainer: Identifiable, Codable {
+struct DockerContainer: Identifiable, Codable, Hashable {
     let id: String
     let names: [String]
     let image: String
@@ -103,6 +103,7 @@ class DockerManager: ObservableObject {
 
 struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.openWindow) private var openWindow
     @StateObject private var manager = DockerManager()
 
     var backgroundColor: Color {
@@ -134,17 +135,24 @@ struct ContentView: View {
                                         .foregroundColor(.secondary)
                                 }
                                 Spacer()
-                                if container.status.lowercased().contains("up") {
-                                    Button("Stop") {
-                                        manager.stopContainer(id: container.id)
+                                VStack {
+                                    if container.status.lowercased().contains("up") {
+                                        Button("Stop") {
+                                            manager.stopContainer(id: container.id)
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .controlSize(.small)
+                                    } else {
+                                        Button("Start") {
+                                            manager.startContainer(id: container.id)
+                                        }
+                                        .buttonStyle(.borderedProminent)
+                                        .controlSize(.small)
                                     }
-                                    .buttonStyle(.bordered)
-                                    .controlSize(.small)
-                                } else {
-                                    Button("Start") {
-                                        manager.startContainer(id: container.id)
+                                    Button("Logs") {
+                                        openWindow(value: Optional(container))
                                     }
-                                    .buttonStyle(.borderedProminent)
+                                    .buttonStyle(.link)
                                     .controlSize(.small)
                                 }
                             }
@@ -180,6 +188,14 @@ struct DockerUIApp: App {
 
         SettingsWindow(manager: manager)
         LogWindowScene()
+
+        WindowGroup(for: DockerContainer?.self) { $container in
+            if let container = container {
+                if let container = container {
+                    ContainerLogsView(container: container, manager: manager)
+                }
+            }
+        }
 
         .commands {
             CommandGroup(replacing: .appInfo) {

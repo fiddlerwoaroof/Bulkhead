@@ -168,7 +168,7 @@ class DockerExecutor {
         LogManager.shared.addLog("Request: \(String(data: requestData, encoding: .utf8) ?? "<invalid>")")
 
         try socket.write(requestData)
-        let (statusLine, headers, bodyData) = try socket.readResponse()
+        let (_, _, bodyData) = try socket.readResponse()
 
         return bodyData
     }
@@ -187,5 +187,10 @@ class DockerExecutor {
     func stopContainer(id: String) throws {
         LogManager.shared.addLog("stop container \(id)", level: "INFO", source: "docker")
         _ = try makeRequest(path: "/v1.41/containers/\(id)/stop", method: "POST")
+    }
+
+    func getContainerLogs(id: String, tail: Int = 100) throws -> Data {
+        LogManager.shared.addLog("get logs for container \(id)", level: "INFO", source: "docker")
+        return try makeRequest(path: "/v1.41/containers/\(id)/logs?stdout=true&stderr=false&tail=\(tail)&follow=false")
     }
 }

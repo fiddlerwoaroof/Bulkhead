@@ -6,7 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A37061362D95117C0091DC02 /* ContainerLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37061352D95117C0091DC02 /* ContainerLogsView.swift */; };
+		A37061392D95227E0091DC02 /* Rainbow in Frameworks */ = {isa = PBXBuildFile; productRef = A37061382D95227E0091DC02 /* Rainbow */; };
+		A370613C2D9525ED0091DC02 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = A370613B2D9525ED0091DC02 /* SwiftTerm */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		A37061352D95117C0091DC02 /* ContainerLogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerLogsView.swift; sourceTree = "<group>"; };
 		A3B602B12D94D89700BE8D6A /* DockerUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DockerUI.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -23,6 +30,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A370613C2D9525ED0091DC02 /* SwiftTerm in Frameworks */,
+				A37061392D95227E0091DC02 /* Rainbow in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -34,6 +43,7 @@
 			children = (
 				A3B602B32D94D89700BE8D6A /* DockerUI */,
 				A3B602B22D94D89700BE8D6A /* Products */,
+				A37061352D95117C0091DC02 /* ContainerLogsView.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -65,6 +75,8 @@
 			);
 			name = DockerUI;
 			packageProductDependencies = (
+				A37061382D95227E0091DC02 /* Rainbow */,
+				A370613B2D9525ED0091DC02 /* SwiftTerm */,
 			);
 			productName = DockerUI;
 			productReference = A3B602B12D94D89700BE8D6A /* DockerUI.app */;
@@ -95,6 +107,8 @@
 			mainGroup = A3B602A82D94D89700BE8D6A;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				A37061372D95227E0091DC02 /* XCRemoteSwiftPackageReference "Rainbow" */,
+				A370613A2D9525ED0091DC02 /* XCRemoteSwiftPackageReference "SwiftTerm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A3B602B22D94D89700BE8D6A /* Products */;
@@ -121,6 +135,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A37061362D95117C0091DC02 /* ContainerLogsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -323,6 +338,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A37061372D95227E0091DC02 /* XCRemoteSwiftPackageReference "Rainbow" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Rainbow.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.1.0;
+			};
+		};
+		A370613A2D9525ED0091DC02 /* XCRemoteSwiftPackageReference "SwiftTerm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/migueldeicaza/SwiftTerm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.5;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A37061382D95227E0091DC02 /* Rainbow */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A37061372D95227E0091DC02 /* XCRemoteSwiftPackageReference "Rainbow" */;
+			productName = Rainbow;
+		};
+		A370613B2D9525ED0091DC02 /* SwiftTerm */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A370613A2D9525ED0091DC02 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
+			productName = SwiftTerm;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A3B602A92D94D89700BE8D6A /* Project object */;
 }
