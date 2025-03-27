@@ -13,7 +13,7 @@ struct SettingsView: View {
                             .font(.headline)
                         TextField("Socket Path", text: $manager.socketPath)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .onChange(of: manager.socketPath) { _ in
+                            .onChange(of: manager.socketPath) {
                                 manager.saveDockerHostPath()
                                 manager.fetchContainers()
                                 withAnimation {
@@ -55,6 +55,7 @@ struct SettingsView: View {
         .frame(minWidth: 400, idealWidth: 480, maxWidth: 500, minHeight: 200, idealHeight: 200, maxHeight: 200)
     }
 }
+
 struct SettingsWindow: Scene {
     @ObservedObject var manager: DockerManager
 
