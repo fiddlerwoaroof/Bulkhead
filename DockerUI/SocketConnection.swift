@@ -96,7 +96,7 @@ class SocketConnection {
         }
 
         let headerData = response[..<headerEndRange.lowerBound]
-        let bodyData = response[headerEndRange.upperBound...]
+        var bodyData = response[headerEndRange.upperBound...]
 
         guard let headerString = String(data: headerData, encoding: .utf8) else {
             throw NSError(domain: "SocketConnection", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to decode headers"])
@@ -112,7 +112,41 @@ class SocketConnection {
             }
         }
 
+        if headers["Transfer-Encoding"]?.lowercased() == "chunked" {
+            bodyData = try dechunk(bodyData)
+        }
+
         return (statusLine, headers, Data(bodyData))
+    }
+
+    private func dechunk(_ data: Data) throws -> Data {
+        var result = Data()
+        var index = data.startIndex
+
+        while index < data.endIndex {
+            guard let crlfRange = data[index...].range(of: "\r\n".data(using: .utf8)!) else { break }
+            let sizeLine = data[index..<crlfRange.lowerBound]
+            guard let sizeString = String(data: sizeLine, encoding: .utf8),
+                  let size = Int(sizeString, radix: 16) else { break }
+            index = crlfRange.upperBound
+            if size == 0 {
+                // consume final CRLF if present
+                if let endCRLF = data[index...].range(of: "\r\n".data(using: .utf8)!) {
+                    index = endCRLF.upperBound
+                }
+                break
+            }
+            let chunkEnd = data.index(index, offsetBy: size, limitedBy: data.endIndex) ?? data.endIndex
+            result.append(data[index..<chunkEnd])
+            index = chunkEnd
+            if let nextCRLF = data[index...].range(of: "\r\n".data(using: .utf8)!) {
+                index = nextCRLF.upperBound
+            } else {
+                break
+            }
+        }
+
+        return result
     }
 
     deinit {

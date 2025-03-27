@@ -3,9 +3,16 @@ import Foundation
 
 struct DockerContainer: Identifiable, Codable {
     let id: String
-    let name: String
+    let names: [String]
     let image: String
     let status: String
+
+    enum CodingKeys: String, CodingKey {
+        case id = "Id"
+        case names = "Names"
+        case image = "Image"
+        case status = "Status"
+    }
 }
 
 class LogManager: ObservableObject {
@@ -33,10 +40,6 @@ class DockerEnvironmentDetector {
         return nil
     }
 }
-
-
-
-
 
 class DockerManager: ObservableObject {
     @Published var containers: [DockerContainer] = []
@@ -95,6 +98,7 @@ class DockerManager: ObservableObject {
 
 struct SettingsView: View {
     @ObservedObject var manager: DockerManager
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -103,34 +107,56 @@ struct SettingsView: View {
             TextField("Socket Path", text: $manager.socketPath)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
 
-            HStack {
-                Button("Use Rancher Desktop") {
-                    manager.socketPath = "\(NSHomeDirectory())/.rd/docker.sock"
-                }
-                Button("Use Colima") {
-                    manager.socketPath = "\(NSHomeDirectory())/.colima/docker.sock"
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Quick Configurations")
+                    .font(.subheadline)
+                    .bold()
+
+                HStack {
+                    Button("Use Rancher Desktop") {
+                        manager.socketPath = "\(NSHomeDirectory())/.rd/docker.sock"
+                    }
+                    Button("Use Colima") {
+                        manager.socketPath = "\(NSHomeDirectory())/.colima/docker.sock"
+                    }
                 }
             }
 
-            Button("Save") {
-                manager.saveDockerHostPath()
-                manager.fetchContainers()
+            HStack {
+                Spacer()
+                Button("Save & Close") {
+                    manager.saveDockerHostPath()
+                    manager.fetchContainers()
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
             }
             Spacer()
         }
         .padding()
-        .frame(width: 400, height: 200)
+        .frame(width: 450, height: 250)
+        .background(Color(NSColor.windowBackgroundColor))
+        .cornerRadius(12)
+        .shadow(radius: 10)
     }
 }
 
 struct LogWindow: View {
     @ObservedObject var logManager = LogManager.shared
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Docker Log")
-                .font(.title2)
-                .padding(.bottom, 5)
+            HStack {
+                Text("Docker Log")
+                    .font(.title2)
+                Spacer()
+                Button("Close") {
+                    dismiss()
+                }
+            }
+            .padding(.bottom, 5)
+
             ScrollView {
                 TextEditor(text: $logManager.log)
                     .font(.system(.body, design: .monospaced))
@@ -143,6 +169,9 @@ struct LogWindow: View {
         }
         .padding()
         .frame(width: 600, height: 400)
+        .background(Color(NSColor.windowBackgroundColor))
+        .cornerRadius(12)
+        .shadow(radius: 10)
     }
 }
 
@@ -152,54 +181,75 @@ struct ContentView: View {
     @State private var showingLog = false
 
     var body: some View {
-        VStack(alignment: .leading) {
-            HStack {
-                Text("DockerUI")
-                    .font(.largeTitle)
-                    .padding(.bottom, 10)
-                Spacer()
-                Button("Log") {
-                    showingLog.toggle()
-                }
-                Button("Settings") {
-                    showingSettings.toggle()
-                }
-            }
+        ZStack {
+            Color(NSColor.windowBackgroundColor)
+                .ignoresSafeArea()
 
-            List(manager.containers) { container in
+            VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    VStack(alignment: .leading) {
-                        Text(container.name)
-                            .font(.headline)
-                        Text(container.image)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                        Text(container.status.capitalized)
-                            .font(.caption)
-                    }
+                    Text("DockerUI")
+                        .font(.largeTitle)
+                        .bold()
                     Spacer()
-                    if container.status.lowercased().contains("up") {
-                        Button("Stop") {
-                            manager.stopContainer(id: container.id)
-                        }.buttonStyle(BorderlessButtonStyle())
-                    } else {
-                        Button("Start") {
-                            manager.startContainer(id: container.id)
-                        }.buttonStyle(BorderlessButtonStyle())
-                    }
+                    Button("Log") { showingLog.toggle() }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                    Button("Settings") { showingSettings.toggle() }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
                 }
-                .padding(.vertical, 4)
-            }
+                .padding()
 
-            HStack {
-                Button("Refresh") {
-                    manager.fetchContainers()
-                }.padding(.top)
-                Spacer()
+                ScrollView {
+                    LazyVStack(spacing: 8) {
+                        ForEach(manager.containers) { container in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(container.names.first ?? "Unnamed")
+                                        .font(.headline)
+                                    Text(container.image)
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                    Text(container.status.capitalized)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                if container.status.lowercased().contains("up") {
+                                    Button("Stop") {
+                                        manager.stopContainer(id: container.id)
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.small)
+                                } else {
+                                    Button("Start") {
+                                        manager.startContainer(id: container.id)
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .controlSize(.small)
+                                }
+                            }
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(10)
+                            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                            .padding(.horizontal)
+                        }
+                    }
+                    .padding(.vertical)
+                }
+
+                HStack {
+                    Button("Refresh") {
+                        manager.fetchContainers()
+                    }
+                    .controlSize(.regular)
+                    .padding()
+                    Spacer()
+                }
             }
         }
-        .padding()
-        .frame(minWidth: 600, minHeight: 400)
+        .frame(minWidth: 600, minHeight: 500)
         .onAppear {
             manager.fetchContainers()
         }
