@@ -1,39 +1,62 @@
-//
-//  SocketConnection.swift
-//  DockerUI
-//
-//  Created by Edward Langley on 3/26/25.
-//
+import SwiftUI
 import Foundation
+
+struct DockerHTTPRequest {
+    let path: String
+    let method: String
+    let body: Data?
+
+    func rawData() -> Data {
+        var request = "\(method) \(path) HTTP/1.1\r\n"
+        request += "Host: docker\r\n"
+        request += "User-Agent: DockerUI/1.0\r\n"
+        request += "Accept: */*\r\n"
+        request += "Connection: close\r\n"
+        request += "Content-Type: application/json\r\n"
+        if let body = body {
+            request += "Content-Length: \(body.count)\r\n"
+        }
+        request += "\r\n"
+
+        var data = Data(request.utf8)
+        if let body = body {
+            data.append(body)
+        }
+        return data
+    }
+}
 
 class SocketConnection {
     private let socket: Int32
-    
+
     init(path: URL) throws {
         socket = Darwin.socket(AF_UNIX, SOCK_STREAM, 0)
         guard socket >= 0 else {
             throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: nil)
         }
+
         var addr = sockaddr_un()
         addr.sun_family = sa_family_t(AF_UNIX)
         let socketPath = path.path
-        _ = withUnsafeMutablePointer(to: &addr.sun_path) {
+        withUnsafeMutablePointer(to: &addr.sun_path) {
             $0.withMemoryRebound(to: CChar.self, capacity: 104) { ptr in
                 strncpy(ptr, socketPath, 104)
             }
         }
+
         let size = socklen_t(MemoryLayout.size(ofValue: addr))
         let result = withUnsafePointer(to: &addr) {
             $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
                 Darwin.connect(socket, $0, size)
             }
         }
+
         guard result >= 0 else {
             close(socket)
             throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: nil)
         }
     }
-    
+
     func write(_ data: Data) throws {
         let result = data.withUnsafeBytes {
             Darwin.send(socket, $0.baseAddress!, data.count, 0)
@@ -42,82 +65,93 @@ class SocketConnection {
             throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: nil)
         }
     }
-    
-    func readResponse(timeout: TimeInterval = 5.0) throws -> Data {
+
+    func readResponse(timeout: TimeInterval = 5.0) throws -> (statusLine: String, headers: [String: String], body: Data) {
+        LogManager.shared.append("Reading response from socket...")
+
         var buffer = [UInt8](repeating: 0, count: 4096)
         var response = Data()
         let startTime = Date()
-        
+
         while Date().timeIntervalSince(startTime) < timeout {
             let bytesRead = Darwin.recv(socket, &buffer, buffer.count, 0)
             if bytesRead > 0 {
                 response.append(buffer, count: bytesRead)
-                if let string = String(data: response, encoding: .utf8), string.contains("\r\n\r\n") {
-                    break
-                }
             } else if bytesRead == 0 {
                 break
             } else {
                 if errno == EWOULDBLOCK || errno == EAGAIN {
-                    usleep(100_000) // wait briefly before retry
+                    usleep(100_000)
                     continue
                 } else {
                     throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: nil)
                 }
             }
         }
-        
+
+        LogManager.shared.append("Raw response data: \(String(data: response, encoding: .utf8) ?? "<binary>")")
+
         guard let headerEndRange = response.range(of: "\r\n\r\n".data(using: .utf8)!) else {
             throw NSError(domain: "SocketConnection", code: -1, userInfo: [NSLocalizedDescriptionKey: "Malformed HTTP response"])
         }
 
         let headerData = response[..<headerEndRange.lowerBound]
         let bodyData = response[headerEndRange.upperBound...]
-        let headersString = String(data: headerData, encoding: .utf8) ?? ""
 
-        LogManager.shared.append("Response Headers:\n\(headersString)")
-        
-        if headersString.lowercased().contains("transfer-encoding: chunked") {
-            return try dechunk(bodyData)
-        } else {
-            return Data(bodyData)
+        guard let headerString = String(data: headerData, encoding: .utf8) else {
+            throw NSError(domain: "SocketConnection", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to decode headers"])
         }
-    }
-    
-    private func dechunk(_ data: Data) throws -> Data {
-        var result = Data()
-        var currentIndex = data.startIndex
 
-        while currentIndex < data.endIndex {
-            guard let crlfRange = data[currentIndex...].range(of: "\r\n".data(using: .utf8)!) else {
-                break
-            }
-
-            let sizeLineData = data[currentIndex..<crlfRange.lowerBound]
-            guard let sizeLine = String(data: sizeLineData, encoding: .utf8),
-                  let chunkSize = Int(sizeLine, radix: 16), chunkSize > 0 else {
-                break
-            }
-
-            let chunkStart = crlfRange.upperBound
-            let chunkEnd = data.index(chunkStart, offsetBy: chunkSize, limitedBy: data.endIndex) ?? data.endIndex
-
-            if chunkEnd > data.endIndex { break }
-            result.append(data[chunkStart..<chunkEnd])
-
-            currentIndex = chunkEnd
-            if let nextCRLF = data[currentIndex...].range(of: "\r\n".data(using: .utf8)!) {
-                currentIndex = nextCRLF.upperBound
-            } else {
-                break
+        let lines = headerString.components(separatedBy: "\r\n")
+        let statusLine = lines.first ?? ""
+        var headers: [String: String] = [:]
+        for line in lines.dropFirst() {
+            let parts = line.split(separator: ":", maxSplits: 1)
+            if parts.count == 2 {
+                headers[String(parts[0]).trimmingCharacters(in: .whitespaces)] = String(parts[1]).trimmingCharacters(in: .whitespaces)
             }
         }
 
-        return result
+        return (statusLine, headers, Data(bodyData))
     }
 
-    
     deinit {
         close(socket)
+    }
+}
+
+class DockerExecutor {
+    let socketPath: String
+
+    init(socketPath: String) {
+        self.socketPath = socketPath
+    }
+
+    func makeRequest(path: String, method: String = "GET", body: Data? = nil) throws -> Data {
+        let socket = try SocketConnection(path: URL(fileURLWithPath: socketPath))
+        let request = DockerHTTPRequest(path: path, method: method, body: body)
+        let requestData = request.rawData()
+        LogManager.shared.append("Request: \(String(data: requestData, encoding: .utf8) ?? "<invalid>")")
+
+        try socket.write(requestData)
+        let (statusLine, headers, bodyData) = try socket.readResponse()
+
+        LogManager.shared.append("Raw Response: \(statusLine)")
+        LogManager.shared.append("Parsed Body: \(String(data: bodyData, encoding: .utf8) ?? "<binary>")")
+
+        return bodyData
+    }
+
+    func listContainers() throws -> [DockerContainer] {
+        let data = try makeRequest(path: "/v1.41/containers/json?all=true")
+        return try JSONDecoder().decode([DockerContainer].self, from: data)
+    }
+
+    func startContainer(id: String) throws {
+        _ = try makeRequest(path: "/v1.41/containers/\(id)/start", method: "POST")
+    }
+
+    func stopContainer(id: String) throws {
+        _ = try makeRequest(path: "/v1.41/containers/\(id)/stop", method: "POST")
     }
 }
