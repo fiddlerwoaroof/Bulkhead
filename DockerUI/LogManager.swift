@@ -13,7 +13,7 @@ struct LogEntry: CustomStringConvertible {
     var message: String
     var level: String
     var source: String
-    
+
     var description: String {
         "\(level)\t\(source)\t\(message)"
     }
@@ -33,7 +33,7 @@ class LogManager: ObservableObject {
     private var loggers: [String: OSLog]
     private let loggersAccessQueue: DispatchQueue
     @Published var logs: [LogEntry]
-    
+
     init() {
         self.loggers = [:]
         self.logs = []
