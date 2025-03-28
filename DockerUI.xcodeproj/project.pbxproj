@@ -7,12 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A37061362D95117C0091DC02 /* ContainerLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37061352D95117C0091DC02 /* ContainerLogsView.swift */; };
 		A370613C2D9525ED0091DC02 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = A370613B2D9525ED0091DC02 /* SwiftTerm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A37061352D95117C0091DC02 /* ContainerLogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerLogsView.swift; sourceTree = "<group>"; };
 		A3B602B12D94D89700BE8D6A /* DockerUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DockerUI.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -41,7 +39,6 @@
 			children = (
 				A3B602B32D94D89700BE8D6A /* DockerUI */,
 				A3B602B22D94D89700BE8D6A /* Products */,
-				A37061352D95117C0091DC02 /* ContainerLogsView.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -131,7 +128,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A37061362D95117C0091DC02 /* ContainerLogsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
