@@ -1,17 +1,13 @@
 import SwiftTerm
 import SwiftUI
 
-class MTD: TerminalDelegate {
-  func send(source: Terminal, data: ArraySlice<UInt8>) {
-  }
-}
-
 struct TerminalWrapper: NSViewRepresentable {
   let container: DockerContainer
   @ObservedObject var manager: DockerManager
 
   class Coordinator: NSObject, TerminalDelegate {
-    func send(source: Terminal, data: ArraySlice<UInt8>) {
+    func send(source _: Terminal, data _: ArraySlice<UInt8>) {
+      // no interaction
     }
   }
 
@@ -19,7 +15,7 @@ struct TerminalWrapper: NSViewRepresentable {
     Coordinator()
   }
 
-  func makeNSView(context: Context) -> TerminalView {
+  func makeNSView(context _: Context) -> TerminalView {
     let terminalView = TerminalView(frame: .zero)
     terminalView.configureNativeColors()
     _ = terminalView.becomeFirstResponder()
@@ -27,7 +23,8 @@ struct TerminalWrapper: NSViewRepresentable {
     return terminalView
   }
 
-  func updateNSView(_ nsView: TerminalView, context: Context) {
+  func updateNSView(_: TerminalView, context _: Context) {
+    // nothing goes here
   }
 
   private func fetchLogs(into terminal: Terminal) {

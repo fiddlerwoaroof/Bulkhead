@@ -15,8 +15,8 @@ struct DockerUIApp: App {
     LogWindowScene()
 
     WindowGroup(for: DockerContainer?.self) { $container in
-      if let container = container {
-        if let container = container {
+      if let container {
+        if let container {
           ContainerLogsView(container: container, manager: manager)
         }
       }
@@ -42,9 +42,9 @@ struct DockerUIApp: App {
         }
         .keyboardShortcut("r")
       }
-      CommandGroup(replacing: .help) {}
-      CommandGroup(replacing: .newItem) {}
-      CommandGroup(replacing: .saveItem) {}
+      CommandGroup(replacing: .help) {/* remove help */}
+      CommandGroup(replacing: .newItem) {/* remove new */}
+      CommandGroup(replacing: .saveItem) {/* remove save */}
     }
   }
 }

@@ -19,7 +19,7 @@ struct LogEntry: CustomStringConvertible {
   }
 
   init(timestamp: Date, message: String, level: String = "INFO", source: String = "main") {
-    self.timestamp = LogEntry.dateFormatter.string(from: timestamp)
+    self.timestamp = Self.dateFormatter.string(from: timestamp)
     self.message = message
     self.level = level
     self.source = source
@@ -46,7 +46,7 @@ class LogManager: ObservableObject {
       if let logger = self.loggers[source] {
         os_log("%@", log: logger, type: .info, logEntry.description)
       } else {
-        let logger = OSLog(subsystem: LogManager.subsystem, category: source)
+        let logger = OSLog(subsystem: Self.subsystem, category: source)
         loggers[source] = logger
         os_log("%@", log: logger, type: .info, logEntry.description)
       }

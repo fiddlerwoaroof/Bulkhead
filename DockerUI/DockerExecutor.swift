@@ -13,13 +13,13 @@ struct DockerHTTPRequest {
     request += "Accept: */*\r\n"
     request += "Connection: close\r\n"
     request += "Content-Type: application/json\r\n"
-    if let body = body {
+    if let body {
       request += "Content-Length: \(body.count)\r\n"
     }
     request += "\r\n"
 
     var data = Data(request.utf8)
-    if let body = body {
+    if let body {
       data.append(body)
     }
     return data
@@ -27,6 +27,9 @@ struct DockerHTTPRequest {
 }
 
 class SocketConnection {
+  private static var crlfData = Data("\r\n".utf8)
+  private static var crlf2Data = Data("\r\n\r\n".utf8)
+
   private let socket: Int32
 
   init(path: URL) throws {
@@ -86,9 +89,8 @@ class SocketConnection {
         if errno == EWOULDBLOCK || errno == EAGAIN {
           usleep(100_000)
           continue
-        } else {
-          throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: nil)
         }
+        throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: nil)
       }
     }
 
@@ -96,7 +98,7 @@ class SocketConnection {
       "Raw response data: \(String(data: response, encoding: .utf8) ?? "<binary>")", level: "DEBUG",
       source: "socket-connection")
 
-    guard let headerEndRange = response.range(of: "\r\n\r\n".data(using: .utf8)!) else {
+    guard let headerEndRange = response.range(of: Self.crlf2Data) else {
       throw NSError(
         domain: "SocketConnection", code: -1,
         userInfo: [NSLocalizedDescriptionKey: "Malformed HTTP response"])
@@ -134,14 +136,14 @@ class SocketConnection {
     var index = data.startIndex
 
     while index < data.endIndex {
-      guard let crlfRange = data[index...].range(of: "\r\n".data(using: .utf8)!) else { break }
+      guard let crlfRange = data[index...].range(of: Self.crlfData) else { break }
       let sizeLine = data[index..<crlfRange.lowerBound]
       guard let sizeString = String(data: sizeLine, encoding: .utf8),
         let size = Int(sizeString, radix: 16)
       else { break }
       index = crlfRange.upperBound
       if size == 0 {
-        if let endCRLF = data[index...].range(of: "\r\n".data(using: .utf8)!) {
+        if let endCRLF = data[index...].range(of: Self.crlfData) {
           index = endCRLF.upperBound
         }
         break
@@ -149,7 +151,7 @@ class SocketConnection {
       let chunkEnd = data.index(index, offsetBy: size, limitedBy: data.endIndex) ?? data.endIndex
       result.append(data[index..<chunkEnd])
       index = chunkEnd
-      if let nextCRLF = data[index...].range(of: "\r\n".data(using: .utf8)!) {
+      if let nextCRLF = data[index...].range(of: Self.crlfData) {
         index = nextCRLF.upperBound
       } else {
         break

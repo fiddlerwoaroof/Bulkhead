@@ -11,12 +11,9 @@ class LogTableViewCoordinator: NSObject, NSTableViewDataSource, NSTableViewDeleg
   }
   weak var tableView: NSTableView?
 
-  func numberOfRows(in tableView: NSTableView) -> Int {
-    return entries.count
-  }
+  func numberOfRows(in _: NSTableView) -> Int { entries.count }
 
-  func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView?
-  {
+  func tableView(_: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
     let entry = entries[row]
     guard let identifier = tableColumn?.identifier else { return nil }
     let text: String
@@ -54,8 +51,7 @@ class LogTableViewCoordinator: NSObject, NSTableViewDataSource, NSTableViewDeleg
     let estimatedCharWidth: CGFloat = 7.0
     let charsPerLine = maxWidth / estimatedCharWidth
     let maxLines = CGFloat(entry.message.count) / charsPerLine + 1
-    let rowHeight: CGFloat = max(20, maxLines * 20)
-    return rowHeight
+    return max(20, maxLines * 20)
   }
 }
 
