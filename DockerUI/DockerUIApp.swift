@@ -14,12 +14,10 @@ struct DockerUIApp: App {
     SettingsWindow(manager: manager)
     LogWindowScene()
 
-    WindowGroup(for: DockerContainer?.self) { $container in
-      if let container {
+    WindowGroup(for: DockerContainer.self) { $container in
         if let container {
-          ContainerLogsView(container: container, manager: manager)
+            ContainerLogsView(container: container, manager: manager)
         }
-      }
     }
 
     .commands {

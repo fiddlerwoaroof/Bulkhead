@@ -191,7 +191,7 @@ struct ContentView: View {
                 .controlSize(.small)
               }
               Button("Logs") {
-                openWindow(value: Optional(container))
+                openWindow(value: container)
               }
               .buttonStyle(.link)
               .controlSize(.small)
