@@ -35,10 +35,8 @@ struct TerminalWrapper: NSViewRepresentable {
 
     DispatchQueue.global().async {
       do {
-        let result = try executor.makeRequest(
-          path: "/v1.41/containers/\(container.id)/logs?stdout=true&stderr=true&tail=100")
+        let result = try executor.getContainerLogs(id: container.id)
         DispatchQueue.main.async {
-          terminal.feed(text: "\u{001B}[38;2;255;100;0m24bit color test\u{001B}[0m\n")
           terminal.feed(byteArray: [UInt8](result))
         }
       } catch {
@@ -58,17 +56,5 @@ struct ContainerLogsView: View {
     TerminalWrapper(container: container, manager: manager)
       .navigationTitle(container.names.first ?? "Logs")
       .frame(minWidth: 600, minHeight: 400)
-  }
-}
-
-struct ContainerLogsWindow: Scene {
-  let container: DockerContainer
-  @ObservedObject var manager: DockerManager
-
-  var body: some Scene {
-    Window(container.names.first ?? "Logs", id: "logs_\(container.id)") {
-      ContainerLogsView(container: container, manager: manager)
-    }
-    .defaultSize(width: 640, height: 400)
   }
 }

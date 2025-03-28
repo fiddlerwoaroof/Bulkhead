@@ -27,7 +27,7 @@ class LogTableViewCoordinator: NSObject, NSTableViewDataSource, NSTableViewDeleg
       text = entry.level
       color = .textColor
     case "Source":
-      text = entry.source ?? "-"
+      text = entry.source
       color = .textColor
     case "Message":
       text = entry.message

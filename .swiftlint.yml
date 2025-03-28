@@ -2,6 +2,7 @@
 included:
   - DockerUI
 excluded:
+  - build
   # - DockerUI/Model.swift
 
 # Enabled/disabled rules
@@ -46,27 +47,17 @@ disabled_rules:
   - todo
   - trailing_closure
   - type_contents_order
+  - vertical_whitespace
   - vertical_whitespace_between_cases
   - vertical_whitespace_closing_braces
 
 # Configurations
-attributes:
-  always_on_line_above:
-    - "@ConfigurationElement"
-    - "@OptionGroup"
-    - "@RuleConfigurationDescriptionBuilder"
-balanced_xctest_lifecycle: &unit_test_configuration
-  test_parent_classes:
-    - SwiftLintTestCase
-    - XCTestCase
 closure_body_length:
     warning: 50
     error: 100
-empty_xctest_method: *unit_test_configuration
 file_name:
   excluded:
     - Model.swift
-final_test_case: *unit_test_configuration
 function_body_length: 60
 identifier_name:
   excluded:
@@ -80,7 +71,6 @@ number_separator:
   minimum_length: 5
 redundant_type_annotation:
   consider_default_literal_types_redundant: true
-single_test_class: *unit_test_configuration
 trailing_comma:
   mandatory_comma: true
 type_body_length: 400

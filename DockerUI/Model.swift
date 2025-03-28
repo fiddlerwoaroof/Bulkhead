@@ -1,4 +1,4 @@
-import SwiftUI
+import Foundation
 
 struct DockerContainer: Identifiable, Codable, Hashable {
   let id: String
