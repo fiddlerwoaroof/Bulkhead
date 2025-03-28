@@ -14,10 +14,11 @@ struct DockerUIApp: App {
     SettingsWindow(manager: manager)
     LogWindowScene()
 
+    // swiftlint:disable:next unused_parameter
     WindowGroup(for: DockerContainer.self) { $container in
-        if let container {
-            ContainerLogsView(container: container, manager: manager)
-        }
+      if let container {
+        ContainerLogsView(container: container, manager: manager)
+      }
     }
 
     .commands {
@@ -40,9 +41,9 @@ struct DockerUIApp: App {
         }
         .keyboardShortcut("r")
       }
-      CommandGroup(replacing: .help) {/* remove help */}
-      CommandGroup(replacing: .newItem) {/* remove new */}
-      CommandGroup(replacing: .saveItem) {/* remove save */}
+      CommandGroup(replacing: .help) { /* remove help */  }
+      CommandGroup(replacing: .newItem) { /* remove new */  }
+      CommandGroup(replacing: .saveItem) { /* remove save */  }
     }
   }
 }
