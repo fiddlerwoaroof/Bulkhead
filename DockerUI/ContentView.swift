@@ -57,52 +57,48 @@ class DockerManager: ObservableObject {
         }
         startAutoRefresh()
     }
+    private func log(_ message: String, level: String = "INFO") {
+        LogManager.shared.addLog(message, level: level, source: "docker-manager")
+    }
 
     func fetchContainers() {
-        guard let executor = executor else { return }
-        DispatchQueue.global().async {
-            do {
-                let list = try executor.listContainers()
-                DispatchQueue.main.async {
-                    self.containers = list
-                }
-            } catch {
-                LogManager.shared.addLog("Fetch error: \(error.localizedDescription)")
+        tryCommand {[weak self] in
+            guard let executor = self?.executor else { return }
+            let list = try executor.listContainers()
+            DispatchQueue.main.async {[weak self] in
+                self?.containers = list
             }
         }
     }
 
     func fetchImages() {
-        guard let executor = executor else { return }
-        DispatchQueue.global().async {
-            do {
-                let list = try executor.listImages()
-                DispatchQueue.main.async {
-                    self.images = list
-                }
-            } catch {
-                LogManager.shared.addLog("Image fetch error: \(error.localizedDescription)")
+        tryCommand { [weak self] in
+            guard let executor = self?.executor else { return }
+            let list = try executor.listImages()
+            DispatchQueue.main.async {
+                self?.images = list
             }
         }
     }
 
     func startContainer(id: String) {
-        tryCommand { [weak self] in try self?.executor?.startContainer(id: id) }
+        tryCommand { [weak self] in
+            try self?.executor?.startContainer(id: id)
+        }
     }
 
     func stopContainer(id: String) {
-        tryCommand { [weak self] in try self?.executor?.stopContainer(id: id) }
+        tryCommand { [weak self]
+            in try self?.executor?.stopContainer(id: id)
+        }
     }
 
     private func tryCommand(_ block: @escaping () throws -> Void) {
-        DispatchQueue.global().async {
+        DispatchQueue.global().async { [weak self] in
             do {
                 try block()
-                DispatchQueue.main.async {
-                    self.fetchContainers()
-                }
             } catch {
-                LogManager.shared.addLog("Command error: \(error.localizedDescription)")
+                self?.log("Image fetch error: \(error.localizedDescription)", level: "ERROR")
             }
         }
     }

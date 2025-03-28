@@ -1,35 +1,55 @@
 import Foundation
+import os.log
 
-struct LogEntry {
+func getDateFormatter() -> DateFormatter {
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+    return dateFormatter
+}
+
+struct LogEntry: CustomStringConvertible {
+    static let dateFormatter = getDateFormatter()
     var timestamp: String
     var message: String
     var level: String
-    var source: String?
+    var source: String
+    
+    var description: String {
+        "\(level)\t\(source)\t\(message)"
+    }
 
-    // Initialize with a basic timestamp and message, optional level and source
-    init(timestamp: String, message: String, level: String = "INFO", source: String? = nil) {
-        self.timestamp = timestamp
+    init(timestamp: Date, message: String, level: String = "INFO", source: String = "main") {
+        self.timestamp = LogEntry.dateFormatter.string(from: timestamp)
         self.message = message
         self.level = level
         self.source = source
+
     }
 }
 
 class LogManager: ObservableObject {
     static let shared = LogManager()
-    @Published var logs: [LogEntry] = []
+    private static var subsystem = Bundle.main.bundleIdentifier!
+    private var loggers: [String: OSLog]
+    @Published var logs: [LogEntry]
+    
+    init() {
+        self.loggers = [:]
+        self.logs = []
+    }
 
-    func addLog(_ message: String, level: String = "INFO", source: String? = nil) {
-        let timestamp = self.getCurrentTimestamp()
-        let logEntry = LogEntry(timestamp: timestamp, message: message, level: level, source: source)
+    func addLog(_ message: String, level: String = "INFO", source: String = "main") {
+        let logEntry = LogEntry(timestamp: Date(), message: message, level: level, source: source)
+        if let logger = self.loggers[source] {
+            os_log("%@", log: logger, type: .info, logEntry.description)
+        } else {
+            let logger = OSLog(subsystem: LogManager.subsystem, category: source)
+            loggers[source] = logger
+            os_log("%@", log: logger, type: .info, logEntry.description)
+        }
+        NSLog("%@", logEntry.description)
         DispatchQueue.main.async {
             self.logs.append(logEntry)
         }
-    }
-
-    private func getCurrentTimestamp() -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        return dateFormatter.string(from: Date())
     }
 }

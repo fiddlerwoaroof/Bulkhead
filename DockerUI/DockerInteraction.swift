@@ -159,12 +159,15 @@ class DockerExecutor {
     init(socketPath: String) {
         self.socketPath = socketPath
     }
+    private func log(_ message: String, level: String) {
+        LogManager.shared.addLog(message, level: level, source: "docker-executor")
+    }
 
     func makeRequest(path: String, method: String = "GET", body: Data? = nil) throws -> Data {
         let socket = try SocketConnection(path: URL(fileURLWithPath: socketPath))
         let request = DockerHTTPRequest(path: path, method: method, body: body)
         let requestData = request.rawData()
-        LogManager.shared.addLog("Request: \(String(data: requestData, encoding: .utf8) ?? "<invalid>")")
+        log("Request: \(String(data: requestData, encoding: .utf8) ?? "<invalid>")", level: "DEBUG")
 
         try socket.write(requestData)
         let (_, _, bodyData) = try socket.readResponse()
@@ -173,29 +176,29 @@ class DockerExecutor {
     }
 
     func listContainers() throws -> [DockerContainer] {
-        LogManager.shared.addLog("listing containers", level: "INFO", source: "docker")
+        log("listing containers", level: "INFO")
         let data = try makeRequest(path: "/v1.41/containers/json?all=true")
         return try JSONDecoder().decode([DockerContainer].self, from: data)
     }
 
     func listImages() throws -> [DockerImage] {
-        LogManager.shared.addLog("listing images", level: "INFO", source: "docker")
+        log("listing images", level: "INFO")
         let data = try makeRequest(path: "/v1.41/images/json")
         return try JSONDecoder().decode([DockerImage].self, from: data)
     }
 
     func startContainer(id: String) throws {
-        LogManager.shared.addLog("start container \(id)", level: "INFO", source: "docker")
+        log("start container \(id)", level: "INFO")
         _ = try makeRequest(path: "/v1.41/containers/\(id)/start", method: "POST")
     }
 
     func stopContainer(id: String) throws {
-        LogManager.shared.addLog("stop container \(id)", level: "INFO", source: "docker")
+        log("stop container \(id)", level: "INFO")
         _ = try makeRequest(path: "/v1.41/containers/\(id)/stop", method: "POST")
     }
 
     func getContainerLogs(id: String, tail: Int = 100) throws -> Data {
-        LogManager.shared.addLog("get logs for container \(id)", level: "INFO", source: "docker")
+        log("get logs for container \(id)", level: "INFO")
         return try makeRequest(path: "/v1.41/containers/\(id)/logs?stdout=true&stderr=false&tail=\(tail)&follow=false")
     }
 }
