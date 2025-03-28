@@ -1,0 +1,88 @@
+# Directory and file filters
+included:
+  - DockerUI
+excluded:
+  # - DockerUI/Model.swift
+
+# Enabled/disabled rules
+analyzer_rules:
+  - unused_declaration
+  - unused_import
+opt_in_rules:
+  - all
+disabled_rules:
+  - anonymous_argument_in_multiline_closure
+  - attributes
+  - closure_parameter_position
+  - closure_spacing
+  - conditional_returns_on_newline
+  - contrasted_opening_brace
+  - convenience_type
+  - discouraged_optional_collection
+  - explicit_acl
+  - explicit_enum_raw_value
+  - explicit_top_level_acl
+  - explicit_type_interface
+  - file_types_order
+  - force_unwrapping
+  - function_default_parameter_at_end
+  - indentation_width
+  - missing_docs
+  - multiline_arguments
+  - multiline_arguments_brackets
+  - multiline_function_chains
+  - multiline_parameters_brackets
+  - no_extension_access_modifier
+  - no_grouping_extension
+  - no_magic_numbers
+  - one_declaration_per_file
+  - opening_brace
+  - prefer_nimble
+  - prefixed_toplevel_constant
+  - required_deinit
+  - sorted_enum_cases
+  - strict_fileprivate
+  - switch_case_on_newline
+  - todo
+  - trailing_closure
+  - type_contents_order
+  - vertical_whitespace_between_cases
+  - vertical_whitespace_closing_braces
+
+# Configurations
+attributes:
+  always_on_line_above:
+    - "@ConfigurationElement"
+    - "@OptionGroup"
+    - "@RuleConfigurationDescriptionBuilder"
+balanced_xctest_lifecycle: &unit_test_configuration
+  test_parent_classes:
+    - SwiftLintTestCase
+    - XCTestCase
+closure_body_length:
+    warning: 50
+    error: 100
+empty_xctest_method: *unit_test_configuration
+file_name:
+  excluded:
+    - Model.swift
+final_test_case: *unit_test_configuration
+function_body_length: 60
+identifier_name:
+  excluded:
+    - RepoTags
+    - Created
+    - Size
+    - id
+    - Id
+large_tuple: 3
+number_separator:
+  minimum_length: 5
+redundant_type_annotation:
+  consider_default_literal_types_redundant: true
+single_test_class: *unit_test_configuration
+trailing_comma:
+  mandatory_comma: true
+type_body_length: 400
+unneeded_override:
+  affect_initializers: true
