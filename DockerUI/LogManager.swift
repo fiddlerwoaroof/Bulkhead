@@ -31,21 +31,25 @@ class LogManager: ObservableObject {
     static let shared = LogManager()
     private static var subsystem = Bundle.main.bundleIdentifier!
     private var loggers: [String: OSLog]
+    private let loggersAccessQueue: DispatchQueue
     @Published var logs: [LogEntry]
     
     init() {
         self.loggers = [:]
         self.logs = []
+        self.loggersAccessQueue = DispatchQueue(label: "com.yourapp.loggersAccessQueue")
     }
 
     func addLog(_ message: String, level: String = "INFO", source: String = "main") {
         let logEntry = LogEntry(timestamp: Date(), message: message, level: level, source: source)
-        if let logger = self.loggers[source] {
-            os_log("%@", log: logger, type: .info, logEntry.description)
-        } else {
-            let logger = OSLog(subsystem: LogManager.subsystem, category: source)
-            loggers[source] = logger
-            os_log("%@", log: logger, type: .info, logEntry.description)
+        loggersAccessQueue.sync { // Use sync for immediate access/update
+            if let logger = self.loggers[source] {
+                os_log("%@", log: logger, type: .info, logEntry.description)
+            } else {
+                let logger = OSLog(subsystem: LogManager.subsystem, category: source)
+                loggers[source] = logger
+                os_log("%@", log: logger, type: .info, logEntry.description)
+            }
         }
         NSLog("%@", logEntry.description)
         DispatchQueue.main.async {

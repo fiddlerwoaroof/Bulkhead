@@ -67,7 +67,7 @@ class SocketConnection {
     }
 
     func readResponse(timeout: TimeInterval = 5.0) throws -> (statusLine: String, headers: [String: String], body: Data) {
-        LogManager.shared.addLog("Reading response from socket...")
+        LogManager.shared.addLog("Reading response from socket...", level: "DEBUG", source: "socket-connection")
 
         var buffer = [UInt8](repeating: 0, count: 4096)
         var response = Data()
@@ -89,7 +89,7 @@ class SocketConnection {
             }
         }
 
-        LogManager.shared.addLog("Raw response data: \(String(data: response, encoding: .utf8) ?? "<binary>")")
+        LogManager.shared.addLog("Raw response data: \(String(data: response, encoding: .utf8) ?? "<binary>")", level: "DEBUG", source: "socket-connection")
 
         guard let headerEndRange = response.range(of: "\r\n\r\n".data(using: .utf8)!) else {
             throw NSError(domain: "SocketConnection", code: -1, userInfo: [NSLocalizedDescriptionKey: "Malformed HTTP response"])
