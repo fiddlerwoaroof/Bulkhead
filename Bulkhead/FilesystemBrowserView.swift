@@ -38,33 +38,33 @@ struct FilesystemRow: View {
   var body: some View {
     HStack(spacing: 8) {
       Image(systemName: iconName)
-        .foregroundColor(iconColor)
+        .foregroundStyle(iconColor)
         .accessibilityLabel(iconAccessibilityLabel)
 
       Text(entry.name)
         .font(.system(.body, design: .monospaced))
-        .foregroundColor(.primary)
+        .foregroundStyle(.primary)
 
       Spacer()
 
       if entry.isExecutable {
         Text("exec")
           .font(.caption2)
-          .foregroundColor(.green)
+          .foregroundStyle(.green)
           .padding(.horizontal, 4)
           .padding(.vertical, 2)
-          .background(Color.green.opacity(0.15))
-          .cornerRadius(4)
+          .background(.green.opacity(0.15))
+          .clipShape(RoundedRectangle(cornerRadius: 4))
       }
 
       if entry.isSymlink {
         Text("link")
           .font(.caption2)
-          .foregroundColor(.orange)
+          .foregroundStyle(.orange)
           .padding(.horizontal, 4)
           .padding(.vertical, 2)
-          .background(Color.orange.opacity(0.15))
-          .cornerRadius(4)
+          .background(.orange.opacity(0.15))
+          .clipShape(RoundedRectangle(cornerRadius: 4))
       }
     }
     .padding(.vertical, 6)

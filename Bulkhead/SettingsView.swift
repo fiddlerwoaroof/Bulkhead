@@ -12,9 +12,9 @@ struct SettingsView: View {
             Text("Docker Socket Path")
               .font(.headline)
             TextField("Socket Path", text: $manager.socketPath)
-              .textFieldStyle(RoundedBorderTextFieldStyle())
-              .onChange(of: manager.socketPath) { _ in
-                handleSocketPathChange()
+              .textFieldStyle(.roundedBorder)
+              .onChange(of: manager.socketPath) { _, newValue in
+                handleSocketPathChange(newValue: newValue)
               }
           }
 
@@ -27,9 +27,11 @@ struct SettingsView: View {
             Button("Use Rancher Desktop") {
               manager.socketPath = "\(NSHomeDirectory())/.rd/docker.sock"
             }
+            .buttonStyle(.bordered)
             Button("Use Colima") {
               manager.socketPath = "\(NSHomeDirectory())/.colima/docker.sock"
             }
+            .buttonStyle(.bordered)
           }
 
           Group {
@@ -46,7 +48,7 @@ struct SettingsView: View {
 
           if showSavedConfirmation {
             Text("✔ Saved")
-              .foregroundColor(.green)
+              .foregroundStyle(.green)
               .transition(.opacity)
           }
         }
@@ -60,13 +62,14 @@ struct SettingsView: View {
       maxHeight: 300)
   }
 
-  private func handleSocketPathChange() {
+  private func handleSocketPathChange(newValue: String) {
     manager.saveDockerHostPath()
     manager.fetchContainers()
     withAnimation {
       showSavedConfirmation = true
     }
-    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+    Task { @MainActor in
+      try? await Task.sleep(for: .seconds(2))
       withAnimation {
         showSavedConfirmation = false
       }
