@@ -33,64 +33,17 @@ final class TerminalSessionManager {
 }
 
 struct TerminalWrapper: NSViewRepresentable {
-  let container: DockerContainer
-  @ObservedObject var manager: DockerManager
+    let configure: (Terminal) -> Void
 
-  class Coordinator: NSObject, TerminalDelegate {
-    func send(source _: Terminal, data _: ArraySlice<UInt8>) {
-      // no interaction
-    }
-  }
-
-  func makeCoordinator() -> Coordinator {
-    Coordinator()
-  }
-
-  func makeNSView(context _: Context) -> TerminalView {
-    let terminalView = TerminalView(frame: .zero)
-    terminalView.configureNativeColors()
-    _ = terminalView.becomeFirstResponder()
-
-    if let executor = manager.executor {
-      TerminalSessionManager(
-        terminal: terminalView.getTerminal(),
-        executor: executor,
-        containerID: container.id
-      ).start()
-    } else {
-      terminalView.getTerminal().feed(text: "No executor available.\n")
-    }
-    return terminalView
-  }
-
-  func updateNSView(_: TerminalView, context _: Context) {
-    // nothing goes here
-  }
-
-  private func fetchLogs(into terminal: Terminal) {
-    guard let executor = manager.executor else {
-      terminal.feed(text: "No executor available.\n")
-      return
+    func makeNSView(context _: Context) -> TerminalView {
+        let terminalView = TerminalView(frame: .zero)
+        terminalView.configureNativeColors()
+        _ = terminalView.becomeFirstResponder()
+        configure(terminalView.getTerminal())
+        return terminalView
     }
 
-    DispatchQueue.global().async {
-      do {
-        let fetcher = LogFetcher(executor: executor)
-        let result = try fetcher.fetchLogs(for: container.id, stream: .stdout)
-
-        DispatchQueue.main.async {
-          for chunk in result {
-            debugPrintBytes(chunk)
-            terminal.feed(byteArray: chunk)
-          }
-        }
-      } catch {
-        DispatchQueue.main.async {
-          terminal.feed(text: "Error: \(error.localizedDescription)\n")
-        }
-      }
-    }
-  }
+    func updateNSView(_: TerminalView, context _: Context) {}
 }
 
 struct ContainerLogsView: View {
@@ -98,7 +51,13 @@ struct ContainerLogsView: View {
   @ObservedObject var manager: DockerManager
 
   var body: some View {
-    TerminalWrapper(container: container, manager: manager)
+      TerminalWrapper { terminal in
+          TerminalSessionManager(
+              terminal: terminal,
+              executor: manager.executor!,
+              containerID: container.id
+          ).start()
+      }
       .navigationTitle(container.names.first ?? "Logs")
       .frame(minWidth: 600, minHeight: 400)
   }
