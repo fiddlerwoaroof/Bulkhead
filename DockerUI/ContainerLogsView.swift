@@ -33,17 +33,17 @@ final class TerminalSessionManager {
 }
 
 struct TerminalWrapper: NSViewRepresentable {
-    let configure: (Terminal) -> Void
+  let configure: (Terminal) -> Void
 
-    func makeNSView(context _: Context) -> TerminalView {
-        let terminalView = TerminalView(frame: .zero)
-        terminalView.configureNativeColors()
-        _ = terminalView.becomeFirstResponder()
-        configure(terminalView.getTerminal())
-        return terminalView
-    }
+  func makeNSView(context _: Context) -> TerminalView {
+    let terminalView = TerminalView(frame: .zero)
+    terminalView.configureNativeColors()
+    _ = terminalView.becomeFirstResponder()
+    configure(terminalView.getTerminal())
+    return terminalView
+  }
 
-    func updateNSView(_: TerminalView, context _: Context) {}
+  func updateNSView(_: TerminalView, context _: Context) {}
 }
 
 struct ContainerLogsView: View {
@@ -51,15 +51,15 @@ struct ContainerLogsView: View {
   @ObservedObject var manager: DockerManager
 
   var body: some View {
-      TerminalWrapper { terminal in
-          TerminalSessionManager(
-              terminal: terminal,
-              executor: manager.executor!,
-              containerID: container.id
-          ).start()
-      }
-      .navigationTitle(container.names.first ?? "Logs")
-      .frame(minWidth: 600, minHeight: 400)
+    TerminalWrapper { terminal in
+      TerminalSessionManager(
+        terminal: terminal,
+        executor: manager.executor!,
+        containerID: container.id
+      ).start()
+    }
+    .navigationTitle(container.names.first ?? "Logs")
+    .frame(minWidth: 600, minHeight: 400)
   }
 }
 

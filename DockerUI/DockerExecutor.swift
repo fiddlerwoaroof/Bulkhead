@@ -267,6 +267,27 @@ class DockerManager: ObservableObject {
     }
   }
 
+  func enrichContainer(_ container: DockerContainer) async throws -> DockerContainer {
+    guard let executor = executor else { throw DockerError.noExecutor }
+
+    //        let now = Date()
+    //        if let cached = enrichmentCache[container.id],
+    //           now.timeIntervalSince(cached.timestamp) < enrichmentTTL {
+    //            return cached.container
+    //        }
+
+    let detailData = try executor.makeRequest(path: "/v1.41/containers/\(container.id)/json")
+    var enriched = container
+    try DockerContainer.enrich(from: detailData, into: &enriched)
+
+    //        enrichmentCache[container.id] = (container: enriched, timestamp: now)
+    return enriched
+  }
+
+  func clearEnrichmentCache() {
+    enrichmentCache.removeAll()
+  }
+
   func fetchImages() {
     tryCommand { [weak self] in
       guard let executor = self?.executor else { return }
@@ -316,5 +337,66 @@ class DockerManager: ObservableObject {
       self?.fetchContainers()
       self?.fetchImages()
     }
+  }
+
+  private var enrichmentCache: [String: (container: DockerContainer, timestamp: Date)] = [:]
+  private let enrichmentTTL: TimeInterval = 10
+
+}
+
+enum DockerError: Error {
+  case noExecutor
+}
+
+extension DockerContainer {
+  static func enrich(from jsonData: Data, into container: inout DockerContainer) throws {
+    let json = try JSONSerialization.jsonObject(with: jsonData, options: []) as? [String: Any]
+    let config = json?["Config"] as? [String: Any]
+    let state = json?["State"] as? [String: Any]
+    let _ = json?["NetworkSettings"] as? [String: Any]
+
+    if let createdString = json?["Created"] as? String {
+      container.created = ISO8601DateFormatter().date(from: createdString)
+    }
+
+    if let cmd = config?["Cmd"] as? [String] {
+      container.command = cmd.joined(separator: " ")
+    }
+
+    if let env = config?["Env"] as? [String] {
+      container.env = env
+    }
+
+    if let health = state?["Health"] as? [String: Any],
+      let status = health["Status"] as? String
+    {
+      container.health = status.capitalized
+    }
+
+    if let mountsRaw = json?["Mounts"] as? [[String: Any]] {
+      container.mounts = mountsRaw.compactMap {
+        guard let source = $0["Source"] as? String,
+          let destination = $0["Destination"] as? String,
+          let type = $0["Type"] as? String
+        else { return nil }
+        return MountInfo(source: source, destination: destination, type: type)
+      }
+    }
+
+    //        if let portsRaw = json?["NetworkSettings"]?["Ports"] as? [String: Any] {
+    //            for (key, value) in portsRaw {
+    //                guard let bindings = value as? [[String: String]] else { continue }
+    //                let parts = key.split(separator: "/")
+    //                if parts.count == 2,
+    //                   let containerPort = Int(parts[0]) {
+    //                    let type = String(parts[1])
+    //                    for binding in bindings {
+    //                        let ip = binding["HostIp"]
+    //                        let publicPort = Int(binding["HostPort"] ?? "")
+    //                        container.ports.append(PortBinding(ip: ip, privatePort: containerPort, publicPort: publicPort, type: type))
+    //                    }
+    //                }
+    //            }
+    //        }
   }
 }

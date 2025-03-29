@@ -5,9 +5,13 @@ struct ImageListView: View {
   var backgroundColor: Color
   var shadowColor: Color
   @Binding var images: [DockerImage]
+  @State private var selectedImage: DockerImage? = nil
 
   var body: some View {
-    ListView(items: $images, backgroundColor: backgroundColor, shadowColor: shadowColor) { image in
+    ListView(
+      items: $images, selectedItem: $selectedImage, backgroundColor: backgroundColor,
+      shadowColor: shadowColor
+    ) { image in
       HStack {
         VStack(alignment: .leading, spacing: 2) {
           Text(image.RepoTags?.first ?? "<none>")
@@ -21,6 +25,13 @@ struct ImageListView: View {
         }
         Spacer()
       }
+    } detail: { image in
+      VStack(alignment: .leading, spacing: 12) {
+        Text("Details for \(image.RepoTags?.first ?? "<none>")")
+          .font(.title2)
+        Text("Created: \(Date(timeIntervalSince1970: TimeInterval(image.Created)))")
+      }
+      .padding()
     }
   }
 }
@@ -28,13 +39,19 @@ struct ImageListView: View {
 struct ContainerListView: View {
   @Environment(\.openWindow) private var openWindow
   @EnvironmentObject var manager: DockerManager
+
   var backgroundColor: Color
   var shadowColor: Color
   @Binding var containers: [DockerContainer]
+  @Binding var selectedContainer: DockerContainer?
 
   var body: some View {
-    ListView(items: $containers, backgroundColor: backgroundColor, shadowColor: shadowColor) {
-      container in
+    ListView(
+      items: $containers,
+      selectedItem: $selectedContainer,
+      backgroundColor: backgroundColor,
+      shadowColor: shadowColor
+    ) { container in
       HStack {
         VStack(alignment: .leading, spacing: 2) {
           Text(container.names.first ?? "Unnamed")
@@ -46,14 +63,19 @@ struct ContainerListView: View {
             .font(.caption)
             .foregroundColor(.secondary)
         }
+
         Spacer()
+
         containerActions(container)
       }
+    } detail: { container in
+      ContainerDetailView(container: container)
+        .id(container.id)
     }
   }
 
   func containerActions(_ container: DockerContainer) -> some View {
-    VStack {
+    VStack(alignment: .leading, spacing: 8) {
       if container.status.lowercased().contains("up") {
         Button("Stop") {
           manager.stopContainer(id: container.id)
@@ -67,6 +89,7 @@ struct ContainerListView: View {
         .buttonStyle(.borderedProminent)
         .controlSize(.small)
       }
+
       Button("Logs") {
         openWindow(value: container)
       }
@@ -79,6 +102,7 @@ struct ContainerListView: View {
 struct ContentView: View {
   @Environment(\.colorScheme) private var colorScheme
   @StateObject private var manager = DockerManager()
+  @State private var selectedContainer: DockerContainer? = nil
 
   var backgroundColor: Color {
     colorScheme == .dark ? Color(NSColor.controlBackgroundColor) : Color.white
@@ -91,7 +115,10 @@ struct ContentView: View {
   var body: some View {
     TabView {
       ContainerListView(
-        backgroundColor: backgroundColor, shadowColor: shadowColor, containers: $manager.containers
+        backgroundColor: backgroundColor,
+        shadowColor: shadowColor,
+        containers: $manager.containers,
+        selectedContainer: $selectedContainer
       )
       .tabItem {
         Text("Containers")
