@@ -3,7 +3,7 @@
 **Bulkhead** is a macOS-native UI for managing Docker containers. Built with SwiftUI, it offers a clean,
 responsive interface for inspecting, starting, stopping, and exploring containers — no terminal required.
 
-<img width="600" alt="image" src="https://github.com/user-attachments/assets/c8abc305-df16-4ba4-a374-6a5d0428cb08" />
+<img alt="image" src="https://github.com/user-attachments/assets/c8abc305-df16-4ba4-a374-6a5d0428cb08" />
 
 ## Features
 
