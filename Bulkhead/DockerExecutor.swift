@@ -218,6 +218,15 @@ class DockerExecutor {
     return try JSONDecoder().decode([DockerImage].self, from: data)
   }
 
+  func inspectImage(id: String) throws -> ImageInspection {
+    log("inspecting image \(id)", level: "INFO")
+    let data = try makeRequest(path: "/v1.41/images/\(id)/json")
+    print("Raw inspection data: \(String(data: data, encoding: .utf8) ?? "invalid")")
+    let inspection = try JSONDecoder().decode(ImageInspection.self, from: data)
+    print("Decoded inspection: \(inspection)")
+    return inspection
+  }
+
   func startContainer(id: String) throws {
     log("start container \(id)", level: "INFO")
     _ = try makeRequest(path: "/v1.41/containers/\(id)/start", method: "POST")
@@ -320,6 +329,8 @@ class DockerManager: ObservableObject {
   }
 
   private var timer: Timer?
+  private var enrichmentCache: [String: (container: DockerContainer, timestamp: Date)] = [:]
+  private let enrichmentTTL: TimeInterval = 10
 
   init() {
     if socketPath.isEmpty, let detected = DockerEnvironmentDetector.detectDockerHostPath() {
@@ -328,6 +339,7 @@ class DockerManager: ObservableObject {
     }
     startAutoRefresh()
   }
+
   private func log(_ message: String, level: String = "INFO") {
     LogManager.shared.addLog(message, level: level, source: "docker-manager")
   }
@@ -345,17 +357,17 @@ class DockerManager: ObservableObject {
   func enrichContainer(_ container: DockerContainer) async throws -> DockerContainer {
     guard let executor else { throw DockerError.noExecutor }
 
-    //        let now = Date()
-    //        if let cached = enrichmentCache[container.id],
-    //           now.timeIntervalSince(cached.timestamp) < enrichmentTTL {
-    //            return cached.container
-    //        }
+    let now = Date()
+    if let cached = enrichmentCache[container.id],
+       now.timeIntervalSince(cached.timestamp) < enrichmentTTL {
+      return cached.container
+    }
 
     let detailData = try executor.makeRequest(path: "/v1.41/containers/\(container.id)/json")
     var enriched = container
     try DockerContainer.enrich(from: detailData, into: &enriched)
 
-    //        enrichmentCache[container.id] = (container: enriched, timestamp: now)
+    enrichmentCache[container.id] = (container: enriched, timestamp: now)
     return enriched
   }
 
@@ -386,12 +398,17 @@ class DockerManager: ObservableObject {
     }
   }
 
+  func inspectImage(id: String) async throws -> ImageInspection {
+    guard let executor else { throw DockerError.noExecutor }
+    return try executor.inspectImage(id: id)
+  }
+
   private func tryCommand(_ block: @escaping () throws -> Void) {
     DispatchQueue.global().async { [weak self] in
       do {
         try block()
       } catch {
-        self?.log("Image fetch error: \(error.localizedDescription)", level: "ERROR")
+        self?.log("Command error: \(error.localizedDescription)", level: "ERROR")
       }
     }
   }
@@ -413,10 +430,6 @@ class DockerManager: ObservableObject {
       self?.fetchImages()
     }
   }
-
-  private var enrichmentCache: [String: (container: DockerContainer, timestamp: Date)] = [:]
-  private let enrichmentTTL: TimeInterval = 10
-
 }
 
 enum DockerError: Error {

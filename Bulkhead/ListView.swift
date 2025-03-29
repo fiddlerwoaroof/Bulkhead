@@ -18,73 +18,35 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   @Binding var selectedItem: T?
   var backgroundColor: Color
   var shadowColor: Color
-  var searchConfig: SearchConfiguration<T>?
-  @Binding var isSearchFocused: Bool
   @ViewBuilder var content: (T) -> Master
   @ViewBuilder var detail: (T) -> Detail
 
-  @State private var searchText = ""
-  @FocusState private var searchFieldFocused: Bool
   @FocusState private var focusedItemId: AnyHashable?
 
-  private var filteredItems: [T] {
-    guard let config = searchConfig, !searchText.isEmpty else { return items }
-    return items.filter { config.filter($0, searchText) }
-  }
-
-  private var searchField: some View {
-    HStack {
-      Image(systemName: "magnifyingglass")
-        .foregroundStyle(.secondary)
-      TextField(searchConfig?.placeholder ?? "Search...", text: $searchText)
-        .textFieldStyle(.plain)
-        .focused($searchFieldFocused)
-      if !searchText.isEmpty {
-        Button(action: { searchText = "" }) {
-          Image(systemName: "xmark.circle.fill")
-            .foregroundStyle(.secondary)
-        }
-        .buttonStyle(.plain)
-      }
-    }
-    .padding(8)
-    .background(.background)
-    .onChange(of: searchFieldFocused) { _, newValue in
-      isSearchFocused = newValue
-    }
-    .onChange(of: isSearchFocused) { _, newValue in
-      searchFieldFocused = newValue
-    }
-  }
-
   private func selectNextItem() {
-    guard !filteredItems.isEmpty else { return }
+    guard !items.isEmpty else { return }
 
-    searchFieldFocused = false
-
-    if let currentIndex = filteredItems.firstIndex(where: { $0.id == selectedItem?.id }) {
-      if currentIndex < filteredItems.count - 1 {
-        selectedItem = filteredItems[currentIndex + 1]
+    if let currentIndex = items.firstIndex(where: { $0.id == selectedItem?.id }) {
+      if currentIndex < items.count - 1 {
+        selectedItem = items[currentIndex + 1]
         focusedItemId = selectedItem?.id
       }
     } else {
-      selectedItem = filteredItems[0]
+      selectedItem = items[0]
       focusedItemId = selectedItem?.id
     }
   }
 
   private func selectPreviousItem() {
-    guard !filteredItems.isEmpty else { return }
+    guard !items.isEmpty else { return }
 
-    searchFieldFocused = false
-
-    if let currentIndex = filteredItems.firstIndex(where: { $0.id == selectedItem?.id }) {
+    if let currentIndex = items.firstIndex(where: { $0.id == selectedItem?.id }) {
       if currentIndex > 0 {
-        selectedItem = filteredItems[currentIndex - 1]
+        selectedItem = items[currentIndex - 1]
         focusedItemId = selectedItem?.id
       }
     } else {
-      selectedItem = filteredItems[filteredItems.count - 1]
+      selectedItem = items[items.count - 1]
       focusedItemId = selectedItem?.id
     }
   }
@@ -109,7 +71,6 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
           withAnimation {
             selectedItem = item
             focusedItemId = item.id
-            searchFieldFocused = false
           }
         }
     }
@@ -119,7 +80,7 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
     ScrollViewReader { proxy in
       ScrollView {
         LazyVStack(spacing: 8) {
-          ForEach(filteredItems) { item in
+          ForEach(items) { item in
             itemView(for: item)
           }
         }
@@ -138,15 +99,8 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
 
   var body: some View {
     NavigationSplitView {
-      VStack(spacing: 0) {
-        if searchConfig != nil {
-          searchField
-          Divider()
-        }
-
-        listContent
-          .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
-      }
+      listContent
+        .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
     } detail: {
       if let selected = selectedItem {
         detail(selected)
@@ -164,21 +118,10 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
       return .handled
     }
     .onKeyPress(.return) {
-      if searchFieldFocused, let first = filteredItems.first {
-        selectedItem = first
-        searchFieldFocused = false
-        focusedItemId = first.id
-        return .handled
-      } else if let selected = selectedItem {
+      if let selected = selectedItem {
         focusedItemId = selected.id
         return .handled
       }
-      return .ignored
-    }
-    .onKeyPress(.escape) {
-      searchText = ""
-      searchFieldFocused = false
-      return .handled
       return .ignored
     }
   }

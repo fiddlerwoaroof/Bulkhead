@@ -1,4 +1,4 @@
-* High Priority Tasks [4/7]
+* High Priority Tasks [0/0]
 ** UI/UX Improvements [4/7]
 *** DONE Fix keyboard navigation in ListView
     - Arrow key support in lists
@@ -187,4 +187,4 @@
 *** TODO Clean up view hierarchy
     - Reduce view nesting
     - Extract common components
-    - Improve state management 
+    - Improve state management

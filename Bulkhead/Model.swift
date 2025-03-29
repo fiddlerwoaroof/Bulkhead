@@ -89,6 +89,58 @@ struct DockerImage: Identifiable, Codable, Hashable {
   let Size: Int
 }
 
+struct ImageInspection: Codable {
+  let Id: String
+  let Parent: String?
+  let RepoTags: [String]?
+  let RepoDigests: [String]?
+  let Created: String  // Docker returns ISO8601 format
+  let Size: Int64
+  let VirtualSize: Int64
+  let Labels: [String: String]?
+  let Config: ImageConfig
+  
+  enum CodingKeys: String, CodingKey {
+    case Id
+    case Parent
+    case RepoTags
+    case RepoDigests
+    case Created
+    case Size
+    case VirtualSize
+    case Labels
+    case Config
+  }
+  
+  var createdDate: Date? {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter.date(from: Created)
+  }
+}
+
+struct ImageConfig: Codable {
+  let entrypoint: [String]?
+  let cmd: [String]?
+  let workingDir: String?
+  let env: [String]?
+  let labels: [String: String]?
+  let volumes: [String: [String: String]]?
+  let exposedPorts: [String: [String: String]]?
+  let layers: [String]?
+  
+  enum CodingKeys: String, CodingKey {
+    case entrypoint = "Entrypoint"
+    case cmd = "Cmd"
+    case workingDir = "WorkingDir"
+    case env = "Env"
+    case labels = "Labels"
+    case volumes = "Volumes"
+    case exposedPorts = "ExposedPorts"
+    case layers = "Layers"
+  }
+}
+
 class DockerEnvironmentDetector {
   static func detectDockerHostPath() -> String? {
     let potentialPaths = [
