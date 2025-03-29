@@ -13,17 +13,8 @@ struct SettingsView: View {
               .font(.headline)
             TextField("Socket Path", text: $manager.socketPath)
               .textFieldStyle(RoundedBorderTextFieldStyle())
-              .onChange(of: manager.socketPath) {
-                manager.saveDockerHostPath()
-                manager.fetchContainers()
-                withAnimation {
-                  showSavedConfirmation = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                  withAnimation {
-                    showSavedConfirmation = false
-                  }
-                }
+              .onChange(of: manager.socketPath) { _ in
+                handleSocketPathChange()
               }
           }
 
@@ -67,6 +58,19 @@ struct SettingsView: View {
     .frame(
       minWidth: 400, idealWidth: 480, maxWidth: 500, minHeight: 250, idealHeight: 250,
       maxHeight: 300)
+  }
+
+  private func handleSocketPathChange() {
+    manager.saveDockerHostPath()
+    manager.fetchContainers()
+    withAnimation {
+      showSavedConfirmation = true
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+      withAnimation {
+        showSavedConfirmation = false
+      }
+    }
   }
 }
 
