@@ -383,20 +383,26 @@ extension DockerContainer {
       }
     }
 
-    //        if let portsRaw = json?["NetworkSettings"]?["Ports"] as? [String: Any] {
-    //            for (key, value) in portsRaw {
-    //                guard let bindings = value as? [[String: String]] else { continue }
-    //                let parts = key.split(separator: "/")
-    //                if parts.count == 2,
-    //                   let containerPort = Int(parts[0]) {
-    //                    let type = String(parts[1])
-    //                    for binding in bindings {
-    //                        let ip = binding["HostIp"]
-    //                        let publicPort = Int(binding["HostPort"] ?? "")
-    //                        container.ports.append(PortBinding(ip: ip, privatePort: containerPort, publicPort: publicPort, type: type))
-    //                    }
-    //                }
-    //            }
-    //        }
+    if let networkSettings = json?["NetworkSettings"] as? [String: Any],
+      let portsRaw = networkSettings["Ports"] as? [String: Any]
+    {
+
+      for (key, value) in portsRaw {
+        guard let bindings = value as? [[String: String]] else { continue }
+        let parts = key.split(separator: "/")
+        if parts.count == 2,
+          let containerPort = Int(parts[0])
+        {
+          let type = String(parts[1])
+          for binding in bindings {
+            let ip = binding["HostIp"]
+            let publicPort = Int(binding["HostPort"] ?? "")
+            container.ports.append(
+              PortBinding(ip: ip, privatePort: containerPort, publicPort: publicPort, type: type)
+            )
+          }
+        }
+      }
+    }
   }
 }
