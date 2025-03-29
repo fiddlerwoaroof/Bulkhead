@@ -104,6 +104,8 @@ struct FilesystemBrowserView: View {
   @State private var path = "/"
   @State private var entries: [FileEntry] = []
   @State private var hoveredID: String?
+  @State private var currentTask: Task<Void, Never>?
+  @State private var isExecuting = false
 
   init(container: DockerContainer, initialPath: String? = nil) {
     self.container = container
@@ -130,8 +132,9 @@ struct FilesystemBrowserView: View {
       command: ["sh", "-c", "test -d \"\(path)\" && echo yes || echo no"],
       addCarriageReturn: false
     )
-    
-    return String(data: data ?? Data(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) == "yes"
+
+    return String(data: data ?? Data(), encoding: .utf8)?.trimmingCharacters(
+      in: .whitespacesAndNewlines) == "yes"
   }
 
   var body: some View {
@@ -173,7 +176,9 @@ struct FilesystemBrowserView: View {
                     path = (path + "/" + entry.name).normalizedPath()
                     fetch()
                   } else if entry.isSymlink {
-                    let fullPath = (path + "/" + entry.name.trimmingCharacters(in: CharacterSet(charactersIn: "@")))
+                    let fullPath =
+                      (path + "/"
+                        + entry.name.trimmingCharacters(in: CharacterSet(charactersIn: "@")))
                     if try await isSymlinkDirectory(fullPath) {
                       path = fullPath.normalizedPath()
                       fetch()
@@ -193,11 +198,17 @@ struct FilesystemBrowserView: View {
       }
     }
     .task(id: container.id) {
+      // Cancel any existing task when container changes
+      currentTask?.cancel()
+      currentTask = nil
       path = initialPath
       fetch()
     }
     .onChange(of: initialPath) { oldPath, newPath in
       if oldPath != newPath {
+        // Cancel any existing task when path changes
+        currentTask?.cancel()
+        currentTask = nil
         path = newPath
         fetch()
       }
@@ -205,7 +216,17 @@ struct FilesystemBrowserView: View {
   }
 
   private func fetch() {
-    Task {
+    // Cancel any existing task
+    currentTask?.cancel()
+
+    // Create a new task with a delay
+    currentTask = Task {
+      // Add a small delay before executing
+      try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms delay
+
+      // Check if task was cancelled during delay
+      if Task.isCancelled { return }
+
       do {
         // Ensure path ends with slash for symlinks to work correctly
         let queryPath = path.hasSuffix("/") ? path : path + "/"
@@ -215,8 +236,14 @@ struct FilesystemBrowserView: View {
           addCarriageReturn: false
         )
 
-        if let output = String(data: data ?? Data(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
-          entries = output.split(separator: "\n", omittingEmptySubsequences: true).compactMap { line -> FileEntry? in
+        // Check if task was cancelled during exec
+        if Task.isCancelled { return }
+
+        if let output = String(data: data ?? Data(), encoding: .utf8)?.trimmingCharacters(
+          in: .whitespacesAndNewlines)
+        {
+          entries = output.split(separator: "\n", omittingEmptySubsequences: true).compactMap {
+            line -> FileEntry? in
             let name = String(line).trimmingCharacters(in: .whitespacesAndNewlines)
             guard !name.isEmpty else { return nil }
             let isDir = name.hasSuffix("/")
@@ -238,17 +265,8 @@ struct FilesystemBrowserView: View {
       } catch DockerError.containerNotRunning {
         entries = [
           FileEntry(
-            name: "Container must be running to browse filesystem", 
-            isDirectory: false, 
-            isSymlink: false,
-            isExecutable: false
-          )
-        ]
-      } catch DockerError.execFailed(let code) {
-        entries = [
-          FileEntry(
-            name: "Error: Command failed with exit code \(code)", 
-            isDirectory: false, 
+            name: "Container must be running to browse filesystem",
+            isDirectory: false,
             isSymlink: false,
             isExecutable: false
           )
@@ -256,8 +274,8 @@ struct FilesystemBrowserView: View {
       } catch {
         entries = [
           FileEntry(
-            name: "Error: \(error.localizedDescription)", 
-            isDirectory: false, 
+            name: "Error: \(error.localizedDescription)",
+            isDirectory: false,
             isSymlink: false,
             isExecutable: false
           )

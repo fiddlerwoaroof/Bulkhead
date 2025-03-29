@@ -17,20 +17,21 @@ struct ImageListView: View {
       searchConfig: SearchConfiguration(
         placeholder: "Search images...",
         filter: { image, query in
-            let searchQuery = query.lowercased()
-            // Search in repo tags
-            if let tag = image.RepoTags?.first?.lowercased(),
-               tag.contains(searchQuery) {
-                return true
-            }
-            // Search in ID
-            return image.Id.lowercased().contains(searchQuery)
+          let searchQuery = query.lowercased()
+          // Search in repo tags
+          if let tag = image.RepoTags?.first?.lowercased(),
+            tag.contains(searchQuery)
+          {
+            return true
+          }
+          // Search in ID
+          return image.Id.lowercased().contains(searchQuery)
         },
         options: SearchOptions(
-            caseSensitive: false,
-            matchWholeWords: false,
-            keyboardShortcut: "f",
-            modifiers: .command
+          caseSensitive: false,
+          matchWholeWords: false,
+          keyboardShortcut: "f",
+          modifiers: .command
         )
       ), isSearchFocused: $isSearchFocused
     ) { image in
@@ -77,24 +78,25 @@ struct ContainerListView: View {
       searchConfig: SearchConfiguration(
         placeholder: "Search containers...",
         filter: { container, query in
-            let searchQuery = query.lowercased()
-            // Search in container name
-            if let name = container.names.first?.lowercased(),
-               name.contains(searchQuery) {
-                return true
-            }
-            // Search in image name
-            if container.image.lowercased().contains(searchQuery) {
-                return true
-            }
-            // Search in status
-            return container.status.lowercased().contains(searchQuery)
+          let searchQuery = query.lowercased()
+          // Search in container name
+          if let name = container.names.first?.lowercased(),
+            name.contains(searchQuery)
+          {
+            return true
+          }
+          // Search in image name
+          if container.image.lowercased().contains(searchQuery) {
+            return true
+          }
+          // Search in status
+          return container.status.lowercased().contains(searchQuery)
         },
         options: SearchOptions(
-            caseSensitive: false,
-            matchWholeWords: false,
-            keyboardShortcut: "f",
-            modifiers: .command
+          caseSensitive: false,
+          matchWholeWords: false,
+          keyboardShortcut: "f",
+          modifiers: .command
         )
       ), isSearchFocused: $isSearchFocused
     ) { container in
@@ -162,30 +164,36 @@ struct ContainerListView: View {
 }
 
 struct ContentView: View {
-  @Environment(\.colorScheme) private var colorScheme
-  @StateObject private var manager = DockerManager()
-  @State private var selectedContainer: DockerContainer?
+  @EnvironmentObject var manager: DockerManager
   @Binding var selectedTab: Int
   @Binding var isSearchFocused: Bool
+  @Environment(\.colorScheme) private var colorScheme
+  @State private var selectedContainer: DockerContainer?
 
-  var backgroundColor: Color {
+  init(selectedTab: Binding<Int>, isSearchFocused: Binding<Bool>) {
+    _selectedTab = selectedTab
+    _isSearchFocused = isSearchFocused
+  }
+
+  private var backgroundColor: Color {
     colorScheme == .dark ? Color(NSColor.controlBackgroundColor) : Color.white
   }
 
-  var shadowColor: Color {
+  private var shadowColor: Color {
     colorScheme == .dark ? Color.black.opacity(0.2) : Color.black.opacity(0.05)
   }
 
   var body: some View {
     TabView(selection: $selectedTab) {
       ContainerListView(
-        isSearchFocused: $isSearchFocused, backgroundColor: backgroundColor,
+        isSearchFocused: $isSearchFocused,
+        backgroundColor: backgroundColor,
         shadowColor: shadowColor,
         containers: $manager.containers,
         selectedContainer: $selectedContainer
       )
       .tabItem {
-        Text("Containers")
+        Label("Containers", systemImage: "shippingbox")
       }
       .tag(0)
 
@@ -196,7 +204,7 @@ struct ContentView: View {
         isSearchFocused: $isSearchFocused
       )
       .tabItem {
-        Text("Images")
+        Label("Images", systemImage: "square.stack.3d.down.right")
       }
       .tag(1)
     }
@@ -210,6 +218,5 @@ struct ContentView: View {
         selectedContainer = newContainers[0]
       }
     }
-    .environmentObject(manager)
   }
 }

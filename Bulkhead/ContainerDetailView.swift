@@ -5,8 +5,8 @@ struct FilesystemLocation: Hashable {
   let path: String
 }
 
-fileprivate extension ContainerState {
-  var color: Color {
+extension ContainerState {
+  fileprivate var color: Color {
     switch self {
     case .running: return .green
     case .paused: return .orange
@@ -18,7 +18,7 @@ fileprivate extension ContainerState {
     }
   }
 
-  var icon: String {
+  fileprivate var icon: String {
     switch self {
     case .running: return "play.circle.fill"
     case .paused: return "pause.circle.fill"
@@ -30,13 +30,13 @@ fileprivate extension ContainerState {
     }
   }
 
-  var label: String {
+  fileprivate var label: String {
     rawValue.capitalized
   }
 }
 
-fileprivate extension HealthStatus {
-  var color: Color {
+extension HealthStatus {
+  fileprivate var color: Color {
     switch self {
     case .healthy: return .green
     case .unhealthy: return .red
@@ -46,7 +46,7 @@ fileprivate extension HealthStatus {
     }
   }
 
-  var icon: String {
+  fileprivate var icon: String {
     switch self {
     case .healthy: return "checkmark.circle.fill"
     case .unhealthy: return "xmark.circle.fill"
@@ -56,7 +56,7 @@ fileprivate extension HealthStatus {
     }
   }
 
-  var label: String {
+  fileprivate var label: String {
     switch self {
     case .healthy: return "Healthy"
     case .unhealthy: return "Unhealthy"
@@ -101,7 +101,8 @@ struct ContainerDetailView: View {
   }
 
   @ViewBuilder
-  private func detailContent(_ container: DockerContainer, enriched: DockerContainer?) -> some View {
+  private func detailContent(_ container: DockerContainer, enriched: DockerContainer?) -> some View
+  {
     ScrollView {
       VStack(alignment: .leading, spacing: 8) {
         Group {
@@ -153,7 +154,7 @@ struct ContainerDetailView: View {
     let health = enriched?.healthStatus ?? .none
 
     let (icon, label, color) = statusInfo(state: state, health: health)
-    
+
     return HStack(spacing: 4) {
       Image(systemName: icon)
         .foregroundStyle(color)
@@ -167,12 +168,14 @@ struct ContainerDetailView: View {
     .clipShape(RoundedRectangle(cornerRadius: 4))
   }
 
-  private func statusInfo(state: ContainerState, health: HealthStatus) -> (icon: String, label: String, color: Color) {
+  private func statusInfo(state: ContainerState, health: HealthStatus) -> (
+    icon: String, label: String, color: Color
+  ) {
     // If container is not running, show container state
     guard state == .running else {
       return (state.icon, state.label, state.color)
     }
-    
+
     // If container is running, prefer health status if available
     switch health {
     case .healthy:

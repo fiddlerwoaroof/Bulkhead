@@ -233,8 +233,9 @@ class DockerExecutor {
     let containerData = try makeRequest(path: "/v1.41/containers/\(containerId)/json")
     let json = try JSONSerialization.jsonObject(with: containerData, options: []) as? [String: Any]
     guard let state = json?["State"] as? [String: Any],
-          let running = state["Running"] as? Bool,
-          running == true else {
+      let running = state["Running"] as? Bool,
+      running == true
+    else {
       throw DockerError.containerNotRunning
     }
 
@@ -277,7 +278,7 @@ class DockerExecutor {
     let parser = DockerLogStreamParser(addCarriageReturn: addCarriageReturn)
     let lines = parser.append(data: result)
     let remainingLines = parser.flush()
-    
+
     // Combine all stdout lines into a single output
     var output = Data()
     for line in lines + remainingLines where line.stream == .stdout {
@@ -287,7 +288,7 @@ class DockerExecutor {
     // 4. Check the execution result
     let inspectResult = try makeRequest(path: "/v1.41/exec/\(execId)/json")
     let execInspectInfo = try JSONDecoder().decode(ExecInspectResponse.self, from: inspectResult)
-    
+
     if execInspectInfo.exitCode != 0 {
       throw DockerError.execFailed(code: execInspectInfo.exitCode)
     }
@@ -297,7 +298,7 @@ class DockerExecutor {
 
   private struct ExecInspectResponse: Codable {
     let exitCode: Int
-    
+
     enum CodingKeys: String, CodingKey {
       case exitCode = "ExitCode"
     }
