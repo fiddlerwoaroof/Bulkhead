@@ -1,0 +1,190 @@
+* High Priority Tasks [4/7]
+** UI/UX Improvements [4/7]
+*** DONE Fix keyboard navigation in ListView
+    - Arrow key support in lists
+    - Proper handling of edge cases
+    - Focus management between search and list
+*** DONE Implement proper focus management
+    - Focus transitions between search and list items
+    - Visual feedback for focused items
+    - Consistent keyboard behavior
+*** DONE Add escape key handling
+    - Clear search text
+    - Return focus to list
+    - Handle edge cases
+*** DONE Fix search field focus
+    - Command-F shortcut
+    - Focus transitions
+    - Search field behavior
+*** TODO Add visual feedback for keyboard navigation
+    - Scroll animation when navigating
+    - Highlight transitions
+    - Focus ring appearance
+*** TODO Implement smooth scrolling animations
+    - Center selected item
+    - Smooth transitions between items
+    - Handle edge cases (top/bottom of list)
+*** TODO Add keyboard shortcuts help overlay
+    - Command palette style interface
+    - List all available shortcuts
+    - Context-sensitive help
+
+** Container Management [0/4]
+*** TODO Implement container creation UI
+**** Basic container configuration
+     - Image selection
+     - Container name
+     - Command override
+**** Environment variable editor
+     - Key-value pair editor
+     - Import from file
+     - Variable validation
+**** Port mapping interface
+     - Host port binding
+     - Protocol selection
+     - Multiple port mapping
+**** Volume mount configuration
+     - Host path selection
+     - Mount point specification
+     - Mount options
+
+*** TODO Add container deletion with confirmation
+    - Safety confirmation dialog
+    - Option to remove volumes
+    - Keyboard shortcut support
+
+*** TODO Add container restart functionality
+    - Quick restart option
+    - Graceful shutdown option
+    - Restart policy configuration
+
+*** TODO Implement container rename feature
+    - Inline rename
+    - Validation
+    - Update all references
+
+** Search/Filter Enhancement [0/3]
+*** TODO Add advanced search options
+    - Status filter
+    - Image filter
+    - Creation date filter
+    - Combined filters
+*** TODO Add search history
+    - Recent searches
+    - Save frequently used searches
+    - Clear history option
+*** TODO Implement saved searches/filters
+    - Named filters
+    - Quick access to saved filters
+    - Filter management
+
+* Medium Priority Tasks [0/3]
+** Log Viewing Improvements [0/4]
+*** TODO Implement real-time log streaming
+    - Auto-scroll option
+    - Pause/resume functionality
+    - Buffer management
+*** TODO Add log search/filter
+    - Text search
+    - Regex support
+    - Highlight matches
+*** TODO Add log export functionality
+    - Save to file
+    - Copy to clipboard
+    - Format options
+*** TODO Add timestamp filtering
+    - Time range selection
+    - Relative time filters
+    - Custom time formats
+
+** Image Management [0/3]
+*** TODO Add image pull interface
+    - Registry selection
+    - Tag selection
+    - Pull progress
+*** TODO Implement image deletion
+    - Unused image cleanup
+    - Tag removal
+    - Force removal option
+*** TODO Add image tag management
+    - Create new tags
+    - Remove tags
+    - Tag search
+
+** Filesystem Browser Enhancements [0/3]
+*** TODO Add file upload capability
+    - Drag and drop support
+    - Progress indication
+    - Overwrite confirmation
+*** TODO Implement file download
+    - Save to local system
+    - Directory download
+    - Progress tracking
+*** TODO Add file permission management
+    - Change mode
+    - Change owner
+    - Recursive options
+
+* Low Priority Tasks [0/3]
+** Docker Compose Integration [0/3]
+*** TODO Add compose file parser
+    - YAML validation
+    - Service detection
+    - Environment variable expansion
+*** TODO Implement compose service management
+    - Start/stop services
+    - Service logs
+    - Service configuration
+*** TODO Add compose file editor
+    - Syntax highlighting
+    - Validation
+    - Auto-completion
+
+** Documentation [0/2]
+*** TODO Write user documentation
+    - Feature guides
+    - Configuration options
+    - Troubleshooting
+*** TODO Create keyboard shortcut reference
+    - Printable cheat sheet
+    - Context-sensitive help
+    - Custom shortcut configuration
+
+** Performance Optimization [0/3]
+*** TODO Implement container list caching
+    - Memory cache
+    - Disk persistence
+    - Cache invalidation
+*** TODO Optimize image list loading
+    - Lazy loading
+    - Background updates
+    - Progress indication
+*** TODO Add background refresh management
+    - Configurable intervals
+    - Conditional updates
+    - Network optimization
+
+* Bug Fixes [0/2]
+** Known Issues [0/2]
+*** TODO Fix focus loss after container selection
+    - Investigate focus chain
+    - Implement proper focus restoration
+    - Add focus debugging
+*** TODO Address memory leak in log viewer
+    - Profile memory usage
+    - Implement proper cleanup
+    - Add memory monitoring
+
+** Technical Debt [0/3]
+*** TODO Refactor DockerExecutor error handling
+    - Consistent error types
+    - Better error messages
+    - Error recovery
+*** TODO Improve type safety in model layer
+    - Add strong types
+    - Remove force unwrapping
+    - Improve optionals handling
+*** TODO Clean up view hierarchy
+    - Reduce view nesting
+    - Extract common components
+    - Improve state management 
