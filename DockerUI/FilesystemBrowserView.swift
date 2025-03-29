@@ -9,46 +9,56 @@ struct FilesystemBrowserView: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      HStack {
-        Text("Path:")
-        TextField("/", text: $path, onCommit: fetch)
-          .textFieldStyle(RoundedBorderTextFieldStyle())
-          .font(.system(.body, design: .monospaced))
-        Button("Go", action: fetch)
-      }
-      .padding(.bottom, 4)
-
-      List(entries) { entry in
-        HStack {
-          Image(systemName: entry.isDirectory ? "folder.fill" : "doc.text")
-          Text(entry.name)
-            .font(.system(.body, design: .monospaced))
-        }
-        .padding(.vertical, 2)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-          hoveredEntry?.id == entry.id
-            ? Color.accentColor.opacity(0.15)
-            : Color.clear
+      if !container.isRunning {
+        Text(
+          "This container is not running. Filesystem access requires the container to be started."
         )
-        .cornerRadius(4)
-        .contentShape(Rectangle())
-        .onHover { hovering in
-          hoveredEntry = hovering ? entry : nil
+        .foregroundColor(.secondary)
+        .italic()
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+      } else {
+
+        HStack {
+          Text("Path:")
+          TextField("/", text: $path, onCommit: fetch)
+            .textFieldStyle(RoundedBorderTextFieldStyle())
+            .font(.system(.body, design: .monospaced))
+          Button("Go", action: fetch)
         }
-        .onTapGesture {
-          if entry.name == ".." {
-            path = (path as NSString).deletingLastPathComponent.normalizedPath()
-            fetch()
-          } else if entry.isDirectory {
-            path = (path + "/" + entry.name.trimmingCharacters(in: ["/"])).normalizedPath()
-            fetch()
+        .padding(.bottom, 4)
+
+        List(entries) { entry in
+          HStack {
+            Image(systemName: entry.isDirectory ? "folder.fill" : "doc.text")
+            Text(entry.name)
+              .font(.system(.body, design: .monospaced))
+          }
+          .padding(.vertical, 2)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .background(
+            hoveredEntry?.id == entry.id
+              ? Color.accentColor.opacity(0.15)
+              : Color.clear
+          )
+          .cornerRadius(4)
+          .contentShape(Rectangle())
+          .onHover { hovering in
+            hoveredEntry = hovering ? entry : nil
+          }
+          .onTapGesture {
+            if entry.name == ".." {
+              path = (path as NSString).deletingLastPathComponent.normalizedPath()
+              fetch()
+            } else if entry.isDirectory {
+              path = (path + "/" + entry.name.trimmingCharacters(in: ["/"])).normalizedPath()
+              fetch()
+            }
           }
         }
+        .padding()
+        .onAppear(perform: fetch)
       }
     }
-    .padding()
-    .onAppear(perform: fetch)
   }
 
   private func fetch() {
@@ -123,5 +133,11 @@ struct FileEntry: Identifiable, Hashable {
 extension String {
   func normalizedPath() -> String {
     NSString(string: self).standardizingPath
+  }
+}
+
+extension DockerContainer {
+  var isRunning: Bool {
+    status.lowercased().contains("up")
   }
 }

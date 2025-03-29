@@ -265,7 +265,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"DockerUI/Preview Content\"";
 				DEVELOPMENT_TEAM = 95L5D2X59B;
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
@@ -296,7 +296,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"DockerUI/Preview Content\"";
 				DEVELOPMENT_TEAM = 95L5D2X59B;
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
