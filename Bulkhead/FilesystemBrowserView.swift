@@ -39,6 +39,7 @@ struct FilesystemRow: View {
     HStack(spacing: 8) {
       Image(systemName: iconName)
         .foregroundColor(iconColor)
+        .accessibilityLabel(iconAccessibilityLabel)
 
       Text(entry.name)
         .font(.system(.body, design: .monospaced))
@@ -87,6 +88,12 @@ struct FilesystemRow: View {
     if entry.isDirectory { return .accentColor }
     if entry.isSymlink { return .orange }
     return .secondary
+  }
+
+  private var iconAccessibilityLabel: String {
+    if entry.isDirectory { return "Folder" }
+    if entry.isSymlink { return "Symbolic link" }
+    return "File"
   }
 }
 
@@ -140,6 +147,7 @@ struct FilesystemBrowserView: View {
                 isSelected: false,
                 isHovered: hoveredID == entry.id
               )
+              .accessibilityAddTraits(.isButton)
               .onTapGesture {
                 if entry.name == ".." {
                   path = (path as NSString).deletingLastPathComponent.normalizedPath()

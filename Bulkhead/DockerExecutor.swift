@@ -387,12 +387,25 @@ extension DockerContainer {
     let json = try JSONSerialization.jsonObject(with: jsonData, options: []) as? [String: Any]
     let config = json?["Config"] as? [String: Any]
     let state = json?["State"] as? [String: Any]
-    _ = json?["NetworkSettings"] as? [String: Any]
 
+    enrichBasicInfo(from: json, into: &container)
+    enrichConfig(from: config, into: &container)
+    enrichState(from: state, into: &container)
+    enrichMounts(from: json, into: &container)
+    enrichPorts(from: json, into: &container)
+  }
+
+  private static func enrichBasicInfo(
+    from json: [String: Any]?, into container: inout DockerContainer
+  ) {
     if let createdString = json?["Created"] as? String {
       container.created = ISO8601DateFormatter().date(from: createdString)
     }
+  }
 
+  private static func enrichConfig(
+    from config: [String: Any]?, into container: inout DockerContainer
+  ) {
     if let cmd = config?["Cmd"] as? [String] {
       container.command = cmd.joined(separator: " ")
     }
@@ -400,41 +413,54 @@ extension DockerContainer {
     if let env = config?["Env"] as? [String] {
       container.env = env
     }
+  }
 
+  private static func enrichState(from state: [String: Any]?, into container: inout DockerContainer)
+  {
     if let health = state?["Health"] as? [String: Any],
       let status = health["Status"] as? String
     {
       container.health = status.capitalized
     }
+  }
 
+  private static func enrichMounts(from json: [String: Any]?, into container: inout DockerContainer)
+  {
     if let mountsRaw = json?["Mounts"] as? [[String: Any]] {
-      container.mounts = mountsRaw.compactMap {
-        guard let source = $0["Source"] as? String,
-          let destination = $0["Destination"] as? String,
-          let type = $0["Type"] as? String
-        else { return nil }
+      container.mounts = mountsRaw.compactMap { mount in
+        guard let source = mount["Source"] as? String,
+          let destination = mount["Destination"] as? String,
+          let type = mount["Type"] as? String
+        else {
+          return nil
+        }
         return MountInfo(source: source, destination: destination, type: type)
       }
     }
+  }
 
-    if let networkSettings = json?["NetworkSettings"] as? [String: Any],
+  private static func enrichPorts(from json: [String: Any]?, into container: inout DockerContainer)
+  {
+    guard let networkSettings = json?["NetworkSettings"] as? [String: Any],
       let portsRaw = networkSettings["Ports"] as? [String: Any]
-    {
-      for (key, value) in portsRaw {
-        guard let bindings = value as? [[String: String]] else { continue }
-        let parts = key.split(separator: "/")
-        if parts.count == 2,
-          let containerPort = Int(parts[0])
-        {
-          let type = String(parts[1])
-          for binding in bindings {
-            let ip = binding["HostIp"]
-            let publicPort = Int(binding["HostPort"] ?? "")
-            container.ports.append(
-              PortBinding(ip: ip, privatePort: containerPort, publicPort: publicPort, type: type)
-            )
-          }
-        }
+    else {
+      return
+    }
+
+    for (key, value) in portsRaw {
+      guard let bindings = value as? [[String: String]] else { continue }
+      let parts = key.split(separator: "/")
+      guard parts.count == 2,
+        let containerPort = Int(parts[0])
+      else { continue }
+
+      let type = String(parts[1])
+      for binding in bindings {
+        let ip = binding["HostIp"]
+        let publicPort = Int(binding["HostPort"] ?? "")
+        container.ports.append(
+          PortBinding(ip: ip, privatePort: containerPort, publicPort: publicPort, type: type)
+        )
       }
     }
   }

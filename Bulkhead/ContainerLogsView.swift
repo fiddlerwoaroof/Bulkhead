@@ -43,7 +43,9 @@ struct TerminalWrapper: NSViewRepresentable {
     return terminalView
   }
 
-  func updateNSView(_: TerminalView, context _: Context) {}
+  func updateNSView(_: TerminalView, context _: Context) {
+    // No updates needed as the terminal view is configured once during creation
+  }
 }
 
 struct ContainerLogsView: View {

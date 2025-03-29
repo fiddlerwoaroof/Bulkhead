@@ -25,6 +25,7 @@ struct ListView<T: Identifiable, Master: View, Detail: View>: View {
                 )
                 .shadow(color: shadowColor, radius: 2, x: 0, y: 1)
                 .padding(.horizontal)
+                .accessibilityAddTraits(.isButton)
                 .onTapGesture {
                   withAnimation {
                     selectedItem = item
