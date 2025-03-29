@@ -62,7 +62,7 @@ struct SettingsView: View {
       maxHeight: 300)
   }
 
-  private func handleSocketPathChange(newValue: String) {
+  private func handleSocketPathChange(newValue _: String) {
     manager.saveDockerHostPath()
     manager.fetchContainers()
     withAnimation {

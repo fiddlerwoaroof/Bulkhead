@@ -54,14 +54,19 @@ struct ContainerListView: View {
     ) { container in
       HStack {
         VStack(alignment: .leading, spacing: 2) {
-          Text(container.names.first ?? "Unnamed")
-            .font(.headline)
+          HStack(spacing: 8) {
+            Text(container.names.first ?? "Unnamed")
+              .font(.headline)
+          }
+          if container.status.lowercased().contains("up") {
+            statusBadge(container.status, color: .green)
+          } else {
+            statusBadge(container.status, color: .secondary)
+          }
           Text(container.image)
             .font(.subheadline)
-            .foregroundColor(.gray)
-          Text(container.status.capitalized)
-            .font(.caption)
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
+
         }
 
         Spacer()
@@ -72,6 +77,20 @@ struct ContainerListView: View {
       ContainerDetailView(container: container)
         .id(container.id)
     }
+  }
+
+  private func statusBadge(_ text: String, color: Color) -> some View {
+    HStack(spacing: 4) {
+      Image(systemName: color == .green ? "checkmark.circle.fill" : "stop.circle.fill")
+        .foregroundStyle(color)
+      Text(text)
+        .font(.caption)
+        .foregroundStyle(color)
+    }
+    .padding(.horizontal, 6)
+    .padding(.vertical, 2)
+    .background(color.opacity(0.15))
+    .clipShape(RoundedRectangle(cornerRadius: 4))
   }
 
   func containerActions(_ container: DockerContainer) -> some View {
@@ -135,6 +154,11 @@ struct ContentView: View {
     .onAppear {
       manager.fetchContainers()
       manager.fetchImages()
+    }
+    .onChange(of: manager.containers) { _, newContainers in
+      if selectedContainer == nil && !newContainers.isEmpty {
+        selectedContainer = newContainers[0]
+      }
     }
     .environmentObject(manager)
   }
