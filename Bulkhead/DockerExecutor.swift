@@ -8,7 +8,7 @@ struct DockerHTTPRequest {
   func rawData() -> Data {
     var request = "\(method) \(path) HTTP/1.1\r\n"
     request += "Host: docker\r\n"
-    request += "User-Agent: DockerUI/1.0\r\n"
+    request += "User-Agent: Bulkhead/1.0\r\n"
     request += "Accept: */*\r\n"
     request += "Connection: close\r\n"
     request += "Content-Type: application/json\r\n"

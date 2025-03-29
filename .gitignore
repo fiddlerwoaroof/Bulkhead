@@ -2,3 +2,6 @@
 out
 /build/
 /compiler.log
+/DerivedData/
+*.zip
+*.app

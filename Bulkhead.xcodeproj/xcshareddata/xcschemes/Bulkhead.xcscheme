@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A3B602B02D94D89700BE8D6A"
-               BuildableName = "DockerUI.app"
-               BlueprintName = "DockerUI"
-               ReferencedContainer = "container:DockerUI.xcodeproj">
+               BuildableName = "Bulkhead.app"
+               BlueprintName = "Bulkhead"
+               ReferencedContainer = "container:Bulkhead.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A3B602B02D94D89700BE8D6A"
-            BuildableName = "DockerUI.app"
-            BlueprintName = "DockerUI"
-            ReferencedContainer = "container:DockerUI.xcodeproj">
+            BuildableName = "Bulkhead.app"
+            BlueprintName = "Bulkhead"
+            ReferencedContainer = "container:Bulkhead.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A3B602B02D94D89700BE8D6A"
-            BuildableName = "DockerUI.app"
-            BlueprintName = "DockerUI"
-            ReferencedContainer = "container:DockerUI.xcodeproj">
+            BuildableName = "Bulkhead.app"
+            BlueprintName = "Bulkhead"
+            ReferencedContainer = "container:Bulkhead.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

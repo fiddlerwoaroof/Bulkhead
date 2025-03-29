@@ -1,9 +1,9 @@
 # Directory and file filters
 included:
-  - DockerUI
+  - Bulkhead
 excluded:
   - build
-  # - DockerUI/Model.swift
+  # - Bulkhead/Model.swift
 
 # Enabled/disabled rules
 analyzer_rules:
