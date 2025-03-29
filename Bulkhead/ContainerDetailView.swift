@@ -57,16 +57,7 @@ struct ContainerDetailView: View {
           }
 
           if let env = enriched?.env {
-            sectionHeader("Environment")
-            ForEach(env, id: \.self) { envVar in
-              if let separatorIndex = envVar.firstIndex(of: "=") {
-                let key = String(envVar[..<separatorIndex])
-                let value = String(envVar[envVar.index(after: separatorIndex)...])
-                detailRow(key, value)
-              } else {
-                detailRow("", envVar)
-              }
-            }
+            environmentSection(env)
           }
 
           if let ports = enriched?.ports, !ports.isEmpty {
@@ -152,12 +143,56 @@ struct ContainerDetailView: View {
 
   @ViewBuilder
   private func detailRow(_ label: String, _ value: String) -> some View {
-    HStack(alignment: .top) {
+    HStack(alignment: .firstTextBaseline) {
       Text("\(label):")
         .fontWeight(.semibold)
         .frame(width: 80, alignment: .leading)
       Text(value)
         .font(.system(.body, design: .monospaced))
+    }
+  }
+
+  @ViewBuilder
+  private func envDetailRow(_ label: String, _ value: String) -> some View {
+    HStack(alignment: .firstTextBaseline) {
+      Text("\(label):")
+        .fontWeight(.semibold)
+        .frame(width: 200, alignment: .leading)
+      Text(value)
+        .font(.system(.body, design: .monospaced))
+    }
+  }
+
+  @ViewBuilder
+  private func pathDetailRow(_ label: String, _ paths: [String]) -> some View {
+    HStack(alignment: .firstTextBaseline) {
+      Text("\(label):")
+        .fontWeight(.semibold)
+        .frame(width: 200, alignment: .leading)
+      VStack(alignment: .leading) {
+        ForEach(paths, id: \.self) { path in
+          Text(path)
+            .font(.system(.body, design: .monospaced))
+        }
+      }
+    }
+  }
+
+  @ViewBuilder
+  private func environmentSection(_ env: [String]) -> some View {
+    sectionHeader("Environment")
+    ForEach(env.sorted(), id: \.self) { envVar in
+      if let separatorIndex = envVar.firstIndex(of: "=") {
+        let key = String(envVar[..<separatorIndex])
+        let value = String(envVar[envVar.index(after: separatorIndex)...])
+        if key.hasSuffix("PATH") {
+          pathDetailRow(key, value.split(separator: ":").map(String.init))
+        } else {
+          envDetailRow(key, value)
+        }
+      } else {
+        envDetailRow("", envVar)
+      }
     }
   }
 
