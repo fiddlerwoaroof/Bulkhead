@@ -18,6 +18,7 @@ struct TerminalWrapper: NSViewRepresentable {
   func makeNSView(context _: Context) -> TerminalView {
     let terminalView = TerminalView(frame: .zero)
     terminalView.configureNativeColors()
+
     _ = terminalView.becomeFirstResponder()
     fetchLogs(into: terminalView.getTerminal())
     return terminalView
@@ -35,9 +36,14 @@ struct TerminalWrapper: NSViewRepresentable {
 
     DispatchQueue.global().async {
       do {
-        let result = try executor.getContainerLogs(id: container.id)
+        let fetcher = LogFetcher(executor: executor)
+        let result = try fetcher.fetchLogs(for: container.id, stream: .stdout)
+          
         DispatchQueue.main.async {
-          terminal.feed(byteArray: [UInt8](result))
+            for chunk in result {
+                debugPrintBytes(chunk)
+                terminal.feed(byteArray: chunk)
+            }
         }
       } catch {
         DispatchQueue.main.async {
@@ -57,4 +63,11 @@ struct ContainerLogsView: View {
       .navigationTitle(container.names.first ?? "Logs")
       .frame(minWidth: 600, minHeight: 400)
   }
+}
+
+func debugPrintBytes(_ bytes: [UInt8], label: String = "DEBUG") {
+    let asString = String(bytes: bytes, encoding: .utf8) ?? "<invalid utf8>"
+    let asHex = bytes.map { String(format: "%02x", $0) }.joined(separator: " ")
+    print("[\(label)] UTF-8: \(asString)")
+    print("[\(label)] HEX: \(asHex)")
 }

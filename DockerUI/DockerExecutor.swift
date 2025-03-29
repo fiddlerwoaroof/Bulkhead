@@ -187,6 +187,25 @@ class DockerExecutor {
     return bodyData
   }
 
+  func getContainerLogs(id: String, tail: Int = 100) throws -> Data {
+    log("get logs for container \(id)", level: "INFO")
+    let result = try makeRequest(
+      path: "/v1.41/containers/\(id)/logs?stdout=true&stderr=true&tail=\(tail)&follow=false")
+
+    let firstBytes = [UInt8](result.prefix(100))
+    debugPrintBytes(firstBytes, label: "Initial Body")
+
+    return result
+  }
+
+  func isTTYEnabled(forContainer id: String) throws -> Bool {
+    let data = try makeRequest(path: "/v1.41/containers/\(id)/json")
+    let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+    let config = json?["Config"] as? [String: Any]
+    let tty = config?["Tty"] as? Bool
+    return tty ?? false
+  }
+
   func listContainers() throws -> [DockerContainer] {
     log("listing containers", level: "INFO")
     let data = try makeRequest(path: "/v1.41/containers/json?all=true")
@@ -209,11 +228,6 @@ class DockerExecutor {
     _ = try makeRequest(path: "/v1.41/containers/\(id)/stop", method: "POST")
   }
 
-  func getContainerLogs(id: String, tail: Int = 100) throws -> Data {
-    log("get logs for container \(id)", level: "INFO")
-    return try makeRequest(
-      path: "/v1.41/containers/\(id)/logs?stdout=true&stderr=false&tail=\(tail)&follow=false")
-  }
 }
 
 class DockerManager: ObservableObject {
