@@ -1,132 +1,52 @@
 import Foundation
 import SwiftUI
 
-class DockerManager: ObservableObject {
-  @Published var containers: [DockerContainer] = []
-  @Published var images: [DockerImage] = []
-  @Published var socketPath: String =
-    UserDefaults.standard.string(forKey: "dockerHostPath")
-    ?? DockerEnvironmentDetector.detectDockerHostPath() ?? ""
-  @Published var refreshInterval: Double =
-    UserDefaults.standard.double(forKey: "refreshInterval") == 0
-    ? 10 : UserDefaults.standard.double(forKey: "refreshInterval")
+struct ImageListView: View {
+  @State private var backgroundColor: Color
+  @State private var shadowColor: Color
+  @Binding var images: [DockerImage]
 
-  var executor: DockerExecutor? {
-    socketPath.isEmpty ? nil : DockerExecutor(socketPath: socketPath)
-  }
-
-  private var timer: Timer?
-
-  init() {
-    if socketPath.isEmpty, let detected = DockerEnvironmentDetector.detectDockerHostPath() {
-      socketPath = detected
-      saveDockerHostPath()
-    }
-    startAutoRefresh()
-  }
-  private func log(_ message: String, level: String = "INFO") {
-    LogManager.shared.addLog(message, level: level, source: "docker-manager")
-  }
-
-  func fetchContainers() {
-    tryCommand { [weak self] in
-      guard let executor = self?.executor else { return }
-      let list = try executor.listContainers()
-      DispatchQueue.main.async { [weak self] in
-        self?.containers = list
+  var body: some View {
+    ScrollView {
+      LazyVStack(spacing: 8) {
+        //            ForEach(manager.images) { image in
+        ForEach(images) { image in
+          HStack {
+            VStack(alignment: .leading, spacing: 2) {
+              Text(image.RepoTags?.first ?? "<none>")
+                .font(.headline)
+              Text("Size: \(image.Size / (1024 * 1024)) MB")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+              Text("Created: \(Date(timeIntervalSince1970: TimeInterval(image.Created)))")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            }
+            Spacer()
+          }
+          .padding()
+          .background(backgroundColor)
+          .cornerRadius(10)
+          .shadow(color: shadowColor, radius: 2, x: 0, y: 1)
+          .padding(.horizontal)
+        }
       }
-    }
-  }
-
-  func fetchImages() {
-    tryCommand { [weak self] in
-      guard let executor = self?.executor else { return }
-      let list = try executor.listImages()
-      DispatchQueue.main.async {
-        self?.images = list
-      }
-    }
-  }
-
-  func startContainer(id: String) {
-    tryCommand { [weak self] in
-      try self?.executor?.startContainer(id: id)
-    }
-  }
-
-  func stopContainer(id: String) {
-    tryCommand {
-      [weak self]
-      in try self?.executor?.stopContainer(id: id)
-    }
-  }
-
-  private func tryCommand(_ block: @escaping () throws -> Void) {
-    DispatchQueue.global().async { [weak self] in
-      do {
-        try block()
-      } catch {
-        self?.log("Image fetch error: \(error.localizedDescription)", level: "ERROR")
-      }
-    }
-  }
-
-  func saveDockerHostPath() {
-    UserDefaults.standard.set(socketPath, forKey: "dockerHostPath")
-  }
-
-  func saveRefreshInterval() {
-    UserDefaults.standard.set(refreshInterval, forKey: "refreshInterval")
-    startAutoRefresh()
-  }
-
-  private func startAutoRefresh() {
-    timer?.invalidate()
-    timer = Timer.scheduledTimer(withTimeInterval: refreshInterval, repeats: true) {
-      [weak self] _ in
-      self?.fetchContainers()
-      self?.fetchImages()
+      .padding(.vertical)
     }
   }
 }
 
-struct ContentView: View {
-  @Environment(\.colorScheme) private var colorScheme
+struct ContainerListView: View {
   @Environment(\.openWindow) private var openWindow
-  @StateObject private var manager = DockerManager()
-
-  var backgroundColor: Color {
-    colorScheme == .dark ? Color(NSColor.controlBackgroundColor) : Color.white
-  }
-
-  var shadowColor: Color {
-    colorScheme == .dark ? Color.black.opacity(0.2) : Color.black.opacity(0.05)
-  }
+  @EnvironmentObject var manager: DockerManager
+  @State private var backgroundColor: Color
+  @State private var shadowColor: Color
+  @Binding var containers: [DockerContainer]
 
   var body: some View {
-    TabView {
-      containerListView
-        .tabItem {
-          Text("Containers")
-        }
-
-      imageListView
-        .tabItem {
-          Text("Images")
-        }
-    }
-    .frame(minWidth: 600, minHeight: 500)
-    .onAppear {
-      manager.fetchContainers()
-      manager.fetchImages()
-    }
-    .environmentObject(manager)
-  }
-
-  var containerListView: some View {
     ScrollView {
       LazyVStack(spacing: 8) {
-        ForEach(manager.containers) { container in
+        ForEach(containers) { container in
           HStack {
             VStack(alignment: .leading, spacing: 2) {
               Text(container.names.first ?? "Unnamed")
@@ -170,32 +90,42 @@ struct ContentView: View {
       .padding(.vertical)
     }
   }
+}
 
-  var imageListView: some View {
-    ScrollView {
-      LazyVStack(spacing: 8) {
-        ForEach(manager.images) { image in
-          HStack {
-            VStack(alignment: .leading, spacing: 2) {
-              Text(image.RepoTags?.first ?? "<none>")
-                .font(.headline)
-              Text("Size: \(image.Size / (1024 * 1024)) MB")
-                .font(.subheadline)
-                .foregroundColor(.gray)
-              Text("Created: \(Date(timeIntervalSince1970: TimeInterval(image.Created)))")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            }
-            Spacer()
-          }
-          .padding()
-          .background(backgroundColor)
-          .cornerRadius(10)
-          .shadow(color: shadowColor, radius: 2, x: 0, y: 1)
-          .padding(.horizontal)
-        }
+struct ContentView: View {
+  @Environment(\.colorScheme) private var colorScheme
+  @Environment(\.openWindow) private var openWindow
+  @StateObject private var manager = DockerManager()
+
+  var backgroundColor: Color {
+    colorScheme == .dark ? Color(NSColor.controlBackgroundColor) : Color.white
+  }
+
+  var shadowColor: Color {
+    colorScheme == .dark ? Color.black.opacity(0.2) : Color.black.opacity(0.05)
+  }
+
+  var body: some View {
+    TabView {
+      ContainerListView(
+        backgroundColor: backgroundColor, shadowColor: shadowColor, containers: $manager.containers
+      )
+      .tabItem {
+        Text("Containers")
       }
-      .padding(.vertical)
+
+      ImageListView(
+        backgroundColor: backgroundColor, shadowColor: shadowColor, images: $manager.images
+      )
+      .tabItem {
+        Text("Images")
+      }
     }
+    .frame(minWidth: 600, minHeight: 500)
+    .onAppear {
+      manager.fetchContainers()
+      manager.fetchImages()
+    }
+    .environmentObject(manager)
   }
 }

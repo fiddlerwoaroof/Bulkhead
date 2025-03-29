@@ -215,3 +215,92 @@ class DockerExecutor {
       path: "/v1.41/containers/\(id)/logs?stdout=true&stderr=false&tail=\(tail)&follow=false")
   }
 }
+
+class DockerManager: ObservableObject {
+  @Published var containers: [DockerContainer] = []
+  @Published var images: [DockerImage] = []
+  @Published var socketPath: String =
+    UserDefaults.standard.string(forKey: "dockerHostPath")
+    ?? DockerEnvironmentDetector.detectDockerHostPath() ?? ""
+  @Published var refreshInterval: Double =
+    UserDefaults.standard.double(forKey: "refreshInterval") == 0
+    ? 10 : UserDefaults.standard.double(forKey: "refreshInterval")
+
+  var executor: DockerExecutor? {
+    socketPath.isEmpty ? nil : DockerExecutor(socketPath: socketPath)
+  }
+
+  private var timer: Timer?
+
+  init() {
+    if socketPath.isEmpty, let detected = DockerEnvironmentDetector.detectDockerHostPath() {
+      socketPath = detected
+      saveDockerHostPath()
+    }
+    startAutoRefresh()
+  }
+  private func log(_ message: String, level: String = "INFO") {
+    LogManager.shared.addLog(message, level: level, source: "docker-manager")
+  }
+
+  func fetchContainers() {
+    tryCommand { [weak self] in
+      guard let executor = self?.executor else { return }
+      let list = try executor.listContainers()
+      DispatchQueue.main.async { [weak self] in
+        self?.containers = list
+      }
+    }
+  }
+
+  func fetchImages() {
+    tryCommand { [weak self] in
+      guard let executor = self?.executor else { return }
+      let list = try executor.listImages()
+      DispatchQueue.main.async {
+        self?.images = list
+      }
+    }
+  }
+
+  func startContainer(id: String) {
+    tryCommand { [weak self] in
+      try self?.executor?.startContainer(id: id)
+    }
+  }
+
+  func stopContainer(id: String) {
+    tryCommand {
+      [weak self]
+      in try self?.executor?.stopContainer(id: id)
+    }
+  }
+
+  private func tryCommand(_ block: @escaping () throws -> Void) {
+    DispatchQueue.global().async { [weak self] in
+      do {
+        try block()
+      } catch {
+        self?.log("Image fetch error: \(error.localizedDescription)", level: "ERROR")
+      }
+    }
+  }
+
+  func saveDockerHostPath() {
+    UserDefaults.standard.set(socketPath, forKey: "dockerHostPath")
+  }
+
+  func saveRefreshInterval() {
+    UserDefaults.standard.set(refreshInterval, forKey: "refreshInterval")
+    startAutoRefresh()
+  }
+
+  private func startAutoRefresh() {
+    timer?.invalidate()
+    timer = Timer.scheduledTimer(withTimeInterval: refreshInterval, repeats: true) {
+      [weak self] _ in
+      self?.fetchContainers()
+      self?.fetchImages()
+    }
+  }
+}
