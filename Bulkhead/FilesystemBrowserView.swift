@@ -235,6 +235,15 @@ struct FilesystemBrowserView: View {
               name: "<invalid UTF-8>", isDirectory: false, isSymlink: false, isExecutable: false)
           ]
         }
+      } catch DockerError.containerNotRunning {
+        entries = [
+          FileEntry(
+            name: "Container must be running to browse filesystem", 
+            isDirectory: false, 
+            isSymlink: false,
+            isExecutable: false
+          )
+        ]
       } catch DockerError.execFailed(let code) {
         entries = [
           FileEntry(

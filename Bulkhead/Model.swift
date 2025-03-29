@@ -13,12 +13,45 @@ struct DockerContainer: Identifiable, Codable, Hashable {
   var mounts: [MountInfo] = []
   var env: [String] = []
   var health: String?
+  var state: ContainerState?
 
   enum CodingKeys: String, CodingKey {
     case id = "Id"
     case names = "Names"
     case image = "Image"
     case status = "Status"
+  }
+
+  var healthStatus: HealthStatus {
+    if let health = health?.lowercased() {
+      switch health {
+      case "healthy": return .healthy
+      case "unhealthy": return .unhealthy
+      case "starting": return .starting
+      case "none": return .none
+      default: return .unknown
+      }
+    }
+    return .none
+  }
+
+  var containerState: ContainerState {
+    let lowercasedStatus = status.lowercased()
+    if lowercasedStatus.contains("up") {
+      return .running
+    } else if lowercasedStatus.contains("paused") {
+      return .paused
+    } else if lowercasedStatus.contains("restarting") {
+      return .restarting
+    } else if lowercasedStatus.contains("removing") {
+      return .removing
+    } else if lowercasedStatus.contains("dead") {
+      return .dead
+    } else if lowercasedStatus.contains("created") {
+      return .created
+    } else {
+      return .exited
+    }
   }
 }
 
@@ -67,4 +100,22 @@ class DockerEnvironmentDetector {
     }
     return nil
   }
+}
+
+enum ContainerState: String {
+  case created
+  case running
+  case paused
+  case restarting
+  case removing
+  case exited
+  case dead
+}
+
+enum HealthStatus: String {
+  case healthy
+  case unhealthy
+  case starting
+  case none
+  case unknown
 }

@@ -229,6 +229,15 @@ class DockerExecutor {
   }
 
   func exec(containerId: String, command: [String], addCarriageReturn: Bool = true) throws -> Data {
+    // Check container state first
+    let containerData = try makeRequest(path: "/v1.41/containers/\(containerId)/json")
+    let json = try JSONSerialization.jsonObject(with: containerData, options: []) as? [String: Any]
+    guard let state = json?["State"] as? [String: Any],
+          let running = state["Running"] as? Bool,
+          running == true else {
+      throw DockerError.containerNotRunning
+    }
+
     // 1. Create exec instance
     let execCreateBody: [String: Any] = [
       "AttachStdout": true,
@@ -245,7 +254,10 @@ class DockerExecutor {
       body: createData
     )
 
-    let execId = try JSONDecoder().decode([String: String].self, from: createExecResponse)["Id"]!
+    let execCreateInfo = try JSONDecoder().decode([String: String].self, from: createExecResponse)
+    guard let execId = execCreateInfo["Id"] else {
+      throw DockerError.invalidResponse("Failed to get exec ID from response")
+    }
 
     // 2. Start the exec session
     let startBody: [String: Any] = [
@@ -274,10 +286,10 @@ class DockerExecutor {
 
     // 4. Check the execution result
     let inspectResult = try makeRequest(path: "/v1.41/exec/\(execId)/json")
-    let execInfo = try JSONDecoder().decode(ExecInspectResponse.self, from: inspectResult)
+    let execInspectInfo = try JSONDecoder().decode(ExecInspectResponse.self, from: inspectResult)
     
-    if execInfo.exitCode != 0 {
-      throw DockerError.execFailed(code: execInfo.exitCode)
+    if execInspectInfo.exitCode != 0 {
+      throw DockerError.execFailed(code: execInspectInfo.exitCode)
     }
 
     return output
@@ -409,6 +421,8 @@ class DockerManager: ObservableObject {
 enum DockerError: Error {
   case noExecutor
   case execFailed(code: Int)
+  case invalidResponse(String)
+  case containerNotRunning
 }
 
 extension DockerContainer {

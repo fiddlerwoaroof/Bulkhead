@@ -5,6 +5,68 @@ struct FilesystemLocation: Hashable {
   let path: String
 }
 
+fileprivate extension ContainerState {
+  var color: Color {
+    switch self {
+    case .running: return .green
+    case .paused: return .orange
+    case .restarting: return .blue
+    case .removing: return .red
+    case .dead: return .red
+    case .created: return .secondary
+    case .exited: return .secondary
+    }
+  }
+
+  var icon: String {
+    switch self {
+    case .running: return "play.circle.fill"
+    case .paused: return "pause.circle.fill"
+    case .restarting: return "arrow.triangle.2.circlepath.circle.fill"
+    case .removing: return "xmark.circle.fill"
+    case .dead: return "exclamationmark.triangle.fill"
+    case .created: return "circle.fill"
+    case .exited: return "stop.circle.fill"
+    }
+  }
+
+  var label: String {
+    rawValue.capitalized
+  }
+}
+
+fileprivate extension HealthStatus {
+  var color: Color {
+    switch self {
+    case .healthy: return .green
+    case .unhealthy: return .red
+    case .starting: return .orange
+    case .none: return .secondary
+    case .unknown: return .secondary
+    }
+  }
+
+  var icon: String {
+    switch self {
+    case .healthy: return "checkmark.circle.fill"
+    case .unhealthy: return "xmark.circle.fill"
+    case .starting: return "arrow.triangle.2.circlepath.circle.fill"
+    case .none: return "minus.circle.fill"
+    case .unknown: return "questionmark.circle.fill"
+    }
+  }
+
+  var label: String {
+    switch self {
+    case .healthy: return "Healthy"
+    case .unhealthy: return "Unhealthy"
+    case .starting: return "Starting"
+    case .none: return "No Health Check"
+    case .unknown: return "Unknown"
+    }
+  }
+}
+
 struct ContainerDetailView: View {
   let container: DockerContainer
   @EnvironmentObject var manager: DockerManager
@@ -39,17 +101,15 @@ struct ContainerDetailView: View {
   }
 
   @ViewBuilder
-  private func detailContent(_ container: DockerContainer, enriched: DockerContainer?) -> some View
-  {
+  private func detailContent(_ container: DockerContainer, enriched: DockerContainer?) -> some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 8) {
         Group {
           HStack(spacing: 8) {
             Text(container.names.first ?? "<unnamed>")
               .font(.headline)
-            if let health = enriched?.health {
-              healthStatusView(health)
-            }
+            Spacer()
+            statusBadge(container, enriched: enriched)
           }
           detailRow("Image", container.image)
           detailRow("Status", container.status)
@@ -88,12 +148,16 @@ struct ContainerDetailView: View {
     }
   }
 
-  private func healthStatusView(_ health: String) -> some View {
-    let (status, color) = healthStatusInfo(health)
+  private func statusBadge(_ container: DockerContainer, enriched: DockerContainer?) -> some View {
+    let state = container.containerState
+    let health = enriched?.healthStatus ?? .none
+
+    let (icon, label, color) = statusInfo(state: state, health: health)
+    
     return HStack(spacing: 4) {
-      Image(systemName: status.icon)
+      Image(systemName: icon)
         .foregroundStyle(color)
-      Text(status.text)
+      Text(label)
         .font(.caption)
         .foregroundStyle(color)
     }
@@ -103,47 +167,24 @@ struct ContainerDetailView: View {
     .clipShape(RoundedRectangle(cornerRadius: 4))
   }
 
-  private func healthStatusInfo(_ health: String) -> (status: HealthStatus, color: Color) {
-    let normalizedHealth = health.lowercased()
-    switch normalizedHealth {
-    case "healthy":
-      return (.healthy, .green)
-    case "unhealthy":
-      return (.unhealthy, .red)
-    case "starting":
-      return (.starting, .orange)
-    case "none":
-      return (.none, .secondary)
-    default:
-      return (.unknown, .secondary)
+  private func statusInfo(state: ContainerState, health: HealthStatus) -> (icon: String, label: String, color: Color) {
+    // If container is not running, show container state
+    guard state == .running else {
+      return (state.icon, state.label, state.color)
     }
-  }
-
-  private enum HealthStatus {
-    case healthy
-    case unhealthy
-    case starting
-    case none
-    case unknown
-
-    var icon: String {
-      switch self {
-      case .healthy: return "checkmark.circle.fill"
-      case .unhealthy: return "xmark.circle.fill"
-      case .starting: return "arrow.triangle.2.circlepath.circle.fill"
-      case .none: return "minus.circle.fill"
-      case .unknown: return "questionmark.circle.fill"
-      }
-    }
-
-    var text: String {
-      switch self {
-      case .healthy: return "Healthy"
-      case .unhealthy: return "Unhealthy"
-      case .starting: return "Starting"
-      case .none: return "No Health Check"
-      case .unknown: return "Unknown"
-      }
+    
+    // If container is running, prefer health status if available
+    switch health {
+    case .healthy:
+      return ("checkmark.circle.fill", "Healthy", .green)
+    case .unhealthy:
+      return ("xmark.circle.fill", "Unhealthy", .red)
+    case .starting:
+      return ("arrow.triangle.2.circlepath.circle.fill", "Starting", .orange)
+    case .none:
+      return ("play.circle.fill", "Running", .green)
+    case .unknown:
+      return ("questionmark.circle.fill", "Unknown", .secondary)
     }
   }
 
