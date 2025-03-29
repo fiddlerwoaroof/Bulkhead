@@ -5,3 +5,5 @@ out
 /DerivedData/
 *.zip
 *.app
+.direnv/
+result
