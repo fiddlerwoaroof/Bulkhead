@@ -268,7 +268,7 @@ class DockerManager: ObservableObject {
   }
 
   func enrichContainer(_ container: DockerContainer) async throws -> DockerContainer {
-    guard let executor = executor else { throw DockerError.noExecutor }
+    guard let executor else { throw DockerError.noExecutor }
 
     //        let now = Date()
     //        if let cached = enrichmentCache[container.id],
@@ -353,7 +353,7 @@ extension DockerContainer {
     let json = try JSONSerialization.jsonObject(with: jsonData, options: []) as? [String: Any]
     let config = json?["Config"] as? [String: Any]
     let state = json?["State"] as? [String: Any]
-    let _ = json?["NetworkSettings"] as? [String: Any]
+    _ = json?["NetworkSettings"] as? [String: Any]
 
     if let createdString = json?["Created"] as? String {
       container.created = ISO8601DateFormatter().date(from: createdString)
@@ -386,7 +386,6 @@ extension DockerContainer {
     if let networkSettings = json?["NetworkSettings"] as? [String: Any],
       let portsRaw = networkSettings["Ports"] as? [String: Any]
     {
-
       for (key, value) in portsRaw {
         guard let bindings = value as? [[String: String]] else { continue }
         let parts = key.split(separator: "/")

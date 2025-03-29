@@ -17,10 +17,9 @@ final class LogFetcher {
     if isTTY {
       let parser = DockerRawLogParser()
       return parser.append(data: data) + parser.flush()
-    } else {
-      let parser = DockerLogStreamParser()
-      let lines = parser.append(data: data) + parser.flush()
-      return lines.filter { $0.stream == stream }.map { $0.message }
     }
+    let parser = DockerLogStreamParser()
+    let lines = parser.append(data: data) + parser.flush()
+    return lines.filter { $0.stream == stream }.map(\.message)
   }
 }

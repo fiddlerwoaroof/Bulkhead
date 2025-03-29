@@ -5,7 +5,7 @@ struct ImageListView: View {
   var backgroundColor: Color
   var shadowColor: Color
   @Binding var images: [DockerImage]
-  @State private var selectedImage: DockerImage? = nil
+  @State private var selectedImage: DockerImage?
 
   var body: some View {
     ListView(
@@ -102,7 +102,7 @@ struct ContainerListView: View {
 struct ContentView: View {
   @Environment(\.colorScheme) private var colorScheme
   @StateObject private var manager = DockerManager()
-  @State private var selectedContainer: DockerContainer? = nil
+  @State private var selectedContainer: DockerContainer?
 
   var backgroundColor: Color {
     colorScheme == .dark ? Color(NSColor.controlBackgroundColor) : Color.white
