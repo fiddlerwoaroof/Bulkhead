@@ -38,7 +38,13 @@ struct ContainerDetailView: View {
     ScrollView {
       VStack(alignment: .leading, spacing: 8) {
         Group {
-          detailRow("Name", container.names.first ?? "<unnamed>")
+          HStack(spacing: 8) {
+            Text(container.names.first ?? "<unnamed>")
+              .font(.headline)
+            if let health = enriched?.health {
+              healthStatusView(health)
+            }
+          }
           detailRow("Image", container.image)
           detailRow("Status", container.status)
 
@@ -49,40 +55,98 @@ struct ContainerDetailView: View {
           if let command = enriched?.command {
             detailRow("Command", command)
           }
-        }
 
-        if let ports = enriched?.ports, !ports.isEmpty {
-          sectionHeader("Ports")
-          ForEach(ports, id: \.self) { port in
-            Text(
-              "\(port.ip ?? "0.0.0.0"):\(port.publicPort ?? 0) → \(port.privatePort)/\(port.type)"
-            )
-            .font(.system(.body, design: .monospaced))
-            .foregroundColor(.primary)
+          if let env = enriched?.env {
+            sectionHeader("Environment")
+            ForEach(env, id: \.self) { envVar in
+              if let separatorIndex = envVar.firstIndex(of: "=") {
+                let key = String(envVar[..<separatorIndex])
+                let value = String(envVar[envVar.index(after: separatorIndex)...])
+                detailRow(key, value)
+              } else {
+                detailRow("", envVar)
+              }
+            }
           }
-        }
 
-        if let mounts = enriched?.mounts, !mounts.isEmpty {
-          sectionHeader("Mounts")
-          ForEach(mounts, id: \.self) { mount in
-            Text("\(mount.source) → \(mount.destination)")
-              .font(.system(.body, design: .monospaced))
-              .foregroundColor(.primary)
+          if let ports = enriched?.ports, !ports.isEmpty {
+            sectionHeader("Ports")
+            ForEach(ports, id: \.privatePort) { port in
+              detailRow(
+                "\(port.privatePort)/\(port.type)",
+                "\(port.ip ?? "0.0.0.0"):\(port.publicPort ?? 0)"
+              )
+            }
           }
-        }
 
-        if let health = enriched?.health {
-          sectionHeader("Health")
-          Label(
-            health,
-            systemImage: health == "Healthy"
-              ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
-          )
-          .foregroundColor(health == "Healthy" ? .green : .orange)
+          if let mounts = enriched?.mounts, !mounts.isEmpty {
+            sectionHeader("Mounts")
+            ForEach(mounts, id: \.source) { mount in
+              detailRow(mount.source, mount.destination)
+            }
+          }
         }
       }
       .padding()
-      .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+  }
+
+  private func healthStatusView(_ health: String) -> some View {
+    let (status, color) = healthStatusInfo(health)
+    return HStack(spacing: 4) {
+      Image(systemName: status.icon)
+        .foregroundStyle(color)
+      Text(status.text)
+        .font(.caption)
+        .foregroundStyle(color)
+    }
+    .padding(.horizontal, 6)
+    .padding(.vertical, 2)
+    .background(color.opacity(0.15))
+    .clipShape(RoundedRectangle(cornerRadius: 4))
+  }
+
+  private func healthStatusInfo(_ health: String) -> (status: HealthStatus, color: Color) {
+    let normalizedHealth = health.lowercased()
+    switch normalizedHealth {
+    case "healthy":
+      return (.healthy, .green)
+    case "unhealthy":
+      return (.unhealthy, .red)
+    case "starting":
+      return (.starting, .orange)
+    case "none":
+      return (.none, .secondary)
+    default:
+      return (.unknown, .secondary)
+    }
+  }
+
+  private enum HealthStatus {
+    case healthy
+    case unhealthy
+    case starting
+    case none
+    case unknown
+
+    var icon: String {
+      switch self {
+      case .healthy: return "checkmark.circle.fill"
+      case .unhealthy: return "xmark.circle.fill"
+      case .starting: return "arrow.triangle.2.circlepath.circle.fill"
+      case .none: return "minus.circle.fill"
+      case .unknown: return "questionmark.circle.fill"
+      }
+    }
+
+    var text: String {
+      switch self {
+      case .healthy: return "Healthy"
+      case .unhealthy: return "Unhealthy"
+      case .starting: return "Starting"
+      case .none: return "No Health Check"
+      case .unknown: return "Unknown"
+      }
     }
   }
 
