@@ -4,10 +4,12 @@ import SwiftUI
 struct DockerUIApp: App {
   @StateObject private var manager = DockerManager()
   @Environment(\.openWindow) private var openWindow
+  @State private var selectedTab = 0
+  @State private var isSearchFocused = false
 
   var body: some Scene {
     WindowGroup {
-      ContentView()
+      ContentView(selectedTab: $selectedTab, isSearchFocused: $isSearchFocused)
         .environmentObject(manager)
     }
 
@@ -40,6 +42,24 @@ struct DockerUIApp: App {
           manager.fetchImages()
         }
         .keyboardShortcut("r")
+
+        Divider()
+
+        Button("Search") {
+          selectedTab = 0
+          isSearchFocused = true
+        }
+        .keyboardShortcut("f")
+
+        Button("Next Item") {
+          // Navigation handled by ListView
+        }
+        .keyboardShortcut(.downArrow)
+
+        Button("Previous Item") {
+          // Navigation handled by ListView
+        }
+        .keyboardShortcut(.upArrow)
       }
       CommandGroup(replacing: .help) { /* remove help */  }
       CommandGroup(replacing: .newItem) { /* remove new */  }

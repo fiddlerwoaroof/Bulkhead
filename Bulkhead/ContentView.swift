@@ -5,12 +5,34 @@ struct ImageListView: View {
   var backgroundColor: Color
   var shadowColor: Color
   @Binding var images: [DockerImage]
+  @Binding var isSearchFocused: Bool
   @State private var selectedImage: DockerImage?
 
   var body: some View {
     ListView(
-      items: $images, selectedItem: $selectedImage, backgroundColor: backgroundColor,
-      shadowColor: shadowColor
+      items: $images,
+      selectedItem: $selectedImage,
+      backgroundColor: backgroundColor,
+      shadowColor: shadowColor,
+      searchConfig: SearchConfiguration(
+        placeholder: "Search images...",
+        filter: { image, query in
+            let searchQuery = query.lowercased()
+            // Search in repo tags
+            if let tag = image.RepoTags?.first?.lowercased(),
+               tag.contains(searchQuery) {
+                return true
+            }
+            // Search in ID
+            return image.Id.lowercased().contains(searchQuery)
+        },
+        options: SearchOptions(
+            caseSensitive: false,
+            matchWholeWords: false,
+            keyboardShortcut: "f",
+            modifiers: .command
+        )
+      ), isSearchFocused: $isSearchFocused
     ) { image in
       HStack {
         VStack(alignment: .leading, spacing: 2) {
@@ -39,6 +61,7 @@ struct ImageListView: View {
 struct ContainerListView: View {
   @Environment(\.openWindow) private var openWindow
   @EnvironmentObject var manager: DockerManager
+  @Binding var isSearchFocused: Bool
 
   var backgroundColor: Color
   var shadowColor: Color
@@ -50,7 +73,30 @@ struct ContainerListView: View {
       items: $containers,
       selectedItem: $selectedContainer,
       backgroundColor: backgroundColor,
-      shadowColor: shadowColor
+      shadowColor: shadowColor,
+      searchConfig: SearchConfiguration(
+        placeholder: "Search containers...",
+        filter: { container, query in
+            let searchQuery = query.lowercased()
+            // Search in container name
+            if let name = container.names.first?.lowercased(),
+               name.contains(searchQuery) {
+                return true
+            }
+            // Search in image name
+            if container.image.lowercased().contains(searchQuery) {
+                return true
+            }
+            // Search in status
+            return container.status.lowercased().contains(searchQuery)
+        },
+        options: SearchOptions(
+            caseSensitive: false,
+            matchWholeWords: false,
+            keyboardShortcut: "f",
+            modifiers: .command
+        )
+      ), isSearchFocused: $isSearchFocused
     ) { container in
       HStack {
         VStack(alignment: .leading, spacing: 2) {
@@ -66,11 +112,8 @@ struct ContainerListView: View {
           Text(container.image)
             .font(.subheadline)
             .foregroundStyle(.secondary)
-
         }
-
         Spacer()
-
         containerActions(container)
       }
     } detail: { container in
@@ -122,6 +165,8 @@ struct ContentView: View {
   @Environment(\.colorScheme) private var colorScheme
   @StateObject private var manager = DockerManager()
   @State private var selectedContainer: DockerContainer?
+  @Binding var selectedTab: Int
+  @Binding var isSearchFocused: Bool
 
   var backgroundColor: Color {
     colorScheme == .dark ? Color(NSColor.controlBackgroundColor) : Color.white
@@ -132,9 +177,9 @@ struct ContentView: View {
   }
 
   var body: some View {
-    TabView {
+    TabView(selection: $selectedTab) {
       ContainerListView(
-        backgroundColor: backgroundColor,
+        isSearchFocused: $isSearchFocused, backgroundColor: backgroundColor,
         shadowColor: shadowColor,
         containers: $manager.containers,
         selectedContainer: $selectedContainer
@@ -142,13 +187,18 @@ struct ContentView: View {
       .tabItem {
         Text("Containers")
       }
+      .tag(0)
 
       ImageListView(
-        backgroundColor: backgroundColor, shadowColor: shadowColor, images: $manager.images
+        backgroundColor: backgroundColor,
+        shadowColor: shadowColor,
+        images: $manager.images,
+        isSearchFocused: $isSearchFocused
       )
       .tabItem {
         Text("Images")
       }
+      .tag(1)
     }
     .frame(minWidth: 600, minHeight: 500)
     .onAppear {
