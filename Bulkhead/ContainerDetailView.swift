@@ -1,9 +1,15 @@
 import SwiftUI
 
+struct FilesystemLocation: Hashable {
+  let container: DockerContainer
+  let path: String
+}
+
 struct ContainerDetailView: View {
   let container: DockerContainer
   @EnvironmentObject var manager: DockerManager
   @StateObject private var model = ContainerDetailModel()
+  @State private var selectedPath: String?
 
   var body: some View {
     VSplitView {
@@ -23,7 +29,7 @@ struct ContainerDetailView: View {
 
       }
 
-      FilesystemBrowserView(container: container)
+      FilesystemBrowserView(container: container, initialPath: selectedPath ?? "/")
         .frame(minHeight: 200)
     }
     .padding()
@@ -186,13 +192,36 @@ struct ContainerDetailView: View {
         let key = String(envVar[..<separatorIndex])
         let value = String(envVar[envVar.index(after: separatorIndex)...])
         if key.hasSuffix("PATH") {
-          pathDetailRow(key, value.split(separator: ":").map(String.init))
+          envRow(key) {
+            VStack(alignment: .leading) {
+              ForEach(value.split(separator: ":").map(String.init), id: \.self) { path in
+                Button(action: {
+                  selectedPath = path
+                }) {
+                  Text(path)
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.blue)
+                }
+                .buttonStyle(.link)
+              }
+            }
+          }
         } else {
           envDetailRow(key, value)
         }
       } else {
         envDetailRow("", envVar)
       }
+    }
+  }
+
+  @ViewBuilder
+  private func envRow(_ label: String, @ViewBuilder value: () -> some View) -> some View {
+    HStack(alignment: .firstTextBaseline) {
+      Text("\(label):")
+        .fontWeight(.semibold)
+        .frame(width: 200, alignment: .leading)
+      value()
     }
   }
 

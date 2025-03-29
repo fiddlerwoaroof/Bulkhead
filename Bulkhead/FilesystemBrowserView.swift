@@ -99,10 +99,16 @@ struct FilesystemRow: View {
 
 struct FilesystemBrowserView: View {
   let container: DockerContainer
+  let initialPath: String
   @EnvironmentObject var manager: DockerManager
   @State private var path = "/"
   @State private var entries: [FileEntry] = []
   @State private var hoveredID: String?
+
+  init(container: DockerContainer, initialPath: String? = nil) {
+    self.container = container
+    self.initialPath = initialPath ?? "/"
+  }
 
   private var displayedEntries: [FileEntry] {
     if path == "/" {
@@ -116,6 +122,16 @@ struct FilesystemBrowserView: View {
           isExecutable: false)
       ] + entries
     }
+  }
+
+  private func isSymlinkDirectory(_ path: String) async throws -> Bool {
+    let data = try await manager.executor?.exec(
+      containerId: container.id,
+      command: ["sh", "-c", "test -d \"\(path)\" && echo yes || echo no"],
+      addCarriageReturn: false
+    )
+    
+    return String(data: data ?? Data(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) == "yes"
   }
 
   var body: some View {
@@ -149,12 +165,20 @@ struct FilesystemBrowserView: View {
               )
               .accessibilityAddTraits(.isButton)
               .onTapGesture {
-                if entry.name == ".." {
-                  path = (path as NSString).deletingLastPathComponent.normalizedPath()
-                  fetch()
-                } else if entry.isDirectory {
-                  path = (path + "/" + entry.name.trimmingCharacters(in: ["/"])).normalizedPath()
-                  fetch()
+                Task {
+                  if entry.name == ".." {
+                    path = (path as NSString).deletingLastPathComponent.normalizedPath()
+                    fetch()
+                  } else if entry.isDirectory {
+                    path = (path + "/" + entry.name).normalizedPath()
+                    fetch()
+                  } else if entry.isSymlink {
+                    let fullPath = (path + "/" + entry.name.trimmingCharacters(in: CharacterSet(charactersIn: "@")))
+                    if try await isSymlinkDirectory(fullPath) {
+                      path = fullPath.normalizedPath()
+                      fetch()
+                    }
+                  }
                 }
               }
               .onHover { hovering in
@@ -168,24 +192,42 @@ struct FilesystemBrowserView: View {
         .onAppear(perform: fetch)
       }
     }
+    .task(id: container.id) {
+      path = initialPath
+      fetch()
+    }
+    .onChange(of: initialPath) { oldPath, newPath in
+      if oldPath != newPath {
+        path = newPath
+        fetch()
+      }
+    }
   }
 
   private func fetch() {
     Task {
       do {
-        let data = try manager.executor?.exec(
+        // Ensure path ends with slash for symlinks to work correctly
+        let queryPath = path.hasSuffix("/") ? path : path + "/"
+        let data = try await manager.executor?.exec(
           containerId: container.id,
-          command: ["sh", "-c", "ls -AF --color=never \"\(path)\""]
+          command: ["sh", "-c", "ls -AF --color=never \"\(queryPath)\""],
+          addCarriageReturn: false
         )
 
-        if let output = String(data: data ?? Data(), encoding: .utf8) {
-          entries = output.split(separator: "\n").compactMap { line -> FileEntry? in
-            let name = String(line)
+        if let output = String(data: data ?? Data(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
+          entries = output.split(separator: "\n", omittingEmptySubsequences: true).compactMap { line -> FileEntry? in
+            let name = String(line).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { return nil }
             let isDir = name.hasSuffix("/")
             let isLink = name.hasSuffix("@")
             let isExec = name.hasSuffix("*")
             return FileEntry(
-              name: name, isDirectory: isDir, isSymlink: isLink, isExecutable: isExec)
+              name: name,
+              isDirectory: isDir,
+              isSymlink: isLink,
+              isExecutable: isExec
+            )
           }
         } else {
           entries = [
@@ -193,11 +235,23 @@ struct FilesystemBrowserView: View {
               name: "<invalid UTF-8>", isDirectory: false, isSymlink: false, isExecutable: false)
           ]
         }
+      } catch DockerError.execFailed(let code) {
+        entries = [
+          FileEntry(
+            name: "Error: Command failed with exit code \(code)", 
+            isDirectory: false, 
+            isSymlink: false,
+            isExecutable: false
+          )
+        ]
       } catch {
         entries = [
           FileEntry(
-            name: "Error: \(error.localizedDescription)", isDirectory: false, isSymlink: false,
-            isExecutable: false)
+            name: "Error: \(error.localizedDescription)", 
+            isDirectory: false, 
+            isSymlink: false,
+            isExecutable: false
+          )
         ]
       }
     }

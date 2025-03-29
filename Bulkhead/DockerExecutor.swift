@@ -228,7 +228,7 @@ class DockerExecutor {
     _ = try makeRequest(path: "/v1.41/containers/\(id)/stop", method: "POST")
   }
 
-  func exec(containerId: String, command: [String]) throws -> Data {
+  func exec(containerId: String, command: [String], addCarriageReturn: Bool = true) throws -> Data {
     // 1. Create exec instance
     let execCreateBody: [String: Any] = [
       "AttachStdout": true,
@@ -255,13 +255,41 @@ class DockerExecutor {
 
     let startData = try JSONSerialization.data(withJSONObject: startBody, options: [])
 
-    return try makeRequest(
+    let result = try makeRequest(
       path: "/v1.41/exec/\(execId)/start",
       method: "POST",
       body: startData
     )
+
+    // 3. Process the multiplexed stream using DockerLogStreamParser
+    let parser = DockerLogStreamParser(addCarriageReturn: addCarriageReturn)
+    let lines = parser.append(data: result)
+    let remainingLines = parser.flush()
+    
+    // Combine all stdout lines into a single output
+    var output = Data()
+    for line in lines + remainingLines where line.stream == .stdout {
+      output.append(contentsOf: line.message)
+    }
+
+    // 4. Check the execution result
+    let inspectResult = try makeRequest(path: "/v1.41/exec/\(execId)/json")
+    let execInfo = try JSONDecoder().decode(ExecInspectResponse.self, from: inspectResult)
+    
+    if execInfo.exitCode != 0 {
+      throw DockerError.execFailed(code: execInfo.exitCode)
+    }
+
+    return output
   }
 
+  private struct ExecInspectResponse: Codable {
+    let exitCode: Int
+    
+    enum CodingKeys: String, CodingKey {
+      case exitCode = "ExitCode"
+    }
+  }
 }
 
 class DockerManager: ObservableObject {
@@ -380,6 +408,7 @@ class DockerManager: ObservableObject {
 
 enum DockerError: Error {
   case noExecutor
+  case execFailed(code: Int)
 }
 
 extension DockerContainer {

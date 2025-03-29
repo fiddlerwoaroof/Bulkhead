@@ -14,6 +14,11 @@ struct DockerLogLine {
 final class DockerLogStreamParser {
   private var buffer = Data()
   private var lineBuffer: [UInt8] = []
+  private let addCarriageReturn: Bool
+
+  init(addCarriageReturn: Bool = true) {
+    self.addCarriageReturn = addCarriageReturn
+  }
 
   func append(data: Data) -> [DockerLogLine] {
     buffer.append(data)
@@ -35,7 +40,9 @@ final class DockerLogStreamParser {
 
       for byte in payloadData {
         if byte == 0x0A {  // newline (\n)
-          lineBuffer.append(0x0d)
+          if addCarriageReturn {
+            lineBuffer.append(0x0d)
+          }
           lineBuffer.append(byte)
           parsedLines.append(DockerLogLine(stream: stream, message: lineBuffer))
           lineBuffer.removeAll()
