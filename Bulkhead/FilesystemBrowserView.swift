@@ -1,14 +1,118 @@
 import SwiftUI
 
+struct FileEntry: Identifiable, Hashable {
+  var id: String { name }
+  let name: String
+  let isDirectory: Bool
+  let isSymlink: Bool
+  let isExecutable: Bool
+}
+
+extension DockerContainer {
+  var isRunning: Bool {
+    status.lowercased().contains("up")
+  }
+}
+
+extension String {
+  func normalizedPath() -> String {
+    let components = self.split(separator: "/").reduce(into: [String]()) { acc, part in
+      switch part {
+      case "", ".":
+        break
+      case "..":
+        if !acc.isEmpty { acc.removeLast() }
+      default:
+        acc.append(String(part))
+      }
+    }
+    return "/" + components.joined(separator: "/")
+  }
+}
+
+struct FilesystemRow: View {
+  let entry: FileEntry
+  let isSelected: Bool
+  let isHovered: Bool
+
+  var body: some View {
+    HStack(spacing: 8) {
+      Image(systemName: iconName)
+        .foregroundColor(iconColor)
+
+      Text(entry.name)
+        .font(.system(.body, design: .monospaced))
+        .foregroundColor(.primary)
+
+      Spacer()
+
+      if entry.isExecutable {
+        Text("exec")
+          .font(.caption2)
+          .foregroundColor(.green)
+          .padding(.horizontal, 4)
+          .padding(.vertical, 2)
+          .background(Color.green.opacity(0.15))
+          .cornerRadius(4)
+      }
+
+      if entry.isSymlink {
+        Text("link")
+          .font(.caption2)
+          .foregroundColor(.orange)
+          .padding(.horizontal, 4)
+          .padding(.vertical, 2)
+          .background(Color.orange.opacity(0.15))
+          .cornerRadius(4)
+      }
+    }
+    .padding(.vertical, 6)
+    .padding(.horizontal)
+    .background(
+      RoundedRectangle(cornerRadius: 8)
+        .fill(
+          isSelected
+            ? Color.accentColor.opacity(0.2) : isHovered ? Color.gray.opacity(0.05) : Color.clear)
+    )
+    .contentShape(Rectangle())
+  }
+
+  private var iconName: String {
+    if entry.isDirectory { return "folder.fill" }
+    if entry.isSymlink { return "arrow.triangle.branch" }
+    return "doc.text"
+  }
+
+  private var iconColor: Color {
+    if entry.isDirectory { return .accentColor }
+    if entry.isSymlink { return .orange }
+    return .secondary
+  }
+}
+
 struct FilesystemBrowserView: View {
   let container: DockerContainer
   @EnvironmentObject var manager: DockerManager
-  @State private var path: String = "/"
+  @State private var path = "/"
   @State private var entries: [FileEntry] = []
-  @State private var hoveredEntry: FileEntry?
+  @State private var hoveredID: String?
+
+  private var displayedEntries: [FileEntry] {
+    if path == "/" {
+      entries
+    } else {
+      [
+        FileEntry(
+          name: "..",
+          isDirectory: true,
+          isSymlink: false,
+          isExecutable: false)
+      ] + entries
+    }
+  }
 
   var body: some View {
-    VStack(alignment: .leading) {
+    VStack(alignment: .leading, spacing: 0) {
       if !container.isRunning {
         Text(
           "This container is not running. Filesystem access requires the container to be started."
@@ -17,7 +121,6 @@ struct FilesystemBrowserView: View {
         .italic()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
       } else {
-
         HStack {
           Text("Path:")
           TextField("/", text: $path, onCommit: fetch)
@@ -25,37 +128,35 @@ struct FilesystemBrowserView: View {
             .font(.system(.body, design: .monospaced))
           Button("Go", action: fetch)
         }
-        .padding(.bottom, 4)
+        .padding()
 
-        List(entries) { entry in
-          HStack {
-            Image(systemName: entry.isDirectory ? "folder.fill" : "doc.text")
-            Text(entry.name)
-              .font(.system(.body, design: .monospaced))
-          }
-          .padding(.vertical, 2)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .background(
-            hoveredEntry?.id == entry.id
-              ? Color.accentColor.opacity(0.15)
-              : Color.clear
-          )
-          .cornerRadius(4)
-          .contentShape(Rectangle())
-          .onHover { hovering in
-            hoveredEntry = hovering ? entry : nil
-          }
-          .onTapGesture {
-            if entry.name == ".." {
-              path = (path as NSString).deletingLastPathComponent.normalizedPath()
-              fetch()
-            } else if entry.isDirectory {
-              path = (path + "/" + entry.name.trimmingCharacters(in: ["/"])).normalizedPath()
-              fetch()
+        Divider()
+
+        ScrollView {
+          LazyVStack(alignment: .leading, spacing: 4) {
+            ForEach(displayedEntries) { entry in
+              FilesystemRow(
+                entry: entry,
+                isSelected: false,
+                isHovered: hoveredID == entry.id
+              )
+              .onTapGesture {
+                if entry.name == ".." {
+                  path = (path as NSString).deletingLastPathComponent.normalizedPath()
+                  fetch()
+                } else if entry.isDirectory {
+                  path = (path + "/" + entry.name.trimmingCharacters(in: ["/"])).normalizedPath()
+                  fetch()
+                }
+              }
+              .onHover { hovering in
+                hoveredID = hovering ? entry.id : nil
+              }
             }
           }
+          .padding(.horizontal)
         }
-        .padding()
+        .frame(minHeight: 250)
         .onAppear(perform: fetch)
       }
     }
@@ -66,78 +167,31 @@ struct FilesystemBrowserView: View {
       do {
         let data = try manager.executor?.exec(
           containerId: container.id,
-          command: ["sh", "-c", "ls -aF \"\(path)\""]
+          command: ["sh", "-c", "ls -AF --color=never \"\(path)\""]
         )
 
         if let output = String(data: data ?? Data(), encoding: .utf8) {
-          entries =
-            output
-            .split(separator: "\n")
-            .map(String.init)
-            .map { line in
-              FileEntry(name: line, isDirectory: line.hasSuffix("/"))
-            }
+          entries = output.split(separator: "\n").compactMap { line -> FileEntry? in
+            let name = String(line)
+            let isDir = name.hasSuffix("/")
+            let isLink = name.hasSuffix("@")
+            let isExec = name.hasSuffix("*")
+            return FileEntry(
+              name: name, isDirectory: isDir, isSymlink: isLink, isExecutable: isExec)
+          }
         } else {
-          entries = [FileEntry(name: "<invalid UTF-8>", isDirectory: false)]
+          entries = [
+            FileEntry(
+              name: "<invalid UTF-8>", isDirectory: false, isSymlink: false, isExecutable: false)
+          ]
         }
       } catch {
-        entries = [FileEntry(name: "Error: \(error.localizedDescription)", isDirectory: false)]
+        entries = [
+          FileEntry(
+            name: "Error: \(error.localizedDescription)", isDirectory: false, isSymlink: false,
+            isExecutable: false)
+        ]
       }
     }
-  }
-}
-
-extension DockerExecutor {
-  func exec(containerId: String, command: [String]) throws -> Data {
-    // 1. Create exec instance
-    let execCreateBody: [String: Any] = [
-      "AttachStdout": true,
-      "AttachStderr": true,
-      "Tty": false,
-      "Cmd": command,
-    ]
-
-    let createData = try JSONSerialization.data(withJSONObject: execCreateBody, options: [])
-
-    let createExecResponse = try makeRequest(
-      path: "/v1.41/containers/\(containerId)/exec",
-      method: "POST",
-      body: createData
-    )
-
-    let execId = try JSONDecoder().decode([String: String].self, from: createExecResponse)["Id"]!
-
-    // 2. Start the exec session
-    let startBody: [String: Any] = [
-      "Detach": false,
-      "Tty": false,
-    ]
-
-    let startData = try JSONSerialization.data(withJSONObject: startBody, options: [])
-
-    let output = try makeRequest(
-      path: "/v1.41/exec/\(execId)/start",
-      method: "POST",
-      body: startData
-    )
-
-    return output
-  }
-}
-
-struct FileEntry: Identifiable, Hashable {
-  var id: String { name }
-  let name: String
-  let isDirectory: Bool
-}
-extension String {
-  func normalizedPath() -> String {
-    NSString(string: self).standardizingPath
-  }
-}
-
-extension DockerContainer {
-  var isRunning: Bool {
-    status.lowercased().contains("up")
   }
 }

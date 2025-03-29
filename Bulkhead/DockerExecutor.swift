@@ -228,6 +228,40 @@ class DockerExecutor {
     _ = try makeRequest(path: "/v1.41/containers/\(id)/stop", method: "POST")
   }
 
+  func exec(containerId: String, command: [String]) throws -> Data {
+    // 1. Create exec instance
+    let execCreateBody: [String: Any] = [
+      "AttachStdout": true,
+      "AttachStderr": true,
+      "Tty": false,
+      "Cmd": command,
+    ]
+
+    let createData = try JSONSerialization.data(withJSONObject: execCreateBody, options: [])
+
+    let createExecResponse = try makeRequest(
+      path: "/v1.41/containers/\(containerId)/exec",
+      method: "POST",
+      body: createData
+    )
+
+    let execId = try JSONDecoder().decode([String: String].self, from: createExecResponse)["Id"]!
+
+    // 2. Start the exec session
+    let startBody: [String: Any] = [
+      "Detach": false,
+      "Tty": false,
+    ]
+
+    let startData = try JSONSerialization.data(withJSONObject: startBody, options: [])
+
+    return try makeRequest(
+      path: "/v1.41/exec/\(execId)/start",
+      method: "POST",
+      body: startData
+    )
+  }
+
 }
 
 class DockerManager: ObservableObject {
