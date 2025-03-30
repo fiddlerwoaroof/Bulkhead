@@ -79,43 +79,61 @@ class SocketConnection {
     var buffer = [UInt8](repeating: 0, count: 4096)
     var response = Data()
     let startTime = Date()
+    var readError: Error? = nil
 
     while Date().timeIntervalSince(startTime) < timeout {
       let bytesRead = Darwin.recv(socket, &buffer, buffer.count, 0)
+      
       if bytesRead > 0 {
         response.append(buffer, count: bytesRead)
       } else if bytesRead == 0 {
+        LogManager.shared.addLog("Connection closed by peer.", level: "DEBUG", source: "socket-connection")
         break
       } else {
-        if errno == EWOULDBLOCK || errno == EAGAIN {
-          usleep(100_000)
+        let currentErrno = errno
+        if currentErrno == EWOULDBLOCK || currentErrno == EAGAIN {
+          usleep(50_000)
           continue
+        } else {
+          readError = DockerError.socketReadError(
+            NSError(domain: NSPOSIXErrorDomain, code: Int(currentErrno), userInfo: nil)
+          )
+          break
         }
-        throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: nil)
       }
     }
 
-    LogManager.shared.addLog(
-      "Raw response data: \(String(data: response, encoding: .utf8) ?? "<binary>")", level: "DEBUG",
-      source: "socket-connection")
+    if let error = readError {
+      throw error
+    }
+
+    if Date().timeIntervalSince(startTime) >= timeout && response.range(of: Self.crlf2Data) == nil {
+      throw DockerError.timeoutOccurred
+    }
 
     guard let headerEndRange = response.range(of: Self.crlf2Data) else {
-      throw NSError(
-        domain: "SocketConnection", code: -1,
-        userInfo: [NSLocalizedDescriptionKey: "Malformed HTTP response"])
+      throw DockerError.invalidResponse("Connection closed or data incomplete before receiving complete HTTP headers.")
     }
+    
+    LogManager.shared.addLog(
+      "Received headers. Raw response size: \(response.count)", level: "DEBUG",
+      source: "socket-connection")
 
     let headerData = response[..<headerEndRange.lowerBound]
     var bodyData = response[headerEndRange.upperBound...]
 
     guard let headerString = String(data: headerData, encoding: .utf8) else {
-      throw NSError(
-        domain: "SocketConnection", code: -2,
-        userInfo: [NSLocalizedDescriptionKey: "Failed to decode headers"])
+      throw DockerError.responseParsingFailed(
+        NSError(domain: "SocketConnection", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to decode headers as UTF-8"])
+      )
     }
 
     let lines = headerString.components(separatedBy: "\r\n")
-    let statusLine = lines.first ?? ""
+    guard !lines.isEmpty else {
+      throw DockerError.invalidResponse("Received empty headers.")
+    }
+    let statusLine = lines.first!
+    
     var headers: [String: String] = [:]
     for line in lines.dropFirst() {
       let parts = line.split(separator: ":", maxSplits: 1)
@@ -126,9 +144,21 @@ class SocketConnection {
     }
 
     if headers["Transfer-Encoding"]?.lowercased() == "chunked" {
-      bodyData = try dechunk(bodyData)
+      LogManager.shared.addLog("Dechunking body...", level: "DEBUG", source: "socket-connection")
+      bodyData = try dechunk(Data(bodyData))
+    } else if let contentLengthStr = headers["Content-Length"],
+              let contentLength = Int(contentLengthStr),
+              bodyData.count < contentLength {
+      LogManager.shared.addLog("Content-Length (\(contentLength)) > received body (\(bodyData.count)). Need to read more.", level: "DEBUG", source: "socket-connection")
+      throw DockerError.invalidResponse("Incomplete body received (Content-Length mismatch). Additional read logic not implemented.")
+    } else if let contentLengthStr = headers["Content-Length"],
+              let contentLength = Int(contentLengthStr),
+              bodyData.count > contentLength {
+      LogManager.shared.addLog("Received body (\(bodyData.count)) > Content-Length (\(contentLength)). Truncating.", level: "WARN", source: "socket-connection")
+      bodyData = bodyData.prefix(contentLength)
     }
 
+    LogManager.shared.addLog("Final body size: \(bodyData.count)", level: "DEBUG", source: "socket-connection")
     return (statusLine, headers, Data(bodyData))
   }
 
