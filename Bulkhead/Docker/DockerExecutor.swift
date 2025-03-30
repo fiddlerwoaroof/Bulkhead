@@ -36,7 +36,8 @@ class SocketConnection {
   init(path: URL) throws {
     socket = Darwin.socket(AF_UNIX, SOCK_STREAM, 0)
     guard socket >= 0 else {
-      throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: nil)
+      let underlyingError = NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: [NSLocalizedDescriptionKey: "Failed to create socket (\(errno)) for path \(path.path)"])
+      throw DockerError.connectionFailed(underlyingError)
     }
 
     var addr = sockaddr_un()
@@ -57,7 +58,8 @@ class SocketConnection {
 
     guard result >= 0 else {
       close(socket)
-      throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: nil)
+      let underlyingError = NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: [NSLocalizedDescriptionKey: "Failed to connect socket to \(path.path) (\(errno): \(String(cString: strerror(errno))))\""])
+      throw DockerError.connectionFailed(underlyingError)
     }
   }
 
@@ -367,6 +369,16 @@ enum DockerError: Error, LocalizedError {
 
   // Generic / Unknown
   case unknownError(Error) // For wrapping non-DockerError types
+
+  // Helper to identify connection-related errors
+  var isConnectionError: Bool {
+    switch self {
+    case .connectionFailed, .socketWriteError, .socketReadError, .timeoutOccurred, .noExecutor:
+      return true
+    default:
+      return false
+    }
+  }
 
   // MARK: - LocalizedError Conformance
 
