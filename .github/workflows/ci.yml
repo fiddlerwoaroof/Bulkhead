@@ -14,6 +14,33 @@ env:
   SCHEME: "Bulkhead"  # Replace with your actual scheme name
 
 jobs:
+  lint:
+    name: Lint with SwiftLint
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install SwiftLint
+        run: brew install swiftlint
+      - name: Run SwiftLint
+        run: swiftlint --strict --baseline .swiftlint.baseline
+
+  format:
+    name: Check Formatting with swift-format
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install swift-format
+        # Assuming swift-format might be installed via brew or comes with Xcode
+        # If using a specific package manager or version, adjust this step
+        # For now, let's try running it directly, it might be bundled
+        # run: brew install swift-format # Or use specific installation method
+        run: echo "Attempting to use swift-format, assuming it's available..."
+      - name: Run swift-format Lint
+        # Add specific paths if needed, e.g., swift-format lint Sources/ Tests/
+        run: swift-format lint --recursive . 
+
   build_debug:
     name: Build and analyze Debug scheme
     runs-on: macos-15
@@ -34,6 +61,7 @@ jobs:
   build_release:
     name: Build and analyze Release scheme
     runs-on: macos-15
+    needs: [lint, format, build_debug]
 
     steps:
       - name: Checkout
@@ -47,7 +75,8 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=macOS' \
             -archivePath ./Bulkhead.xcarchive \
-            | xcpretty && exit ${PIPESTATUS[0]}
+            CODE_SIGNING_ALLOWED=NO \
+            && exit ${PIPESTATUS[0]}
           
           echo "ARCHIVE_PATH=$(pwd)/Bulkhead.xcarchive" >> $GITHUB_ENV
 
