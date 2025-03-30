@@ -45,11 +45,15 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
     if let currentIndex = currentItems.firstIndex(where: { $0.id == selectedItem?.id }) {
       if currentIndex < currentItems.count - 1 {
         selectedItem = currentItems[currentIndex + 1]
-        focusedField = .item(AnyHashable(selectedItem!.id))
+        if let newlySelectedItem = selectedItem {
+            focusedField = .item(AnyHashable(newlySelectedItem.id))
+        }
       }
     } else {
       selectedItem = currentItems[0]
-      focusedField = .item(AnyHashable(selectedItem!.id))
+      if let newlySelectedItem = selectedItem {
+          focusedField = .item(AnyHashable(newlySelectedItem.id))
+      }
     }
   }
 
@@ -60,11 +64,15 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
     if let currentIndex = currentItems.firstIndex(where: { $0.id == selectedItem?.id }) {
       if currentIndex > 0 {
         selectedItem = currentItems[currentIndex - 1]
-        focusedField = .item(AnyHashable(selectedItem!.id))
+        if let newlySelectedItem = selectedItem {
+            focusedField = .item(AnyHashable(newlySelectedItem.id))
+        }
       }
     } else {
       selectedItem = currentItems[currentItems.count - 1]
-      focusedField = .item(AnyHashable(selectedItem!.id))
+      if let newlySelectedItem = selectedItem {
+          focusedField = .item(AnyHashable(newlySelectedItem.id))
+      }
     }
   }
 
