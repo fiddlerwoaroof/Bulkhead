@@ -8,9 +8,9 @@ struct ContentView: View {
   @State private var selectedContainer: DockerContainer?
   @Binding private var searchFocused: Bool
 
-    init(selectedTab: Binding<Int>, searchFocused: Binding<Bool>) {
-     _selectedTab = selectedTab
-      _searchFocused = searchFocused
+  init(selectedTab: Binding<Int>, searchFocused: Binding<Bool>) {
+    _selectedTab = selectedTab
+    _searchFocused = searchFocused
   }
 
   private var backgroundColor: Color {

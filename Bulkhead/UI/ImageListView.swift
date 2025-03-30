@@ -4,7 +4,7 @@ struct ImageListView: View {
   var backgroundColor: Color
   var shadowColor: Color
   @Binding var images: [DockerImage]
-    @Binding var searchFocused: Bool
+  @Binding var searchFocused: Bool
   @State private var selectedImage: DockerImage?
 
   private var imageSearchConfig: SearchConfiguration<DockerImage> {

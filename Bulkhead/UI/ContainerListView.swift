@@ -8,7 +8,6 @@ struct ContainerListView: View {
   @Binding var selectedContainer: DockerContainer?
   @Binding var searchFocused: Bool
 
-
   var backgroundColor: Color
   var shadowColor: Color
 

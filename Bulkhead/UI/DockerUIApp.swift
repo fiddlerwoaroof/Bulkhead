@@ -9,7 +9,7 @@ struct DockerUIApp: App {
 
   var body: some Scene {
     WindowGroup {
-        ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused)
+      ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused)
         .environmentObject(manager)
         .onAppear {
           manager.fetchContainers()
