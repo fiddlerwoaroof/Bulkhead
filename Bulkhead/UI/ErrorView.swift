@@ -1,15 +1,22 @@
 import SwiftUI
 
+// Define a structure for actionable error elements
+struct ErrorAction {
+    let label: String
+    let action: () -> Void
+}
+
 struct ErrorView: View {
     
     enum DisplayStyle {
-        case prominent // Full box with icon, title, description, suggestion
+        case prominent // Full box with icon, title, description, suggestion, actions
         case compact   // Minimal, inline style (e.g., icon + description)
     }
     
     let error: LocalizedError
     var title: String? // Optional title
     var style: DisplayStyle = .prominent // Default to prominent
+    var actions: [ErrorAction]? // Optional array of actions
 
     var body: some View {
         Group {
@@ -22,7 +29,7 @@ struct ErrorView: View {
         }
     }
 
-    // Original prominent style view body
+    // Prominent style view body with actions
     private var prominentBody: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -52,6 +59,20 @@ struct ErrorView: View {
                 }
                 .padding(.top, 4)
             }
+            
+            // Display actions if provided
+            if let actions = actions, !actions.isEmpty {
+                HStack(spacing: 8) {
+                    Spacer() // Push buttons to the right
+                    ForEach(actions.indices, id: \.self) { index in
+                        Button(actions[index].label) {
+                            actions[index].action()
+                        }
+                        // Optionally add styling like .buttonStyle(.bordered)
+                    }
+                }
+                .padding(.top, 8)
+            }
         }
         .padding()
         .background(Color.red.opacity(0.1))
@@ -62,7 +83,7 @@ struct ErrorView: View {
         )
     }
     
-    // New compact style view body
+    // Compact style view body (no actions shown in compact mode)
     private var compactBody: some View {
         HStack(spacing: 4) {
             Image(systemName: "exclamationmark.circle.fill") // Smaller icon
@@ -83,29 +104,47 @@ struct ErrorView: View {
 }
 
 #Preview {
-    // Example usage with a sample error
+    // Example usage with a sample error and actions
     enum PreviewError: Error, LocalizedError {
         case sampleConnectionError
-        
+        case sampleAuthError
+
         var errorDescription: String? {
-            "Could not connect to the server. The network might be unavailable."
+            switch self {
+            case .sampleConnectionError: "Could not connect to the server. Network might be unavailable."
+            case .sampleAuthError: "Authentication failed. Invalid credentials."
+            }
         }
         var recoverySuggestion: String? {
-            "Please check your network connection and try again. Ensure the server address is correct."
+            switch self {
+            case .sampleConnectionError: "Check network connection and server address."
+            case .sampleAuthError: "Please check your username and password."
+            }
         }
     }
     
-    return ScrollView { VStack(alignment: .leading, spacing: 20) {
-        Text("Prominent Style:")
-        ErrorView(error: PreviewError.sampleConnectionError)
-        ErrorView(error: PreviewError.sampleConnectionError, title: "Connection Failed")
-        
-        Divider()
-        
-        Text("Compact Style:")
-        ErrorView(error: PreviewError.sampleConnectionError, style: .compact)
-        ErrorView(error: PreviewError.sampleConnectionError, title: "Connection Failed", style: .compact)
-    }
-    .padding()
+    // Example actions
+    let retryAction = ErrorAction(label: "Retry") { print("Retry tapped") }
+    let settingsAction = ErrorAction(label: "Settings") { print("Settings tapped") }
+    
+    return ScrollView {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Prominent Style (No Actions):").font(.title2)
+            ErrorView(error: PreviewError.sampleConnectionError)
+            
+            Divider()
+            
+            Text("Prominent Style (With Actions):").font(.title2)
+            ErrorView(error: PreviewError.sampleConnectionError, title: "Connection Failed", actions: [retryAction, settingsAction])
+            ErrorView(error: PreviewError.sampleAuthError, title: "Auth Failed", actions: [retryAction])
+            
+            Divider()
+            
+            Text("Compact Style:").font(.title2)
+            ErrorView(error: PreviewError.sampleConnectionError, style: .compact)
+            // Note: Actions are not displayed in compact style
+            ErrorView(error: PreviewError.sampleAuthError, title: "Auth Failed", style: .compact, actions: [retryAction])
+        }
+        .padding()
     }
 }

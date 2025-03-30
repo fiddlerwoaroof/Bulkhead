@@ -78,12 +78,12 @@ We will enhance the error handling system across the application by:
 - [x] **Conform `DockerError` to `LocalizedError`**
     - [x] Implement `errorDescription` for each case, providing a user-friendly summary.
     - [x] Implement `recoverySuggestion` for relevant cases (e.g., check socket path, restart Docker, check container status).
-- [ ] **Create `ErrorView.swift`**
-    - [ ] Design a SwiftUI view to display an error.
-    - [ ] Include parameters for title (optional), `errorDescription`,
-          and `recoverySuggestion`.
-    - [ ] Style the view appropriately (e.g., using standard alert
-          colors/icons).
+- [x] **Create `ErrorView.swift`**
+    - [x] Design a SwiftUI view to display an error.
+    - [x] Include parameters for title (optional), `errorDescription`, and `recoverySuggestion`.
+    - [x] Style the view appropriately (e.g., using standard alert colors/icons).
+    - [x] Added display style parameter for flexibility.
+    - [ ] Add support for displaying one or more actionable elements (buttons, inputs) based on the error context.
 - [ ] **Update Error Catching Logic**
     - [ ] Modify `catch` blocks in `DockerManager`, detail view models (`ContainerDetailModel`, `ImageDetailModel`), and potentially `FilesystemBrowserView` to:
         - Catch specific error types where possible.
