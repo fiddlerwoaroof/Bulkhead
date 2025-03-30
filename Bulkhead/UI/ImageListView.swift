@@ -83,5 +83,10 @@ struct ImageListView: View {
       },
       searchConfig: imageSearchConfig
     )
+    .onChange(of: images) { _, newImages in
+        if selectedImage == nil && !newImages.isEmpty {
+            selectedImage = newImages.first
+        }
+    }
   }
 } 
