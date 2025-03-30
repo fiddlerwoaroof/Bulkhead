@@ -37,25 +37,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+  build:
+    name: Build and analyse default scheme using xcodebuild command
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        run: |
+          xcodebuild clean build analyze \
+            -scheme "$scheme" \
+            -workspace "Bulkhead.xcodeproj/project.xcworkspace" \
+            -configuration Release \
+            -destination 'platform=macOS,arch=arm64' \
+            | xcpretty && exit ${PIPESTATUS[0]}
+
+
       - name: Get Build Products Directory
         id: build_dir
         run: |
           export BUILT_PRODUCTS_DIR=$(xcodebuild -workspace "Bulkhead.xcodeproj/project.xcworkspace" \
             -scheme "$scheme" \
-            -configuration Debug \
+            -configuration Release \
             -showBuildSettings | grep BUILT_PRODUCTS_DIR | head -1 | awk '{print $3}')
           echo "BUILT_PRODUCTS_DIR=$BUILT_PRODUCTS_DIR" >> $GITHUB_ENV
-
-      - name: Zip App
-        run: |
-          cd ${{ env.BUILT_PRODUCTS_DIR }}
-          zip -r Bulkhead.app.zip Bulkhead.app
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: Bulkhead
-          path: ${{ env.BUILT_PRODUCTS_DIR }}/Bulkhead.app.zip
 
       - name: Code Sign
         env:
@@ -69,3 +75,24 @@ jobs:
             -exportPath ${{ env.BUILT_PRODUCTS_DIR }} \
             CODE_SIGN_IDENTITY="Developer ID Application: Edward Langley" \
             PROVISIONING_PROFILE_SPECIFIER="Developer ID Application: Edward Langley"
+
+      - name: Zip App
+        run: |
+          cd ${{ env.BUILT_PRODUCTS_DIR }}
+          # Extract the app from the xcarchive
+          APP_PATH="${{ env.BUILT_PRODUCTS_DIR }}/Bulkhead.xcarchive/Products/Applications/Bulkhead.app"
+          zip -r Bulkhead.app.zip "$APP_PATH"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Bulkhead
+          path: ${{ env.BUILT_PRODUCTS_DIR }}/Bulkhead.app.zip
+
+      - name: Create Draft Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          prerelease: false
