@@ -1,6 +1,18 @@
 import Foundation
 import SwiftUI
 
+// Define Environment Key for Global Error State
+struct IsGlobalErrorShowingKey: EnvironmentKey {
+    static let defaultValue: Bool = false
+}
+
+extension EnvironmentValues {
+    var isGlobalErrorShowing: Bool {
+        get { self[IsGlobalErrorShowingKey.self] }
+        set { self[IsGlobalErrorShowingKey.self] = newValue }
+    }
+}
+
 struct ContentView: View {
   @EnvironmentObject var manager: DockerManager
   @Binding var selectedTab: Int
@@ -20,6 +32,14 @@ struct ContentView: View {
 
   private var shadowColor: Color {
     colorScheme == .dark ? Color.black.opacity(0.2) : Color.black.opacity(0.05)
+  }
+
+  // Check for any global connection error
+  private var globalConnectionError: DockerError? {
+      // Prioritize container list error, then image list error
+      if let err = manager.containerListError, err.isConnectionError { return err }
+      if let err = manager.imageListError, err.isConnectionError { return err }
+      return nil
   }
     
     private var containerListView: some View {
@@ -44,33 +64,50 @@ struct ContentView: View {
     }
 
   var body: some View {
-      TabView(selection: $selectedTab) {
-        // Container List View
-          containerListView
-        .tabItem {
-          Label("Containers", systemImage: "shippingbox.fill")
-        }
-        .tag(0)
-      // Image List View
-          imageListView
+      // Main content with potential error overlay
+      ZStack {
+          TabView(selection: $selectedTab) {
+            // Container List View
+            containerListView
               .tabItem {
-        Label("Images", systemImage: "photo.stack.fill")
+                Label("Containers", systemImage: "shippingbox.fill")
+              }
+              .tag(0)
+            // Image List View
+            imageListView
+              .tabItem {
+                Label("Images", systemImage: "photo.stack.fill")
+              }
+              .tag(1)
+          }
+          .frame(minWidth: 800, minHeight: 600)
+          // Pass down environment value based on global error state
+          .environment(\.isGlobalErrorShowing, globalConnectionError != nil)
+
+          // Overlay Error View if a global connection error exists
+          if let error = globalConnectionError {
+              // Background layer that fills the space
+              Rectangle()
+                  .fill(.ultraThinMaterial.opacity(0.9)) // Apply material to the background
+                  .ignoresSafeArea() // Ensure it covers the whole window area if needed
+                  .overlay( // Place the ErrorView content on top, centered by default
+                      ErrorView(error: error, title: "Connection Error", style: .prominent)
+                          .padding() // Add padding around the ErrorView content
+                  )
+          }
       }
-      .tag(1)
-    }
-    .frame(minWidth: 800, minHeight: 600)
-    .onAppear {
-        Task {
-            await manager.fetchContainers()
+      .onAppear {
+          Task {
+              await manager.fetchContainers()
+          }
+          Task {
+            await manager.fetchImages()
         }
-        Task {
-          await manager.fetchImages()
       }
-    }
-    .onChange(of: manager.containers) { _, newContainers in
-      if selectedContainer == nil && !newContainers.isEmpty {
-        selectedContainer = newContainers[0]
+      .onChange(of: manager.containers) { _, newContainers in
+        if selectedContainer == nil && !newContainers.isEmpty {
+          selectedContainer = newContainers[0]
+        }
       }
-    }
   }
 }
