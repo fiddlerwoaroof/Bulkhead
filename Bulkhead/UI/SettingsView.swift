@@ -1,10 +1,11 @@
+import BulkheadCore
 import SwiftUI
 
-struct SettingsView: View {
+public struct SettingsView: View {
   @ObservedObject var manager: DockerManager
   @State private var showSavedConfirmation = false
 
-  var body: some View {
+  public var body: some View {
     GeometryReader { geometry in
       ScrollView {
         VStack(alignment: .leading, spacing: 12) {

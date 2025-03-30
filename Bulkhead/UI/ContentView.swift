@@ -1,8 +1,6 @@
+import BulkheadCore
 import Foundation
 import SwiftUI
-import BulkheadCore
-import BulkheadFeatures
-import BulkheadUI
 
 struct ContainerListView: View {
   @Environment(\.openWindow) private var openWindow
@@ -42,7 +40,7 @@ struct ContainerListView: View {
         isSearchFocused: $isSearchFocused
       )
       Divider()
-      
+
       ListView(
         items: .constant(filteredContainers),
         selectedItem: $selectedContainer,
@@ -169,4 +167,4 @@ struct ContentView: View {
       }
     }
   }
-} 
+}

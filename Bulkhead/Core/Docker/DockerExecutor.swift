@@ -237,7 +237,9 @@ public class DockerExecutor {
     _ = try makeRequest(path: "/v1.41/containers/\(id)/stop", method: "POST")
   }
 
-  public func exec(containerId: String, command: [String], addCarriageReturn: Bool = true) throws -> Data {
+  public func exec(containerId: String, command: [String], addCarriageReturn: Bool = true) throws
+    -> Data
+  {
     // Check container state first
     let containerData = try makeRequest(path: "/v1.41/containers/\(containerId)/json")
     let json = try JSONSerialization.jsonObject(with: containerData, options: []) as? [String: Any]
@@ -321,8 +323,12 @@ public class DockerExecutor {
 public class DockerManager: ObservableObject {
   @Published public var containers: [DockerContainer] = []
   @Published public var images: [DockerImage] = []
-  @Published public var socketPath: String = UserDefaults.standard.string(forKey: "dockerHostPath") ?? DockerEnvironmentDetector.detectDockerHostPath() ?? ""
-  @Published public var refreshInterval: Double = UserDefaults.standard.double(forKey: "refreshInterval") == 0 ? 10 : UserDefaults.standard.double(forKey: "refreshInterval")
+  @Published public var socketPath: String =
+    UserDefaults.standard.string(forKey: "dockerHostPath")
+    ?? DockerEnvironmentDetector.detectDockerHostPath() ?? ""
+  @Published public var refreshInterval: Double =
+    UserDefaults.standard.double(forKey: "refreshInterval") == 0
+    ? 10 : UserDefaults.standard.double(forKey: "refreshInterval")
   @Published public var isLoading = false
   @Published public var error: DockerError?
 
@@ -388,7 +394,8 @@ public class DockerManager: ObservableObject {
 
     let now = Date()
     if let cached = enrichmentCache[container.id],
-       now.timeIntervalSince(cached.timestamp) < enrichmentTTL {
+      now.timeIntervalSince(cached.timestamp) < enrichmentTTL
+    {
       return cached.container
     }
 
@@ -419,11 +426,11 @@ public class DockerManager: ObservableObject {
     }
   }
 
-  func saveDockerHostPath() {
+  public func saveDockerHostPath() {
     UserDefaults.standard.set(socketPath, forKey: "dockerHostPath")
   }
 
-  func saveRefreshInterval() {
+  public func saveRefreshInterval() {
     UserDefaults.standard.set(refreshInterval, forKey: "refreshInterval")
     startAutoRefresh()
   }

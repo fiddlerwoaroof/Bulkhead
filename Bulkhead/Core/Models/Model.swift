@@ -99,7 +99,7 @@ public struct ImageInspection: Codable {
   public let VirtualSize: Int64
   public let Labels: [String: String]?
   public let Config: ImageConfig
-  
+
   enum CodingKeys: String, CodingKey {
     case Id
     case Parent
@@ -111,7 +111,7 @@ public struct ImageInspection: Codable {
     case Labels
     case Config
   }
-  
+
   public var createdDate: Date? {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -128,7 +128,7 @@ public struct ImageConfig: Codable {
   public let volumes: [String: [String: String]]?
   public let exposedPorts: [String: [String: String]]?
   public let layers: [String]?
-  
+
   enum CodingKeys: String, CodingKey {
     case entrypoint = "Entrypoint"
     case cmd = "Cmd"

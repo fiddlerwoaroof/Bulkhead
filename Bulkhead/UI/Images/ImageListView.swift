@@ -1,6 +1,6 @@
-import SwiftUI
 import BulkheadCore
 import BulkheadUI
+import SwiftUI
 
 struct ImageListView: View {
   var backgroundColor: Color
@@ -46,7 +46,7 @@ struct ImageListView: View {
         isSearchFocused: $isSearchFocused
       )
       Divider()
-      
+
       ListView(
         items: .constant(filteredImages),
         selectedItem: $selectedImage,
@@ -61,13 +61,13 @@ struct ImageListView: View {
               Text(image.RepoTags?.first ?? "<none>")
                 .font(.headline)
             }
-            
+
             if let tags = image.RepoTags, tags.count > 1 {
               Text("\(tags.count - 1) more tags")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
-            
+
             HStack(spacing: 8) {
               Text(formatSize(image.Size))
                 .font(.caption)
@@ -91,4 +91,4 @@ struct ImageListView: View {
       }
     }
   }
-} 
+}

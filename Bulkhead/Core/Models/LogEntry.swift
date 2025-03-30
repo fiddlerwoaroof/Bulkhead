@@ -23,4 +23,4 @@ public struct LogEntry: CustomStringConvertible {
     self.level = level
     self.source = source
   }
-} 
+}

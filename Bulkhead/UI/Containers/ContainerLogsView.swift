@@ -1,6 +1,6 @@
+import BulkheadCore
 import SwiftTerm
 import SwiftUI
-import BulkheadCore
 
 final class TerminalSessionManager {
   let terminal: Terminal

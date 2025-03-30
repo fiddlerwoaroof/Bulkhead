@@ -30,4 +30,4 @@ public class LogManager: ObservableObject {
       self.logs.append(logEntry)
     }
   }
-} 
+}

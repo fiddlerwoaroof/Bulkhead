@@ -1,3 +1,4 @@
+import BulkheadCore
 import SwiftUI
 
 struct SettingsWindow: Scene {

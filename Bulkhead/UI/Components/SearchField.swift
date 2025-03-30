@@ -5,13 +5,13 @@ public struct SearchField: View {
   @Binding var text: String
   @Binding var isSearchFocused: Bool
   @FocusState private var isFocused: Bool
-  
+
   public init(placeholder: String, text: Binding<String>, isSearchFocused: Binding<Bool>) {
     self.placeholder = placeholder
     self._text = text
     self._isSearchFocused = isSearchFocused
   }
-  
+
   public var body: some View {
     HStack {
       Image(systemName: "magnifyingglass")
@@ -40,4 +40,4 @@ public struct SearchField: View {
       isFocused = newValue
     }
   }
-} 
+}

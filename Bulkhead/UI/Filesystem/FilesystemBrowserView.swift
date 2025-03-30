@@ -1,5 +1,5 @@
-import SwiftUI
 import BulkheadCore
+import SwiftUI
 
 struct FileEntry: Identifiable, Hashable {
   var id: String { name }

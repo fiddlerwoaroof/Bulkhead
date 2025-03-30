@@ -8,7 +8,9 @@ public final class LogFetcher {
   }
 
   /// Fetches logs from a container, auto-detecting whether to use multiplexed parsing or raw.
-  public func fetchLogs(for containerID: String, tail: Int = 100, stream: DockerLogStreamType = .stdout)
+  public func fetchLogs(
+    for containerID: String, tail: Int = 100, stream: DockerLogStreamType = .stdout
+  )
     throws -> [[UInt8]]
   {
     let isTTY = try executor.isTTYEnabled(forContainer: containerID)
