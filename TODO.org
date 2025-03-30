@@ -1,4 +1,70 @@
 * High Priority Tasks [0%]
+** TODO Release Polish (v1.0) [0%]
+*** TODO Code Architecture Improvements [0%]
+**** TODO DockerManager Refactoring
+     - Create new file DockerManager.swift in Docker directory
+     - Move DockerManager class from DockerExecutor.swift
+     - Update imports and references
+     - Test functionality after move
+**** TODO Error Handling Enhancement
+     - Expand DockerError enum with more specific cases
+     - Add user-friendly error messages
+     - Implement error recovery suggestions
+     - Create reusable ErrorView component
+     - Update UI components to use new error display
+**** TODO Type Safety Improvements
+     - Eliminate force unwrapping where possible
+     - Implement proper nil handling with optionals
+     - Add appropriate assertions and preconditions
+     - Use specific types instead of generic dictionaries
+
+*** TODO UI/UX Refinements [0%]
+**** TODO Visual Feedback Enhancements
+     - Add loading indicators for operations
+     - Implement success/failure feedback for actions
+     - Improve state transitions in the UI
+     - Ensure consistent color scheme for states
+**** TODO Keyboard Navigation Completion
+     - Test Tab key navigation throughout app
+     - Verify Enter key behavior in all contexts
+     - Ensure ESC key properly dismisses/clears
+     - Confirm arrow key behavior
+     - Test focus persistence when switching tabs
+**** TODO Help Overlay
+     - Design simple help overlay UI
+     - Implement keyboard shortcut (?) to display
+     - Document all keyboard shortcuts
+     - Group shortcuts logically by function
+
+*** TODO Documentation and Testing [0%]
+**** TODO User Documentation
+     - Write "Getting Started" guide
+     - Document connection configuration
+     - Create container management overview
+     - Document image browsing capabilities
+     - Explain filesystem browser usage
+     - Detail log viewing functionality
+**** TODO Developer Documentation
+     - Add documentation headers to key classes
+     - Document complex methods (DockerExecutor, etc.)
+     - Update README.md with development setup
+     - Add inline comments for complex logic
+**** TODO Cross-Environment Testing
+     - Test with Colima
+     - Test with Docker Desktop
+     - Test with Rancher Desktop
+     - Verify on both arm64 and x86_64 architectures
+     - Test with variety of containers
+     - Test with large numbers of containers/images
+     - Monitor memory usage during extended use
+
+*** TODO Final Release Preparation [0%]
+**** TODO Version and Distribution
+     - Update version number in project settings
+     - Create GitHub release with notes
+     - Generate DMG or installer package
+     - Verify code signing and notarization
+
 ** TODO UI/UX Improvements [70%]
 *** TODO Add keyboard shortcuts help overlay
     - Command palette style interface

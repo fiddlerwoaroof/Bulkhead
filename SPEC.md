@@ -134,10 +134,9 @@ Bulkhead is a SwiftUI-based macOS application for interacting with the local Doc
 ### Code Organization
 *(Note: Keep this section updated when adding/moving files)*
 - **Core Logic:**
-  - `Bulkhead/Docker/DockerExecutor.swift`: Low-level Docker socket communication and API requests. (`DockerExecutor`, `DockerManager`, etc.)
+  - `Bulkhead/Docker/DockerExecutor.swift`: Low-level Docker socket communication and API requests. Also contains the `DockerManager` class that manages application state and coordinates Docker actions.
   - `Bulkhead/Docker/Model.swift`: Core data structures (`DockerContainer`, `DockerImage`, etc.).
-  - `Bulkhead/UI/DockerUIApp.swift`: Main application entry point, window setup, main state (`DockerManager`).
-  - `DockerManager.swift` (Location TBD): Central class managing application state and coordinating Docker actions.
+  - `Bulkhead/UI/DockerUIApp.swift`: Main application entry point, window setup, and scene definitions.
 - **UI Components:**
   - `Bulkhead/UI/ContentView.swift`: Root view containing the `TabView`.
   - `Bulkhead/UI/ListView.swift`: Generic reusable list view component (handles layout, search, focus, nav, selection).
@@ -148,6 +147,9 @@ Bulkhead is a SwiftUI-based macOS application for interacting with the local Doc
   - `Bulkhead/UI/SearchField.swift`: Reusable search text field.
   - `Bulkhead/UI/FilesystemBrowserView.swift`: View for browsing container filesystem.
   - `Bulkhead/UI/ContainerLogsView.swift`: View for displaying container logs (`SwiftTerm`).
+  - `Bulkhead/UI/LogTableView.swift`: View for displaying log entries in a tabular format.
+  - `Bulkhead/UI/SettingsView.swift`: View for user configuration settings.
+  - `Bulkhead/UI/SettingsWindow.swift`: Window definition for settings.
 - **Log Handling:**
   - `Bulkhead/Docker/LogFetcher.swift`: Logic to fetch logs using `DockerExecutor`.
   - `Bulkhead/Docker/DockerLogStreamParser.swift`: Parses multiplexed log streams.
