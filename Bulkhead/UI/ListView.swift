@@ -146,7 +146,7 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
         .padding(.vertical)
       }
       .onChange(of: searchFocused) { oldValue, newValue in
-          if (oldValue != newValue && newValue == true ) {
+          if oldValue != newValue && newValue == true {
               focusedField = .search
           }
       }
@@ -212,7 +212,7 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
       }
       .onChange(of: focusedField) { _, newValue in
         viewState.lastKnownFocus = newValue
-          if (newValue != .search) {
+          if newValue != .search {
               searchFocused = false
           }
       }
