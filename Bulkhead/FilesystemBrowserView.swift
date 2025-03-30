@@ -127,7 +127,7 @@ struct FilesystemBrowserView: View {
   }
 
   private func isSymlinkDirectory(_ path: String) async throws -> Bool {
-    let data = try await manager.executor?.exec(
+    let data = try manager.executor?.exec(
       containerId: container.id,
       command: ["sh", "-c", "test -d \"\(path)\" && echo yes || echo no"],
       addCarriageReturn: false
@@ -230,7 +230,7 @@ struct FilesystemBrowserView: View {
       do {
         // Ensure path ends with slash for symlinks to work correctly
         let queryPath = path.hasSuffix("/") ? path : path + "/"
-        let data = try await manager.executor?.exec(
+        let data = try manager.executor?.exec(
           containerId: container.id,
           command: ["sh", "-c", "ls -AF --color=never \"\(queryPath)\""],
           addCarriageReturn: false
