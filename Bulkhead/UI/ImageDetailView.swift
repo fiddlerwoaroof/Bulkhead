@@ -5,9 +5,12 @@ struct ImageDetailView: View {
   @EnvironmentObject var manager: DockerManager
   @StateObject private var model = ImageDetailModel()
   @Environment(\.colorScheme) var colorScheme
+  @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
 
   private var connectionError: DockerError? {
-    if case .connectionFailed = manager.imageListError { return manager.imageListError }
+    guard !isGlobalErrorShowing else { return nil }
+
+    if let err = manager.imageListError, err.isConnectionError { return err }
     if case .socketReadError = manager.imageListError { return manager.imageListError }
     if case .socketWriteError = manager.imageListError { return manager.imageListError }
     if case .timeoutOccurred = manager.imageListError { return manager.imageListError }

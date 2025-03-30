@@ -38,6 +38,7 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   @StateObject private var viewState = ListViewState()
   @State private var selectionTask: Task<Void, Never>?  // Task for debouncing
   @Binding var searchFocused: Bool
+  @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing // Read environment
   @ViewBuilder var content: (T) -> Master
   @ViewBuilder var detail: (T) -> Detail
 
@@ -139,7 +140,8 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
 
   private var listColumnContent: some View {
     VStack(spacing: 0) {
-      if let error = listError {
+      // Show local list error ONLY if a global error isn't already showing
+      if !isGlobalErrorShowing, let error = listError {
         ErrorView(error: error, title: listErrorTitle, style: .compact)
           .padding()
           .frame(maxHeight: .infinity)

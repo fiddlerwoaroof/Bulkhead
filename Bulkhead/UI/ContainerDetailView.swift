@@ -72,19 +72,26 @@ struct ContainerDetailView: View {
   @EnvironmentObject var manager: DockerManager
   @StateObject private var model = ContainerDetailModel()
   @State private var selectedPath: String?
+  @Environment(\.colorScheme) var colorScheme
+  @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
 
-  // Determine if there's a relevant connection error from the manager
+  // Determine if there's a *local* model loading error
+  private var localError: DockerError? {
+    if let error = model.error { return error }
+    return nil
+  }
+
+  // Determine if there's a *relevant* connection error from the manager
   private var connectionError: DockerError? {
-      if case .connectionFailed = manager.containerListError { return manager.containerListError }
-      if case .socketReadError = manager.containerListError { return manager.containerListError }
-      if case .socketWriteError = manager.containerListError { return manager.containerListError }
-      if case .timeoutOccurred = manager.containerListError { return manager.containerListError }
-      if case .noExecutor = manager.containerListError { return manager.containerListError }
+      // Ignore connection errors if a global one is already showing
+      guard !isGlobalErrorShowing else { return nil }
+
+      if let err = manager.containerListError, err.isConnectionError { return err }
       return nil // No relevant connection error
   }
 
   var body: some View {
-    // Check for global connection error first
+    // Check for global connection error first (or if we should ignore local one)
     if let connError = connectionError {
         ErrorView(error: connError, title: "Connection Error")
             .padding()
@@ -94,13 +101,15 @@ struct ContainerDetailView: View {
         VSplitView {
           ScrollView {
             VStack(alignment: .leading, spacing: 8) {
-              if let error = model.error { // Local model error (e.g., enrich failed)
+              if model.isLoading {
+                ProgressView("Loading container details...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding()
+              } else if let error = localError { // Local model error (e.g., enrich failed)
                  ErrorView(error: error, title: "Failed to Load Details")
                     .padding()
               } else if let base = model.base { // Use base container as fallback
                 detailContent(base, enriched: model.enriched)
-              } else if model.isLoading {
-                ProgressView("Loading container details...")
               } else {
                  // Should not happen if base is always set, but provides fallback
                  Text("Select a container.").foregroundColor(.secondary)
