@@ -1,35 +1,45 @@
-* High Priority Tasks [0/0]
-** UI/UX Improvements [4/7]
+* High Priority Tasks [0%]
+** TODO UI/UX Improvements [60%]
+*** TODO Add keyboard shortcuts help overlay
+    - Command palette style interface
+    - List all available shortcuts
+    - Context-sensitive help
+*** TODO Re-wire Command-F shortcut
+    - Pass focus request from DockerUIApp down to active ListView.
+    - Consider using NotificationCenter or a shared state object.
+*** TODO Refine visual feedback for navigation/selection
+    - Evaluate if current background + focus ring is optimal.
+    - Explore other highlight options if needed.
+*** TODO Ensure list selection debounce is effective
+    - Test rapid selection changes.
+    - Confirm background tasks (e.g., detail loading) are correctly cancelled/triggered.
+
 *** DONE Fix keyboard navigation in ListView
     - Arrow key support in lists
-    - Proper handling of edge cases
+    - Proper handling of edge cases (list ends, search field interaction)
     - Focus management between search and list
 *** DONE Implement proper focus management
     - Focus transitions between search and list items
-    - Visual feedback for focused items
-    - Consistent keyboard behavior
+    - Visual feedback for focused items (selection background + focus ring)
+    - Consistent keyboard behavior (Escape, Enter, Arrows)
+    - Focus persistence across tab switches
 *** DONE Add escape key handling
     - Clear search text
     - Return focus to list
     - Handle edge cases
 *** DONE Fix search field focus
-    - Command-F shortcut
+    - Command-F shortcut (needs re-wiring in App)
     - Focus transitions
     - Search field behavior
-*** TODO Add visual feedback for keyboard navigation
-    - Scroll animation when navigating
-    - Highlight transitions
-    - Focus ring appearance
-*** TODO Implement smooth scrolling animations
-    - Center selected item
-    - Smooth transitions between items
-    - Handle edge cases (top/bottom of list)
-*** TODO Add keyboard shortcuts help overlay
-    - Command palette style interface
-    - List all available shortcuts
-    - Context-sensitive help
-
-** Container Management [0/4]
+*** DONE Add visual feedback for keyboard navigation
+    - Scroll animation when navigating (Implemented via withAnimation + ScrollViewReader)
+    - Highlight transitions (Implemented via selection background change)
+    - Focus ring appearance (Using system default)
+*** DONE Implement smooth scrolling animations
+    - Center selected item (Implemented via ScrollViewReader anchor: .center)
+    - Smooth transitions between items (Implemented via withAnimation)
+    - Handle edge cases (top/bottom of list) (Implemented in key handlers)
+** TODO Container Management [0%]
 *** TODO Implement container creation UI
 **** Basic container configuration
      - Image selection
@@ -63,7 +73,7 @@
     - Validation
     - Update all references
 
-** Search/Filter Enhancement [0/3]
+** TODO Search/Filter Enhancement [0%]
 *** TODO Add advanced search options
     - Status filter
     - Image filter
@@ -78,8 +88,8 @@
     - Quick access to saved filters
     - Filter management
 
-* Medium Priority Tasks [0/3]
-** Log Viewing Improvements [0/4]
+* Medium Priority Tasks [0%]
+** TODO Log Viewing Improvements [0%]
 *** TODO Implement real-time log streaming
     - Auto-scroll option
     - Pause/resume functionality
@@ -97,7 +107,7 @@
     - Relative time filters
     - Custom time formats
 
-** Image Management [0/3]
+** TODO Image Management [0%]
 *** TODO Add image pull interface
     - Registry selection
     - Tag selection
@@ -111,7 +121,7 @@
     - Remove tags
     - Tag search
 
-** Filesystem Browser Enhancements [0/3]
+** TODO Filesystem Browser Enhancements [0%]
 *** TODO Add file upload capability
     - Drag and drop support
     - Progress indication
@@ -125,8 +135,8 @@
     - Change owner
     - Recursive options
 
-* Low Priority Tasks [0/3]
-** Docker Compose Integration [0/3]
+* Low Priority Tasks [0%]
+** Docker Compose Integration [0%]
 *** TODO Add compose file parser
     - YAML validation
     - Service detection
@@ -140,7 +150,7 @@
     - Validation
     - Auto-completion
 
-** Documentation [0/2]
+** Documentation [0%]
 *** TODO Write user documentation
     - Feature guides
     - Configuration options
@@ -150,7 +160,7 @@
     - Context-sensitive help
     - Custom shortcut configuration
 
-** Performance Optimization [0/3]
+** Performance Optimization [0%]
 *** TODO Implement container list caching
     - Memory cache
     - Disk persistence
@@ -164,18 +174,18 @@
     - Conditional updates
     - Network optimization
 
-* Bug Fixes [0/2]
-** Known Issues [0/2]
-*** TODO Fix focus loss after container selection
-    - Investigate focus chain
-    - Implement proper focus restoration
-    - Add focus debugging
+* Bug Fixes [0%]
+** Known Issues [50%]
+*** DONE Fix focus loss after container selection
+    - Investigated focus chain
+    - Implemented focus persistence via @StateObject
+    - Added focus debugging (and removed)
 *** TODO Address memory leak in log viewer
     - Profile memory usage
     - Implement proper cleanup
     - Add memory monitoring
 
-** Technical Debt [0/3]
+** Technical Debt [20%]
 *** TODO Refactor DockerExecutor error handling
     - Consistent error types
     - Better error messages
@@ -184,7 +194,13 @@
     - Add strong types
     - Remove force unwrapping
     - Improve optionals handling
-*** TODO Clean up view hierarchy
-    - Reduce view nesting
-    - Extract common components
-    - Improve state management
+*** DONE Clean up view hierarchy
+    - Reduced view nesting via generic ListView
+    - Extracted common components (StatusBadgeView, ContainerActionsView)
+    - Improved state management (moved state to ListViewState)
+*** TODO Refine ListView state management
+    - Evaluate @StateObject approach for potential issues.
+    - Monitor performance, consider alternatives if needed.
+*** TODO Review AnyView usage
+    - Check if AnyView type erasures in list view callers can be avoided.
+    - Prioritize performance and clarity.
