@@ -6,7 +6,6 @@ struct ContainerListView: View {
   @EnvironmentObject var manager: DockerManager
   @Binding var containers: [DockerContainer]
   @Binding var selectedContainer: DockerContainer?
-  @State private var lastKnownFocus: ListView<DockerContainer, AnyView, AnyView>.FocusField? = nil // Persisted focus state
 
   var backgroundColor: Color
   var shadowColor: Color
@@ -63,11 +62,7 @@ struct ContainerListView: View {
         // Type erase the detail view
         AnyView(ContainerDetailView(container: container))
       },
-      searchConfig: containerSearchConfig,
-      persistedFocus: lastKnownFocus, // Pass the persisted focus state
-      onFocusChange: { newFocus in // Provide callback
-          lastKnownFocus = newFocus
-      }
+      searchConfig: containerSearchConfig
     )
   }
 }

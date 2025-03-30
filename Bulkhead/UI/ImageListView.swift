@@ -5,7 +5,6 @@ struct ImageListView: View {
   var shadowColor: Color
   @Binding var images: [DockerImage]
   @State private var selectedImage: DockerImage?
-  @State private var lastKnownFocus: ListView<DockerImage, AnyView, AnyView>.FocusField? = nil
 
   private var imageSearchConfig: SearchConfiguration<DockerImage> {
     SearchConfiguration(
@@ -85,11 +84,7 @@ struct ImageListView: View {
         // Type erase the detail view
         AnyView(ImageDetailView(image: image))
       },
-      searchConfig: imageSearchConfig,
-      persistedFocus: lastKnownFocus,
-      onFocusChange: { newFocus in
-          lastKnownFocus = newFocus
-      }
+      searchConfig: imageSearchConfig
     )
     .onChange(of: images) { _, newImages in
         if selectedImage == nil && !newImages.isEmpty {

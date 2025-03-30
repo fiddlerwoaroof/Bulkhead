@@ -3,8 +3,8 @@ import SwiftUI
 struct SearchField<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   let placeholder: String
   @Binding var text: String
-  var focusBinding: FocusState<ListView<T, Master, Detail>.FocusField?>.Binding
-  let focusCase: ListView<T, Master, Detail>.FocusField
+  var focusBinding: FocusState<ListViewFocusTarget?>.Binding
+  let focusCase: ListViewFocusTarget
 
   var body: some View {
     HStack {
