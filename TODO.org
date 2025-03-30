@@ -1,11 +1,11 @@
 * High Priority Tasks [25%]
 ** TODO Release Polish (v1.0) [0%]
 *** TODO Code Architecture Improvements [0%]
-**** TODO DockerManager Refactoring
-     - Create new file DockerManager.swift in Docker directory
-     - Move DockerManager class from DockerExecutor.swift
-     - Update imports and references
-     - Test functionality after move
+**** DONE DockerManager Refactoring
+     - [X] Create new file DockerManager.swift in Docker directory
+     - [X] Move DockerManager class from DockerExecutor.swift
+     - [X] Update imports and references
+     - [X] Test functionality after move
      - DEPENDS ON: Technical Debt > Refactor DockerExecutor error handling
 **** TODO Error Handling Enhancement
      - Expand DockerError enum with more specific cases
@@ -229,6 +229,17 @@
     - Investigated focus chain
     - Implemented focus persistence via @StateObject
     - Added focus debugging (and removed)
+*** TODO Fix UI Hang during Filesystem Browse
+    - Investigate `__recvfrom` block in `SocketConnection.readResponse` during `DockerExecutor.exec`.
+    - Ensure `DockerExecutor.exec` and `SocketConnection` calls are fully non-blocking.
+    - Implement timeout mechanism for socket read operations, especially for `exec`.
+    - Propagate timeout/errors back to `FilesystemBrowserView` for user feedback.
+    - Ensure `FilesystemBrowserView.fetch` runs off the main thread.
+*** TODO Address memory leak in log viewer
+    - Profile memory usage
+    - Implement proper cleanup
+    - Add memory monitoring
+    - MERGED INTO: Release Polish > Documentation and Testing > Cross-Environment Testing
 ** Technical Debt [33%]
 *** TODO Refine ListView state management
     - Evaluate @StateObject approach for potential issues.

@@ -1,7 +1,7 @@
 # ADR 0003: Refactor DockerManager out of DockerExecutor
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2024-03-30
@@ -68,28 +68,19 @@ This decision involves:
 
 ## Implementation Checklist
 
-- [ ] Create new file `Bulkhead/Docker/DockerManager.swift`.
-- [ ] Add necessary imports (`Foundation`, `SwiftUI`, `Combine`, etc.)
-      to `DockerManager.swift`.
-- [ ] Cut the entire `DockerManager` class definition from
-      `Bulkhead/Docker/DockerExecutor.swift`.
-- [ ] Paste the `DockerManager` class definition into
-      `Bulkhead/Docker/DockerManager.swift`.
-- [ ] Verify that `DockerManager.swift` compiles successfully.
-- [ ] Verify that `DockerExecutor.swift` compiles successfully.
-- [ ] Review files that reference `DockerManager` (e.g.,
-      `DockerUIApp.swift`, `ContainerListView.swift`,
-      `ImageListView.swift`, `ContainerDetailView.swift`,
-      `SettingsView.swift`) to ensure they still compile and correctly
-      reference the manager.
-- [ ] Build and run the application.
-- [ ] Test core functionality related to `DockerManager`:
-    - [ ] Fetching containers and images on launch.
-    - [ ] Auto-refreshing container/image lists.
-    - [ ] Displaying details (which involves `enrichContainer`).
-    - [ ] Starting/Stopping containers.
-    - [ ] Reading/Writing settings (Socket Path, Refresh Interval).
-- [ ] Update `TODO.org`: Mark `Release Polish > Code Architecture
-      Improvements > DockerManager Refactoring` subtasks as complete.
-- [ ] Update `adr/20250330-0002-bulkhead-release-polish.md`: Mark the
-      `DockerManager Refactoring` checklist items as complete.
+- [x] Create new file `Bulkhead/Docker/DockerManager.swift`.
+- [x] Add necessary imports (`Foundation`, `SwiftUI`, `Combine`, etc.) to `DockerManager.swift`.
+- [x] Cut the entire `DockerManager` class definition from `Bulkhead/Docker/DockerExecutor.swift`.
+- [x] Paste the `DockerManager` class definition into `Bulkhead/Docker/DockerManager.swift`.
+- [x] Verify that `DockerManager.swift` compiles successfully.
+- [x] Verify that `DockerExecutor.swift` compiles successfully.
+- [x] Review files that reference `DockerManager` (e.g., `DockerUIApp.swift`, `ContainerListView.swift`, `ImageListView.swift`, `ContainerDetailView.swift`, `SettingsView.swift`) to ensure they still compile and correctly reference the manager.
+- [x] Build and run the application.
+- [x] Test core functionality related to `DockerManager`:
+    - [x] Fetching containers and images on launch.
+    - [x] Auto-refreshing container/image lists.
+    - [x] Displaying details (which involves `enrichContainer`).
+    - [x] Starting/Stopping containers.
+    - [x] Reading/Writing settings (Socket Path, Refresh Interval).
+- [x] Update `TODO.org`: Mark `Release Polish > Code Architecture Improvements > DockerManager Refactoring` subtasks as complete.
+- [x] Update `adr/20250330-0002-bulkhead-release-polish.md`: Mark the `DockerManager Refactoring` checklist items as complete.
