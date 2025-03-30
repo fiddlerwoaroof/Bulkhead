@@ -285,7 +285,7 @@ public class DockerExecutor {
 
     // 3. Process the multiplexed stream using DockerLogStreamParser
     let parser = DockerLogStreamParser(addCarriageReturn: addCarriageReturn)
-    let lines = parser.append(data: result)
+    let lines = parser.append(data: [UInt8](result))
     let remainingLines = parser.flush()
 
     // Combine all stdout lines into a single output

@@ -19,7 +19,7 @@ public final class LogFetcher {
       return parser.append(data: data) + parser.flush()
     }
     let parser = DockerLogStreamParser()
-    let lines = parser.append(data: data) + parser.flush()
+    let lines = parser.append(data: [UInt8](data)) + parser.flush()
     return lines.filter { $0.stream == stream }.map(\.message)
   }
 }

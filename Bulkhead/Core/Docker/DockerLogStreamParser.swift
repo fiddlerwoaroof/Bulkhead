@@ -1,9 +1,9 @@
 import Foundation
 
 public enum DockerLogStreamType: UInt8 {
-  public case stdout = 1
-  public case stderr = 2
-  public case unknown = 0
+  case stdout = 1
+  case stderr = 2
+  case unknown = 0
 }
 
 struct DockerLogStreamLine {

@@ -20,7 +20,9 @@ final class TerminalSessionManager {
         let logs = try fetcher.fetchLogs(for: self.containerID, stream: .stdout)
 
         DispatchQueue.main.async {
-          self.terminal.feed(byteArray: logs)
+          for log in logs {
+            self.terminal.feed(byteArray: log)
+          }
         }
       } catch {
         DispatchQueue.main.async {
