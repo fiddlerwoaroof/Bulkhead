@@ -6,6 +6,7 @@ struct ContainerListView: View {
   @EnvironmentObject var manager: DockerManager
   @Binding var containers: [DockerContainer]
   @Binding var selectedContainer: DockerContainer?
+  @State private var lastKnownFocus: ListView<DockerContainer, AnyView, AnyView>.FocusField? = nil // Persisted focus state
 
   var backgroundColor: Color
   var shadowColor: Color
@@ -36,30 +37,37 @@ struct ContainerListView: View {
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
       content: { container in
-        HStack {
-          VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 8) {
-              Text(container.names.first ?? "Unnamed")
-                .font(.headline)
+        // Type erase the content view
+        AnyView(
+          HStack {
+            VStack(alignment: .leading, spacing: 2) {
+              HStack(spacing: 8) {
+                Text(container.names.first ?? "Unnamed")
+                  .font(.headline)
+              }
+              if container.status.lowercased().contains("up") {
+                StatusBadgeView(text: container.status, color: .green)
+              } else {
+                StatusBadgeView(text: container.status, color: .secondary)
+              }
+              Text(container.image)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
-            if container.status.lowercased().contains("up") {
-              StatusBadgeView(text: container.status, color: .green)
-            } else {
-              StatusBadgeView(text: container.status, color: .secondary)
-            }
-            Text(container.image)
-              .font(.subheadline)
-              .foregroundStyle(.secondary)
+            Spacer()
+            ContainerActionsView(container: container, manager: manager)
           }
-          Spacer()
-          ContainerActionsView(container: container, manager: manager)
-        }
+        )
       },
       detail: { container in
-        ContainerDetailView(container: container)
-            .id(container.id)
+        // Type erase the detail view
+        AnyView(ContainerDetailView(container: container))
       },
-      searchConfig: containerSearchConfig
+      searchConfig: containerSearchConfig,
+      persistedFocus: lastKnownFocus, // Pass the persisted focus state
+      onFocusChange: { newFocus in // Provide callback
+          lastKnownFocus = newFocus
+      }
     )
   }
 }

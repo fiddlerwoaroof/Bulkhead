@@ -21,6 +21,8 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   @ViewBuilder var content: (T) -> Master
   @ViewBuilder var detail: (T) -> Detail
   var searchConfig: SearchConfiguration<T>? = nil
+  var persistedFocus: FocusField? = nil
+  var onFocusChange: ((FocusField?) -> Void)? = nil
 
   // Define focus states (reverting to AnyHashable approach)
   enum FocusField: Hashable {
@@ -48,7 +50,9 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
         // Move to next item if not the last one
         selectedItem = currentItems[currentIndex + 1]
         if let newlySelectedItem = selectedItem {
-            focusedField = .item(AnyHashable(newlySelectedItem.id))
+            let newFocus: FocusField = .item(AnyHashable(newlySelectedItem.id))
+            focusedField = newFocus
+            onFocusChange?(newFocus)
         }
       } else {
           // Already at the last item, do nothing
@@ -57,7 +61,9 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
         // If no item is selected, select the first one (should focus be set here too?)
         selectedItem = firstItem
         if let newlySelectedItem = selectedItem {
-            focusedField = .item(AnyHashable(newlySelectedItem.id))
+            let newFocus: FocusField = .item(AnyHashable(newlySelectedItem.id))
+            focusedField = newFocus
+            onFocusChange?(newFocus)
         }
     }
   }
@@ -71,20 +77,25 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
         // Move to previous item if not the first one
         selectedItem = currentItems[currentIndex - 1]
         if let newlySelectedItem = selectedItem {
-            focusedField = .item(AnyHashable(newlySelectedItem.id))
+            let newFocus: FocusField = .item(AnyHashable(newlySelectedItem.id))
+            focusedField = newFocus
+            onFocusChange?(newFocus)
         }
       } else {
           // If already at the first item, move focus to the search field
           focusedField = .search
+          onFocusChange?(.search)
       }
     } else if let firstItem = currentItems.first {
         // If no item is selected, but list is not empty, select first and focus search
         // This case might be less common with the new down arrow logic, but handles edge cases
         selectedItem = firstItem
         focusedField = .search
+        onFocusChange?(.search)
     } else {
         // If list is empty or no selection, focus search
         focusedField = .search
+        onFocusChange?(.search)
     }
   }
 
@@ -115,8 +126,10 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
     .focused($focusedField, equals: .item(AnyHashable(item.id))) // Bind focus state
     .onTapGesture { // Use tap gesture for selection
         withAnimation {
+            let newFocus: FocusField = .item(AnyHashable(item.id))
             selectedItem = item
-            focusedField = .item(AnyHashable(item.id))
+            focusedField = newFocus
+            onFocusChange?(newFocus)
         }
     }
   }
@@ -150,7 +163,9 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
                       await MainActor.run { 
                           withAnimation {
                               proxy.scrollTo(item.id, anchor: .center)
-                              focusedField = .item(AnyHashable(item.id))
+                              let newFocus: FocusField = .item(AnyHashable(item.id))
+                              focusedField = newFocus
+                              onFocusChange?(newFocus)
                           }
                       }
                       // TODO: Trigger any data fetching or other actions for the new item here
@@ -160,6 +175,7 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
                       if searchConfig != nil {
                           await MainActor.run {
                              focusedField = .search
+                             onFocusChange?(.search)
                           }
                       }
                   }
@@ -192,12 +208,18 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
       }
       .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
       .onAppear {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-              // Always use default logic: focus first item or search
-              if let firstItem = filteredItems.first {
-                  focusedField = .item(AnyHashable(firstItem.id))
-              } else if searchConfig != nil {
-                  focusedField = .search
+          // Use persisted focus state if available
+          if let initialFocus = persistedFocus {
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                   if focusedField == nil {
+                       focusedField = initialFocus
+                   }
+              }
+          } else if let firstItem = items.first {
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                   if focusedField == nil {
+                       focusedField = .item(AnyHashable(firstItem.id))
+                   }
               }
           }
       }
@@ -212,8 +234,10 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
     .onKeyPress(.downArrow) {
       if focusedField == .search {
           if let firstItem = filteredItems.first {
-              focusedField = .item(AnyHashable(firstItem.id))
+              let newFocus: FocusField = .item(AnyHashable(firstItem.id))
+              focusedField = newFocus
               selectedItem = firstItem
+              onFocusChange?(newFocus)
               return .handled
           } else {
               return .handled
@@ -237,6 +261,7 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
             return .handled
         } else if focusedField != .search { 
             focusedField = .search
+            onFocusChange?(.search)
             return .handled
         }
         return .ignored
@@ -248,11 +273,14 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
          let currentItem = filteredItems.first(where: { $0.id == itemId }) {
         selectedItem = currentItem
         focusedField = .item(itemIdHashable)
+        onFocusChange?(.item(itemIdHashable))
         return .handled
       } else if focusedField == .search {
         if let firstItem = filteredItems.first {
+          let newFocus: FocusField = .item(AnyHashable(firstItem.id))
+          focusedField = newFocus
           selectedItem = firstItem
-          focusedField = .item(AnyHashable(firstItem.id)) // Revert assignment
+          onFocusChange?(newFocus)
           return .handled
         }
       }

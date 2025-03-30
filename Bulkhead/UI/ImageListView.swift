@@ -5,6 +5,7 @@ struct ImageListView: View {
   var shadowColor: Color
   @Binding var images: [DockerImage]
   @State private var selectedImage: DockerImage?
+  @State private var lastKnownFocus: ListView<DockerImage, AnyView, AnyView>.FocusField? = nil
 
   private var imageSearchConfig: SearchConfiguration<DockerImage> {
     SearchConfiguration(
@@ -44,44 +45,51 @@ struct ImageListView: View {
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
       content: { image in
-        HStack {
-          VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 8) {
-              Image(systemName: "photo")
-                .foregroundStyle(.secondary)
-              Text(image.RepoTags?.first ?? "<none>")
-                .font(.headline)
+        // Type erase the content view
+        AnyView(
+          HStack {
+            VStack(alignment: .leading, spacing: 2) {
+              HStack(spacing: 8) {
+                Image(systemName: "photo")
+                  .foregroundStyle(.secondary)
+                Text(image.RepoTags?.first ?? "<none>")
+                  .font(.headline)
+              }
+              
+              if let tags = image.RepoTags, tags.count > 1 {
+                Text("\(tags.count - 1) more tags")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+              }
+              
+              HStack(spacing: 8) {
+                Text(formatSize(image.Size))
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+                Text("•")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+                Text("Created \(formatDate(image.Created))")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+              }
             }
-            
-            if let tags = image.RepoTags, tags.count > 1 {
-              Text("\(tags.count - 1) more tags")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-            
-            HStack(spacing: 8) {
-              Text(formatSize(image.Size))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-              Text("•")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-              Text("Created \(formatDate(image.Created))")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
+            Spacer()
+            Text((image.Id.starts(with: "sha256:") ? String(image.Id.dropFirst(7)) : image.Id).prefix(12))
+              .font(.caption.monospaced())
+              .foregroundStyle(.secondary)
           }
-          Spacer()
-          Text((image.Id.starts(with: "sha256:") ? String(image.Id.dropFirst(7)) : image.Id).prefix(12))
-            .font(.caption.monospaced())
-            .foregroundStyle(.secondary)
-        }
+        )
       },
       detail: { image in
-        ImageDetailView(image: image)
-          .id(image.id)
+        // Type erase the detail view
+        AnyView(ImageDetailView(image: image))
       },
-      searchConfig: imageSearchConfig
+      searchConfig: imageSearchConfig,
+      persistedFocus: lastKnownFocus,
+      onFocusChange: { newFocus in
+          lastKnownFocus = newFocus
+      }
     )
     .onChange(of: images) { _, newImages in
         if selectedImage == nil && !newImages.isEmpty {
