@@ -68,6 +68,10 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Create Archive
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
         run: |
           xcodebuild archive \
             -scheme "${{ env.SCHEME }}" \
@@ -75,25 +79,9 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=macOS' \
             -archivePath ./Bulkhead.xcarchive \
-            CODE_SIGNING_ALLOWED=NO \
             && exit ${PIPESTATUS[0]}
           
           echo "ARCHIVE_PATH=$(pwd)/Bulkhead.xcarchive" >> $GITHUB_ENV
-
-      - name: Code Sign
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
-          TEAM_ID: ${{ secrets.TEAM_ID }}
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath ${{ env.ARCHIVE_PATH }} \
-            -exportOptionsPlist exportOptions.plist \
-            -exportPath ./export \
-            CODE_SIGN_IDENTITY="Developer ID Application: Edward Langley" \
-            PROVISIONING_PROFILE_SPECIFIER="Developer ID Application: Edward Langley"
-          
-          echo "EXPORT_PATH=$(pwd)/export" >> $GITHUB_ENV
 
       - name: Notarize App
         env:
