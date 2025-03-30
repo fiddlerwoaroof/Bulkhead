@@ -15,6 +15,7 @@ class ListViewState: ObservableObject {
 struct SearchOptions {
   var caseSensitive = false
   var matchWholeWords = false
+  // Command-F shortcut
   var keyboardShortcut: KeyEquivalent = "f"
   var modifiers: EventModifiers = .command
 }
@@ -34,6 +35,7 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   @FocusState private var focusedField: ListViewFocusTarget?
   @StateObject private var viewState = ListViewState()
   @State private var selectionTask: Task<Void, Never>?  // Task for debouncing
+    @Binding var searchFocused: Bool
   @ViewBuilder var content: (T) -> Master
   @ViewBuilder var detail: (T) -> Detail
 
@@ -143,6 +145,11 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
         }
         .padding(.vertical)
       }
+      .onChange(of: searchFocused) { oldValue, newValue in
+          if (oldValue != newValue && newValue == true ) {
+              focusedField = .search
+          }
+      }
       .onChange(of: selectedItem) { _, newItem in
         // Cancel any previous task
         selectionTask?.cancel()
@@ -205,6 +212,9 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
       }
       .onChange(of: focusedField) { _, newValue in
         viewState.lastKnownFocus = newValue
+          if (newValue != .search) {
+              searchFocused = false
+          }
       }
       .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
       .onAppear {

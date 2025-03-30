@@ -6,9 +6,11 @@ struct ContentView: View {
   @Binding var selectedTab: Int
   @Environment(\.colorScheme) private var colorScheme
   @State private var selectedContainer: DockerContainer?
+  @Binding private var searchFocused: Bool
 
-  init(selectedTab: Binding<Int>) {
-    _selectedTab = selectedTab
+    init(selectedTab: Binding<Int>, searchFocused: Binding<Bool>) {
+     _selectedTab = selectedTab
+      _searchFocused = searchFocused
   }
 
   private var backgroundColor: Color {
@@ -24,6 +26,7 @@ struct ContentView: View {
       ContainerListView(
         containers: $manager.containers,
         selectedContainer: $selectedContainer,
+        searchFocused: $searchFocused,
         backgroundColor: backgroundColor,
         shadowColor: shadowColor
       )
@@ -35,7 +38,8 @@ struct ContentView: View {
       ImageListView(
         backgroundColor: backgroundColor,
         shadowColor: shadowColor,
-        images: $manager.images
+        images: $manager.images,
+        searchFocused: $searchFocused
       )
       .tabItem {
         Label("Images", systemImage: "square.stack.3d.down.right")

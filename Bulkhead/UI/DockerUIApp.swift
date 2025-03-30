@@ -9,7 +9,7 @@ struct DockerUIApp: App {
 
   var body: some Scene {
     WindowGroup {
-      ContentView(selectedTab: $selectedTab)
+        ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused)
         .environmentObject(manager)
         .onAppear {
           manager.fetchContainers()
@@ -50,7 +50,6 @@ struct DockerUIApp: App {
         Divider()
 
         Button("Search") {
-          selectedTab = 0
           isSearchFocused = true
         }
         .keyboardShortcut("f")

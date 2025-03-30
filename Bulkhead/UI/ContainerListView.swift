@@ -6,6 +6,8 @@ struct ContainerListView: View {
   @EnvironmentObject var manager: DockerManager
   @Binding var containers: [DockerContainer]
   @Binding var selectedContainer: DockerContainer?
+  @Binding var searchFocused: Bool
+
 
   var backgroundColor: Color
   var shadowColor: Color
@@ -35,7 +37,8 @@ struct ContainerListView: View {
       selectedItem: $selectedContainer,
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
-      searchConfig: containerSearchConfig
+      searchConfig: containerSearchConfig,
+      searchFocused: $searchFocused
     ) { container in
       // Type erase the content view
       AnyView(

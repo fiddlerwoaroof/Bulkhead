@@ -4,6 +4,7 @@ struct ImageListView: View {
   var backgroundColor: Color
   var shadowColor: Color
   @Binding var images: [DockerImage]
+    @Binding var searchFocused: Bool
   @State private var selectedImage: DockerImage?
 
   private var imageSearchConfig: SearchConfiguration<DockerImage> {
@@ -44,7 +45,8 @@ struct ImageListView: View {
       selectedItem: $selectedImage,
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
-      searchConfig: imageSearchConfig
+      searchConfig: imageSearchConfig,
+      searchFocused: $searchFocused
     ) { image in
       // Type erase the content view
       AnyView(
