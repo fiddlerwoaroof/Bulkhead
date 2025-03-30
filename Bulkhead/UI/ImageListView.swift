@@ -4,23 +4,24 @@ struct ImageListView: View {
   var backgroundColor: Color
   var shadowColor: Color
   @Binding var images: [DockerImage]
-  @Binding var isSearchFocused: Bool
   @State private var selectedImage: DockerImage?
-  @State private var searchText = ""
 
-  private var filteredImages: [DockerImage] {
-    guard !searchText.isEmpty else { return images }
-    let searchQuery = searchText.lowercased()
-    return images.filter { image in
-      // Search in repo tags
-      if let tags = image.RepoTags {
-        return tags.contains { tag in
-          tag.lowercased().contains(searchQuery)
+  private var imageSearchConfig: SearchConfiguration<DockerImage> {
+    SearchConfiguration(
+      placeholder: "Search images...",
+      filter: { image, query in
+        let searchQuery = query.lowercased()
+        // Search in repo tags
+        if let tags = image.RepoTags {
+          if tags.contains(where: { $0.lowercased().contains(searchQuery) }) {
+            return true
+          }
         }
+        // Search in ID (shortened, prefix match)
+        let idToSearch = (image.Id.starts(with: "sha256:") ? String(image.Id.dropFirst(7)) : image.Id).lowercased()
+        return idToSearch.prefix(searchQuery.count) == searchQuery
       }
-      // Search in ID
-      return image.Id.lowercased().contains(searchQuery)
-    }
+    )
   }
 
   private func formatSize(_ size: Int) -> String {
@@ -37,20 +38,12 @@ struct ImageListView: View {
   }
 
   var body: some View {
-    VStack(spacing: 0) {
-      SearchField(
-        placeholder: "Search images...",
-        text: $searchText,
-        isSearchFocused: $isSearchFocused
-      )
-      Divider()
-      
-      ListView(
-        items: .constant(filteredImages),
-        selectedItem: $selectedImage,
-        backgroundColor: backgroundColor,
-        shadowColor: shadowColor
-      ) { image in
+    ListView(
+      items: $images,
+      selectedItem: $selectedImage,
+      backgroundColor: backgroundColor,
+      shadowColor: shadowColor,
+      content: { image in
         HStack {
           VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 8) {
@@ -79,14 +72,16 @@ struct ImageListView: View {
             }
           }
           Spacer()
-          Text(image.Id.prefix(12))
-            .font(.caption)
+          Text((image.Id.starts(with: "sha256:") ? String(image.Id.dropFirst(7)) : image.Id).prefix(12))
+            .font(.caption.monospaced())
             .foregroundStyle(.secondary)
         }
-      } detail: { image in
+      },
+      detail: { image in
         ImageDetailView(image: image)
           .id(image.id)
-      }
-    }
+      },
+      searchConfig: imageSearchConfig
+    )
   }
 } 

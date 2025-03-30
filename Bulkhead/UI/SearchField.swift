@@ -1,10 +1,10 @@
 import SwiftUI
 
-struct SearchField: View {
+struct SearchField<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   let placeholder: String
   @Binding var text: String
-  @FocusState private var isFocused: Bool
-  @Binding var isSearchFocused: Bool
+  var focusBinding: FocusState<ListView<T, Master, Detail>.FocusField?>.Binding
+  let focusCase: ListView<T, Master, Detail>.FocusField
 
   var body: some View {
     HStack {
@@ -12,7 +12,7 @@ struct SearchField: View {
         .foregroundStyle(.secondary)
       TextField(placeholder, text: $text)
         .textFieldStyle(.plain)
-        .focused($isFocused)
+        .focused(focusBinding, equals: focusCase)
       if !text.isEmpty {
         Button(action: { text = "" }) {
           Image(systemName: "xmark.circle.fill")
@@ -23,11 +23,5 @@ struct SearchField: View {
     }
     .padding(8)
     .background(.background)
-    .onChange(of: isFocused) { _, newValue in
-      isSearchFocused = newValue
-    }
-    .onChange(of: isSearchFocused) { _, newValue in
-      isFocused = newValue
-    }
   }
 } 
