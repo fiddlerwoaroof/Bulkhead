@@ -282,7 +282,7 @@ struct ContainerDetailView: View {
 final class ContainerDetailModel: ObservableObject {
   @Published var enriched: DockerContainer?
   @Published var isLoading = false
-  @Published var error: Error?
+  @Published var error: DockerError?
 
   var base: DockerContainer?
 
@@ -295,8 +295,13 @@ final class ContainerDetailModel: ObservableObject {
     do {
       let result = try await manager.enrichContainer(container)
       self.enriched = result
+      self.error = nil
+    } catch let dockerError as DockerError {
+      self.error = dockerError
+      LogManager.shared.addLog("DockerError loading container details: \(dockerError.localizedDescription)", level: "ERROR")
     } catch {
-      self.error = error
+      self.error = .unknownError(error)
+      LogManager.shared.addLog("Unknown error loading container details: \(error.localizedDescription)", level: "ERROR")
     }
 
     isLoading = false

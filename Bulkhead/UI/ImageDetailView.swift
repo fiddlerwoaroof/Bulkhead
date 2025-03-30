@@ -116,7 +116,7 @@ struct ImageDetailView: View {
         ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color(red: 0.95, green: 0.95, blue: 0.95)
     )
     .task(id: image.id) {
-      await model.loadImageDetails(id: image.id)
+      await model.loadImageDetails(id: image.id, using: DockerManager())
     }
   }
 }
@@ -129,7 +129,7 @@ class ImageDetailModel: ObservableObject {
   @Published var repoDigests: [String]?
   @Published var rawInspectionData: String?
   @Published var isLoading = false
-  @Published var error: Error?
+  @Published var error: DockerError?
   @Published var createdDate: Date?
   @Published var virtualSize: Int64?
 
@@ -149,7 +149,7 @@ class ImageDetailModel: ObservableObject {
   }
 
   @MainActor
-  func loadImageDetails(id: String) async {
+  func loadImageDetails(id: String, using manager: DockerManager) async {
     // Reset state before loading new data
     resetState()
 
@@ -157,7 +157,7 @@ class ImageDetailModel: ObservableObject {
     error = nil
 
     do {
-      let inspection = try await dockerManager.inspectImage(id: id)
+      let inspection = try await manager.inspectImage(id: id)
       print("Image inspection received: \(inspection)")
       parentId = inspection.Parent
       layers = inspection.Config.layers ?? []
@@ -195,9 +195,18 @@ class ImageDetailModel: ObservableObject {
       {
         rawInspectionData = string
       }
+      
+      // Ensure error is cleared on success (redundant due to resetState/initial clear, but safe)
+      self.error = nil 
+      
+    } catch let dockerError as DockerError {
+      // Store the specific DockerError
+      self.error = dockerError
+      LogManager.shared.addLog("DockerError loading image details: \(dockerError.localizedDescription)", level: "ERROR")
     } catch {
-      print("Error loading image details: \(error)")
-      self.error = error
+      // Wrap other errors
+      self.error = .unknownError(error)
+      LogManager.shared.addLog("Unknown error loading image details: \(error.localizedDescription)", level: "ERROR")
     }
 
     isLoading = false
@@ -248,4 +257,28 @@ struct DetailRow: View {
         .font(.body)
     }
   }
+}
+
+extension ImageInspection {
+    func asDictionary() -> [String: Any] {
+        // Simplified example - needs actual implementation based on ImageInspection properties
+        return [
+            "Id": Id,
+            "Parent": Parent as Any,
+            "RepoTags": RepoTags as Any,
+            // ... include all other relevant properties ...
+            "Config": Config.asDictionary()
+        ]
+    }
+}
+
+extension ImageConfig {
+    func asDictionary() -> [String: Any] {
+        // Simplified example - needs actual implementation
+        return [
+            "Entrypoint": entrypoint as Any,
+            "Cmd": cmd as Any,
+            // ... include all other relevant properties ...
+        ]
+    }
 }

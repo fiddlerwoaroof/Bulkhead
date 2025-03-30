@@ -96,8 +96,14 @@ class DockerManager: ObservableObject {
     DispatchQueue.global().async { [weak self] in
       do {
         try block()
+      } catch let dockerError as DockerError {
+        // Log specific DockerError
+        self?.log("DockerError in command: \(dockerError.localizedDescription)", level: "ERROR")
+        // Note: We don't set a published error here, as this is for background commands.
+        // Errors relevant to UI state should be handled where the command is initiated (e.g., in ViewModels).
       } catch {
-        self?.log("Command error: \(error.localizedDescription)", level: "ERROR")
+        // Log other wrapped errors
+        self?.log("Unknown error in command: \(error.localizedDescription)", level: "ERROR")
       }
     }
   }

@@ -106,6 +106,7 @@ struct FilesystemBrowserView: View {
   @State private var hoveredID: String?
   @State private var currentTask: Task<Void, Never>?
   @State private var isExecuting = false
+  @State private var fetchError: DockerError?
 
   init(container: DockerContainer, initialPath: String? = nil) {
     self.container = container
@@ -127,160 +128,195 @@ struct FilesystemBrowserView: View {
   }
 
   private func isSymlinkDirectory(_ path: String) async throws -> Bool {
-    let data = try manager.executor?.exec(
+    guard let executor = manager.executor else { throw DockerError.noExecutor }
+    let data = try await executor.exec(
       containerId: container.id,
       command: ["sh", "-c", "test -d \"\(path)\" && echo yes || echo no"],
       addCarriageReturn: false
     )
 
-    return String(data: data ?? Data(), encoding: .utf8)?.trimmingCharacters(
+    return String(data: data, encoding: .utf8)?.trimmingCharacters(
       in: .whitespacesAndNewlines) == "yes"
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       if !container.isRunning {
-        Text(
-          "This container is not running. Filesystem access requires the container to be started."
-        )
-        .foregroundColor(.secondary)
-        .italic()
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        ErrorView(error: DockerError.containerNotRunning, style: .prominent)
+          .padding()
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
       } else {
         HStack {
           Text("Path:")
-          TextField("/", text: $path, onCommit: fetch)
+          TextField("/", text: $path, onCommit: {
+              Task { await fetch() }
+          })
             .textFieldStyle(RoundedBorderTextFieldStyle())
             .font(.system(.body, design: .monospaced))
-          Button("Go", action: fetch)
+          Button("Go", action: {
+              Task { await fetch() }
+          })
         }
         .padding()
 
         Divider()
 
-        ScrollView {
-          LazyVStack(alignment: .leading, spacing: 4) {
-            ForEach(displayedEntries) { entry in
-              FilesystemRow(
-                entry: entry,
-                isSelected: false,
-                isHovered: hoveredID == entry.id
-              )
-              .accessibilityAddTraits(.isButton)
-              .onTapGesture {
-                Task {
-                  if entry.name == ".." {
-                    path = (path as NSString).deletingLastPathComponent.normalizedPath()
-                    fetch()
-                  } else if entry.isDirectory {
-                    path = (path + "/" + entry.name).normalizedPath()
-                    fetch()
-                  } else if entry.isSymlink {
-                    let fullPath =
-                      (path + "/"
-                        + entry.name.trimmingCharacters(in: CharacterSet(charactersIn: "@")))
-                    if try await isSymlinkDirectory(fullPath) {
-                      path = fullPath.normalizedPath()
-                      fetch()
+        ZStack {
+          if let error = fetchError {
+            ErrorView(error: error, style: .prominent)
+              .padding()
+              .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+          } else if entries.isEmpty && isExecuting {
+            ProgressView("Loading directory...")
+              .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+          } else {
+            ScrollView {
+              LazyVStack(alignment: .leading, spacing: 4) {
+                ForEach(displayedEntries) { entry in
+                  FilesystemRow(
+                    entry: entry,
+                    isSelected: false,
+                    isHovered: hoveredID == entry.id
+                  )
+                  .accessibilityAddTraits(.isButton)
+                  .onTapGesture {
+                    Task {
+                      await handleTap(on: entry)
                     }
+                  }
+                  .onHover { hovering in
+                    hoveredID = hovering ? entry.id : nil
                   }
                 }
               }
-              .onHover { hovering in
-                hoveredID = hovering ? entry.id : nil
-              }
+              .padding(.horizontal)
             }
+            .frame(minHeight: 250)
           }
-          .padding(.horizontal)
         }
-        .frame(minHeight: 250)
-        .onAppear(perform: fetch)
+        .onAppear {
+          Task {
+            await fetch()
+          }
+        }
       }
     }
     .task(id: container.id) {
-      // Cancel any existing task when container changes
-      currentTask?.cancel()
-      currentTask = nil
-      path = initialPath
-      fetch()
+      await setupAndFetch()
     }
     .onChange(of: initialPath) { oldPath, newPath in
       if oldPath != newPath {
-        // Cancel any existing task when path changes
-        currentTask?.cancel()
-        currentTask = nil
         path = newPath
-        fetch()
+        Task { await setupAndFetch() }
       }
     }
   }
 
-  private func fetch() {
-    // Cancel any existing task
+  private func setupAndFetch() async {
+    currentTask?.cancel()
+    currentTask = nil
+    fetchError = nil
+    entries = []
+    isExecuting = false
+    await fetch()
+  }
+
+  private func handleTap(on entry: FileEntry) async {
+    guard !isExecuting else { return }
+    do {
+      if entry.name == ".." {
+        path = (path as NSString).deletingLastPathComponent.normalizedPath()
+        await fetch()
+      } else if entry.isDirectory {
+        path = (path + "/" + entry.name).normalizedPath()
+        await fetch()
+      } else if entry.isSymlink {
+        let fullPath =
+          (path + "/"
+            + entry.name.trimmingCharacters(in: CharacterSet(charactersIn: "@")))
+        if try await isSymlinkDirectory(fullPath) {
+          path = fullPath.normalizedPath()
+          await fetch()
+        }
+      }
+    } catch let dockerError as DockerError {
+      fetchError = dockerError
+      LogManager.shared.addLog("Error handling tap in FilesystemBrowser: \(dockerError.localizedDescription)", level: "ERROR")
+    } catch {
+      fetchError = .unknownError(error)
+      LogManager.shared.addLog("Unknown error handling tap in FilesystemBrowser: \(error.localizedDescription)", level: "ERROR")
+    }
+  }
+
+  private func fetch() async {
+    guard container.isRunning else {
+      isExecuting = false
+      entries = []
+      fetchError = DockerError.containerNotRunning
+      return
+    }
+    
+    guard let executor = manager.executor else {
+        await MainActor.run { self.fetchError = .noExecutor }
+        isExecuting = false
+        return
+    }
+    
     currentTask?.cancel()
 
-    // Create a new task with a delay
     currentTask = Task {
-      // Add a small delay before executing
-      try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms delay
-
-      // Check if task was cancelled during delay
-      if Task.isCancelled { return }
-
+      isExecuting = true
+      fetchError = nil
+      entries = []
+      
       do {
-        // Ensure path ends with slash for symlinks to work correctly
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        if Task.isCancelled { isExecuting = false; return }
+
         let queryPath = path.hasSuffix("/") ? path : path + "/"
-        let data = try manager.executor?.exec(
+        let data = try await executor.exec(
           containerId: container.id,
           command: ["sh", "-c", "ls -AF --color=never \"\(queryPath)\""],
           addCarriageReturn: false
         )
 
-        // Check if task was cancelled during exec
-        if Task.isCancelled { return }
+        if Task.isCancelled { isExecuting = false; return }
 
-        if let output = String(data: data ?? Data(), encoding: .utf8)?.trimmingCharacters(
+        if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(
           in: .whitespacesAndNewlines)
         {
-          entries = output.split(separator: "\n", omittingEmptySubsequences: true).compactMap {
+          let parsedEntries = output.split(separator: "\n", omittingEmptySubsequences: true).compactMap {
             line -> FileEntry? in
             let name = String(line).trimmingCharacters(in: .whitespacesAndNewlines)
             guard !name.isEmpty else { return nil }
             let isDir = name.hasSuffix("/")
             let isLink = name.hasSuffix("@")
             let isExec = name.hasSuffix("*")
+            let cleanName = name.trimmingCharacters(in: CharacterSet(charactersIn: "/@*"))
+            guard cleanName != "." else { return nil }
             return FileEntry(
-              name: name,
+              name: cleanName,
               isDirectory: isDir,
               isSymlink: isLink,
               isExecutable: isExec
             )
           }
+          await MainActor.run {
+            self.entries = parsedEntries
+            self.fetchError = nil
+          }
         } else {
-          entries = [
-            FileEntry(
-              name: "<invalid UTF-8>", isDirectory: false, isSymlink: false, isExecutable: false)
-          ]
+          throw DockerError.responseParsingFailed(NSError(domain: "FilesystemBrowser", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid UTF-8 output from ls command"]))
         }
-      } catch DockerError.containerNotRunning {
-        entries = [
-          FileEntry(
-            name: "Container must be running to browse filesystem",
-            isDirectory: false,
-            isSymlink: false,
-            isExecutable: false
-          )
-        ]
+      } catch let dockerError as DockerError {
+        await MainActor.run { self.fetchError = dockerError }
+        LogManager.shared.addLog("DockerError fetching filesystem: \(dockerError.localizedDescription)", level: "ERROR")
       } catch {
-        entries = [
-          FileEntry(
-            name: "Error: \(error.localizedDescription)",
-            isDirectory: false,
-            isSymlink: false,
-            isExecutable: false
-          )
-        ]
+        await MainActor.run { self.fetchError = .unknownError(error) }
+        LogManager.shared.addLog("Unknown error fetching filesystem: \(error.localizedDescription)", level: "ERROR")
       }
+      await MainActor.run { isExecuting = false }
     }
   }
 }

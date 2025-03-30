@@ -335,6 +335,9 @@ enum DockerError: Error, LocalizedError {
   // Execution Errors
   case execFailed(code: Int) // `docker exec` command finished with a non-zero exit code
 
+  // Generic / Unknown
+  case unknownError(Error) // For wrapping non-DockerError types
+
   // MARK: - LocalizedError Conformance
 
   var errorDescription: String? {
@@ -359,6 +362,8 @@ enum DockerError: Error, LocalizedError {
       return "Failed to parse the response from the Docker API: \(underlyingError.localizedDescription)"
     case .execFailed(let code):
       return "The command executed in the container failed with exit code \(code)."
+    case .unknownError(let underlyingError):
+      return "An unknown error occurred: \(underlyingError.localizedDescription)"
     }
   }
 
@@ -374,6 +379,8 @@ enum DockerError: Error, LocalizedError {
       return "An unexpected issue occurred while communicating with Docker. If the problem persists, please report it."
     case .execFailed:
       return "Check the command being executed and the container's logs for more details."
+    case .unknownError:
+      return "An unknown error occurred. Please check the underlying error for more details."
     }
   }
 }
