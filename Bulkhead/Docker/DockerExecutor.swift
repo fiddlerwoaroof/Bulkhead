@@ -359,7 +359,8 @@ class DockerManager: ObservableObject {
 
     let now = Date()
     if let cached = enrichmentCache[container.id],
-       now.timeIntervalSince(cached.timestamp) < enrichmentTTL {
+      now.timeIntervalSince(cached.timestamp) < enrichmentTTL
+    {
       return cached.container
     }
 

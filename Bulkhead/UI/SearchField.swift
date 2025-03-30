@@ -24,4 +24,4 @@ struct SearchField<T: Identifiable & Equatable, Master: View, Detail: View>: Vie
     .padding(8)
     .background(.background)
   }
-} 
+}

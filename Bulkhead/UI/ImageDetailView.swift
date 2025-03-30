@@ -90,7 +90,9 @@ struct ImageDetailView: View {
                 DetailRow(title: "Exposed Ports", value: exposedPorts.keys.joined(separator: "\n"))
               }
               if let configLabels = config.labels, !configLabels.isEmpty {
-                DetailRow(title: "Config Labels", value: configLabels.map { "\($0.key): \($0.value)" }.joined(separator: "\n"))
+                DetailRow(
+                  title: "Config Labels",
+                  value: configLabels.map { "\($0.key): \($0.value)" }.joined(separator: "\n"))
               }
             }
           }
@@ -109,7 +111,10 @@ struct ImageDetailView: View {
       .frame(maxWidth: .infinity, alignment: .leading)
     }
     .frame(maxWidth: .infinity)
-    .background(colorScheme == .dark ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color(red: 0.95, green: 0.95, blue: 0.95))
+    .background(
+      colorScheme == .dark
+        ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color(red: 0.95, green: 0.95, blue: 0.95)
+    )
     .task(id: image.id) {
       await model.loadImageDetails(id: image.id)
     }
@@ -147,10 +152,10 @@ class ImageDetailModel: ObservableObject {
   func loadImageDetails(id: String) async {
     // Reset state before loading new data
     resetState()
-    
+
     isLoading = true
     error = nil
-    
+
     do {
       let inspection = try await dockerManager.inspectImage(id: id)
       print("Image inspection received: \(inspection)")
@@ -161,7 +166,7 @@ class ImageDetailModel: ObservableObject {
       repoDigests = inspection.RepoDigests
       createdDate = inspection.createdDate
       virtualSize = inspection.VirtualSize
-      
+
       // Format raw inspection data
       let inspectionDict: [String: Any] = [
         "Id": inspection.Id,
@@ -180,22 +185,24 @@ class ImageDetailModel: ObservableObject {
           "Labels": inspection.Config.labels as Any,
           "Volumes": inspection.Config.volumes as Any,
           "ExposedPorts": inspection.Config.exposedPorts as Any,
-          "Layers": inspection.Config.layers as Any
-        ]
+          "Layers": inspection.Config.layers as Any,
+        ],
       ]
-      
-      if let data = try? JSONSerialization.data(withJSONObject: inspectionDict, options: .prettyPrinted),
-         let string = String(data: data, encoding: .utf8) {
+
+      if let data = try? JSONSerialization.data(
+        withJSONObject: inspectionDict, options: .prettyPrinted),
+        let string = String(data: data, encoding: .utf8)
+      {
         rawInspectionData = string
       }
     } catch {
       print("Error loading image details: \(error)")
       self.error = error
     }
-    
+
     isLoading = false
   }
-  
+
   private func resetState() {
     parentId = nil
     layers = []
@@ -241,4 +248,4 @@ struct DetailRow: View {
         .font(.body)
     }
   }
-} 
+}

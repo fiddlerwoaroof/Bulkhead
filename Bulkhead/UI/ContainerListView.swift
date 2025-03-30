@@ -35,34 +35,34 @@ struct ContainerListView: View {
       selectedItem: $selectedContainer,
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
-      searchConfig: containerSearchConfig){ container in
-          // Type erase the content view
-          AnyView(
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 8) {
-                        Text(container.names.first ?? "Unnamed")
-                            .font(.headline)
-                    }
-                    if container.status.lowercased().contains("up") {
-                        StatusBadgeView(text: container.status, color: .green)
-                    } else {
-                        StatusBadgeView(text: container.status, color: .secondary)
-                    }
-                    Text(container.image)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                ContainerActionsView(container: container, manager: manager)
+      searchConfig: containerSearchConfig
+    ) { container in
+      // Type erase the content view
+      AnyView(
+        HStack {
+          VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 8) {
+              Text(container.names.first ?? "Unnamed")
+                .font(.headline)
             }
-          )
-      }
-      detail: { container in
-          // Type erase the detail view
-          AnyView(ContainerDetailView(container: container))
-      }
-    
+            if container.status.lowercased().contains("up") {
+              StatusBadgeView(text: container.status, color: .green)
+            } else {
+              StatusBadgeView(text: container.status, color: .secondary)
+            }
+            Text(container.image)
+              .font(.subheadline)
+              .foregroundStyle(.secondary)
+          }
+          Spacer()
+          ContainerActionsView(container: container, manager: manager)
+        }
+      )
+    } detail: { container in
+      // Type erase the detail view
+      AnyView(ContainerDetailView(container: container))
+    }
+
   }
 }
 
@@ -90,7 +90,7 @@ struct StatusBadgeView: View {
 struct ContainerActionsView: View {
   @Environment(\.openWindow) private var openWindow
   let container: DockerContainer
-  @ObservedObject var manager: DockerManager // Use ObservedObject if manager might change
+  @ObservedObject var manager: DockerManager  // Use ObservedObject if manager might change
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -115,4 +115,4 @@ struct ContainerActionsView: View {
       .controlSize(.small)
     }
   }
-} 
+}

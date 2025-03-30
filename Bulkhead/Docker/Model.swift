@@ -39,19 +39,23 @@ struct DockerContainer: Identifiable, Codable, Hashable {
     let lowercasedStatus = status.lowercased()
     if lowercasedStatus.contains("up") {
       return .running
-    } else if lowercasedStatus.contains("paused") {
-      return .paused
-    } else if lowercasedStatus.contains("restarting") {
-      return .restarting
-    } else if lowercasedStatus.contains("removing") {
-      return .removing
-    } else if lowercasedStatus.contains("dead") {
-      return .dead
-    } else if lowercasedStatus.contains("created") {
-      return .created
-    } else {
-      return .exited
     }
+    if lowercasedStatus.contains("paused") {
+      return .paused
+    }
+    if lowercasedStatus.contains("restarting") {
+      return .restarting
+    }
+    if lowercasedStatus.contains("removing") {
+      return .removing
+    }
+    if lowercasedStatus.contains("dead") {
+      return .dead
+    }
+    if lowercasedStatus.contains("created") {
+      return .created
+    }
+    return .exited
   }
 }
 
@@ -99,7 +103,7 @@ struct ImageInspection: Codable {
   let VirtualSize: Int64
   let Labels: [String: String]?
   let Config: ImageConfig
-  
+
   enum CodingKeys: String, CodingKey {
     case Id
     case Parent
@@ -111,7 +115,7 @@ struct ImageInspection: Codable {
     case Labels
     case Config
   }
-  
+
   var createdDate: Date? {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -128,7 +132,7 @@ struct ImageConfig: Codable {
   let volumes: [String: [String: String]]?
   let exposedPorts: [String: [String: String]]?
   let layers: [String]?
-  
+
   enum CodingKeys: String, CodingKey {
     case entrypoint = "Entrypoint"
     case cmd = "Cmd"
