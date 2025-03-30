@@ -35,35 +35,34 @@ struct ContainerListView: View {
       selectedItem: $selectedContainer,
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
-      content: { container in
-        // Type erase the content view
-        AnyView(
-          HStack {
-            VStack(alignment: .leading, spacing: 2) {
-              HStack(spacing: 8) {
-                Text(container.names.first ?? "Unnamed")
-                  .font(.headline)
-              }
-              if container.status.lowercased().contains("up") {
-                StatusBadgeView(text: container.status, color: .green)
-              } else {
-                StatusBadgeView(text: container.status, color: .secondary)
-              }
-              Text(container.image)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+      searchConfig: containerSearchConfig){ container in
+          // Type erase the content view
+          AnyView(
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 8) {
+                        Text(container.names.first ?? "Unnamed")
+                            .font(.headline)
+                    }
+                    if container.status.lowercased().contains("up") {
+                        StatusBadgeView(text: container.status, color: .green)
+                    } else {
+                        StatusBadgeView(text: container.status, color: .secondary)
+                    }
+                    Text(container.image)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                ContainerActionsView(container: container, manager: manager)
             }
-            Spacer()
-            ContainerActionsView(container: container, manager: manager)
-          }
-        )
-      },
+          )
+      }
       detail: { container in
-        // Type erase the detail view
-        AnyView(ContainerDetailView(container: container))
-      },
-      searchConfig: containerSearchConfig
-    )
+          // Type erase the detail view
+          AnyView(ContainerDetailView(container: container))
+      }
+    
   }
 }
 

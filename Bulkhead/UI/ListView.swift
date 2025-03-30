@@ -30,12 +30,12 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   @Binding var selectedItem: T?
   var backgroundColor: Color
   var shadowColor: Color
-  @ViewBuilder var content: (T) -> Master
-  @ViewBuilder var detail: (T) -> Detail
   var searchConfig: SearchConfiguration<T>? = nil
   @FocusState private var focusedField: ListViewFocusTarget?
   @StateObject private var viewState = ListViewState()
   @State private var selectionTask: Task<Void, Never>? = nil // Task for debouncing
+  @ViewBuilder var content: (T) -> Master
+  @ViewBuilder var detail: (T) -> Detail
 
   // Computed property for filtered items
   private var filteredItems: [T] {

@@ -43,49 +43,47 @@ struct ImageListView: View {
       selectedItem: $selectedImage,
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
-      content: { image in
-        // Type erase the content view
-        AnyView(
-          HStack {
-            VStack(alignment: .leading, spacing: 2) {
-              HStack(spacing: 8) {
-                Image(systemName: "photo")
-                  .foregroundStyle(.secondary)
-                Text(image.RepoTags?.first ?? "<none>")
-                  .font(.headline)
-              }
-              
-              if let tags = image.RepoTags, tags.count > 1 {
-                Text("\(tags.count - 1) more tags")
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-              }
-              
-              HStack(spacing: 8) {
-                Text(formatSize(image.Size))
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-                Text("•")
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-                Text("Created \(formatDate(image.Created))")
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-              }
+      searchConfig: imageSearchConfig) { image in
+          // Type erase the content view
+          AnyView(
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "photo")
+                            .foregroundStyle(.secondary)
+                        Text(image.RepoTags?.first ?? "<none>")
+                            .font(.headline)
+                    }
+                    
+                    if let tags = image.RepoTags, tags.count > 1 {
+                        Text("\(tags.count - 1) more tags")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    HStack(spacing: 8) {
+                        Text(formatSize(image.Size))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("•")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("Created \(formatDate(image.Created))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Spacer()
+                Text((image.Id.starts(with: "sha256:") ? String(image.Id.dropFirst(7)) : image.Id).prefix(12))
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
             }
-            Spacer()
-            Text((image.Id.starts(with: "sha256:") ? String(image.Id.dropFirst(7)) : image.Id).prefix(12))
-              .font(.caption.monospaced())
-              .foregroundStyle(.secondary)
-          }
-        )
-      },
-      detail: { image in
-        // Type erase the detail view
-        AnyView(ImageDetailView(image: image))
-      },
-      searchConfig: imageSearchConfig
-    )
+          )
+      } detail: { image in
+          // Type erase the detail view
+          AnyView(ImageDetailView(image: image))
+      }
+    
     .onChange(of: images) { _, newImages in
         if selectedImage == nil && !newImages.isEmpty {
             selectedImage = newImages.first
