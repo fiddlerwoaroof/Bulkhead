@@ -13,8 +13,8 @@ struct DockerUIApp: App {
         .environmentObject(manager)
         .onAppear {
           Task {
-              await manager.fetchContainers()
-              await manager.fetchImages()
+            await manager.fetchContainers()
+            await manager.fetchImages()
           }
         }
     }
@@ -45,8 +45,8 @@ struct DockerUIApp: App {
 
         Button("Refresh Containers") {
           Task {
-              await manager.fetchContainers()
-              await manager.fetchImages()
+            await manager.fetchContainers()
+            await manager.fetchImages()
           }
         }
         .keyboardShortcut("r")

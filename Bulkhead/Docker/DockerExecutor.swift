@@ -36,7 +36,11 @@ class SocketConnection {
   init(path: URL) throws {
     socket = Darwin.socket(AF_UNIX, SOCK_STREAM, 0)
     guard socket >= 0 else {
-      let underlyingError = NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: [NSLocalizedDescriptionKey: "Failed to create socket (\(errno)) for path \(path.path)"])
+      let underlyingError = NSError(
+        domain: NSPOSIXErrorDomain, code: Int(errno),
+        userInfo: [
+          NSLocalizedDescriptionKey: "Failed to create socket (\(errno)) for path \(path.path)"
+        ])
       throw DockerError.connectionFailed(underlyingError)
     }
 
@@ -58,7 +62,12 @@ class SocketConnection {
 
     guard result >= 0 else {
       close(socket)
-      let underlyingError = NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: [NSLocalizedDescriptionKey: "Failed to connect socket to \(path.path) (\(errno): \(String(cString: strerror(errno))))\""])
+      let underlyingError = NSError(
+        domain: NSPOSIXErrorDomain, code: Int(errno),
+        userInfo: [
+          NSLocalizedDescriptionKey:
+            "Failed to connect socket to \(path.path) (\(errno): \(String(cString: strerror(errno))))\""
+        ])
       throw DockerError.connectionFailed(underlyingError)
     }
   }
@@ -81,27 +90,27 @@ class SocketConnection {
     var buffer = [UInt8](repeating: 0, count: 4096)
     var response = Data()
     let startTime = Date()
-    var readError: Error? = nil
+    var readError: Error?
 
     while Date().timeIntervalSince(startTime) < timeout {
       let bytesRead = Darwin.recv(socket, &buffer, buffer.count, 0)
-      
+
       if bytesRead > 0 {
         response.append(buffer, count: bytesRead)
       } else if bytesRead == 0 {
-        LogManager.shared.addLog("Connection closed by peer.", level: "DEBUG", source: "socket-connection")
+        LogManager.shared.addLog(
+          "Connection closed by peer.", level: "DEBUG", source: "socket-connection")
         break
       } else {
         let currentErrno = errno
         if currentErrno == EWOULDBLOCK || currentErrno == EAGAIN {
           usleep(50_000)
           continue
-        } else {
-          readError = DockerError.socketReadError(
-            NSError(domain: NSPOSIXErrorDomain, code: Int(currentErrno), userInfo: nil)
-          )
-          break
         }
+        readError = DockerError.socketReadError(
+          NSError(domain: NSPOSIXErrorDomain, code: Int(currentErrno), userInfo: nil)
+        )
+        break
       }
     }
 
@@ -114,9 +123,10 @@ class SocketConnection {
     }
 
     guard let headerEndRange = response.range(of: Self.crlf2Data) else {
-      throw DockerError.invalidResponse("Connection closed or data incomplete before receiving complete HTTP headers.")
+      throw DockerError.invalidResponse(
+        "Connection closed or data incomplete before receiving complete HTTP headers.")
     }
-    
+
     LogManager.shared.addLog(
       "Received headers. Raw response size: \(response.count)", level: "DEBUG",
       source: "socket-connection")
@@ -126,7 +136,9 @@ class SocketConnection {
 
     guard let headerString = String(data: headerData, encoding: .utf8) else {
       throw DockerError.responseParsingFailed(
-        NSError(domain: "SocketConnection", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to decode headers as UTF-8"])
+        NSError(
+          domain: "SocketConnection", code: -2,
+          userInfo: [NSLocalizedDescriptionKey: "Failed to decode headers as UTF-8"])
       )
     }
 
@@ -135,7 +147,7 @@ class SocketConnection {
       throw DockerError.invalidResponse("Received empty headers.")
     }
     let statusLine = lines.first!
-    
+
     var headers: [String: String] = [:]
     for line in lines.dropFirst() {
       let parts = line.split(separator: ":", maxSplits: 1)
@@ -149,18 +161,27 @@ class SocketConnection {
       LogManager.shared.addLog("Dechunking body...", level: "DEBUG", source: "socket-connection")
       bodyData = try dechunk(Data(bodyData))
     } else if let contentLengthStr = headers["Content-Length"],
-              let contentLength = Int(contentLengthStr),
-              bodyData.count < contentLength {
-      LogManager.shared.addLog("Content-Length (\(contentLength)) > received body (\(bodyData.count)). Need to read more.", level: "DEBUG", source: "socket-connection")
-      throw DockerError.invalidResponse("Incomplete body received (Content-Length mismatch). Additional read logic not implemented.")
+      let contentLength = Int(contentLengthStr),
+      bodyData.count < contentLength
+    {
+      LogManager.shared.addLog(
+        "Content-Length (\(contentLength)) > received body (\(bodyData.count)). Need to read more.",
+        level: "DEBUG", source: "socket-connection")
+      throw DockerError.invalidResponse(
+        "Incomplete body received (Content-Length mismatch). Additional read logic not implemented."
+      )
     } else if let contentLengthStr = headers["Content-Length"],
-              let contentLength = Int(contentLengthStr),
-              bodyData.count > contentLength {
-      LogManager.shared.addLog("Received body (\(bodyData.count)) > Content-Length (\(contentLength)). Truncating.", level: "WARN", source: "socket-connection")
+      let contentLength = Int(contentLengthStr),
+      bodyData.count > contentLength
+    {
+      LogManager.shared.addLog(
+        "Received body (\(bodyData.count)) > Content-Length (\(contentLength)). Truncating.",
+        level: "WARN", source: "socket-connection")
       bodyData = bodyData.prefix(contentLength)
     }
 
-    LogManager.shared.addLog("Final body size: \(bodyData.count)", level: "DEBUG", source: "socket-connection")
+    LogManager.shared.addLog(
+      "Final body size: \(bodyData.count)", level: "DEBUG", source: "socket-connection")
     return (statusLine, headers, Data(bodyData))
   }
 
@@ -350,25 +371,25 @@ class DockerExecutor {
 
 enum DockerError: Error, LocalizedError, Equatable {
   // Core Errors
-  case noExecutor // DockerManager couldn't create an executor (likely invalid path)
-  case containerNotRunning // Attempted action on a non-running container
-  
+  case noExecutor  // DockerManager couldn't create an executor (likely invalid path)
+  case containerNotRunning  // Attempted action on a non-running container
+
   // Connection Errors
-  case connectionFailed(Error) // Failed to connect to the Docker socket
-  case socketReadError(Error) // Error reading data from the socket
-  case socketWriteError(Error) // Error writing data to the socket
-  case timeoutOccurred // Operation timed out waiting for socket response
+  case connectionFailed(Error)  // Failed to connect to the Docker socket
+  case socketReadError(Error)  // Error reading data from the socket
+  case socketWriteError(Error)  // Error writing data to the socket
+  case timeoutOccurred  // Operation timed out waiting for socket response
 
   // API & Response Errors
-  case apiError(statusCode: Int, message: String) // Docker API returned an error status code
-  case invalidResponse(String) // General invalid/unexpected response from API
-  case responseParsingFailed(Error) // Failed to decode JSON or parse response data
+  case apiError(statusCode: Int, message: String)  // Docker API returned an error status code
+  case invalidResponse(String)  // General invalid/unexpected response from API
+  case responseParsingFailed(Error)  // Failed to decode JSON or parse response data
 
   // Execution Errors
-  case execFailed(code: Int) // `docker exec` command finished with a non-zero exit code
+  case execFailed(code: Int)  // `docker exec` command finished with a non-zero exit code
 
   // Generic / Unknown
-  case unknownError(Error) // For wrapping non-DockerError types
+  case unknownError(Error)  // For wrapping non-DockerError types
 
   // Helper to identify connection-related errors
   var isConnectionError: Bool {
@@ -391,9 +412,11 @@ enum DockerError: Error, LocalizedError, Equatable {
     case .connectionFailed(let underlyingError):
       return "Failed to connect to the Docker socket: \(underlyingError.localizedDescription)"
     case .socketReadError(let underlyingError):
-      return "An error occurred while reading from the Docker socket: \(underlyingError.localizedDescription)"
+      return
+        "An error occurred while reading from the Docker socket: \(underlyingError.localizedDescription)"
     case .socketWriteError(let underlyingError):
-      return "An error occurred while writing to the Docker socket: \(underlyingError.localizedDescription)"
+      return
+        "An error occurred while writing to the Docker socket: \(underlyingError.localizedDescription)"
     case .timeoutOccurred:
       return "The operation timed out while waiting for a response from the Docker daemon."
     case .apiError(let statusCode, let message):
@@ -401,7 +424,8 @@ enum DockerError: Error, LocalizedError, Equatable {
     case .invalidResponse(let details):
       return "Received an invalid or unexpected response from the Docker API: \(details)"
     case .responseParsingFailed(let underlyingError):
-      return "Failed to parse the response from the Docker API: \(underlyingError.localizedDescription)"
+      return
+        "Failed to parse the response from the Docker API: \(underlyingError.localizedDescription)"
     case .execFailed(let code):
       return "The command executed in the container failed with exit code \(code)."
     case .unknownError(let underlyingError):
@@ -412,13 +436,16 @@ enum DockerError: Error, LocalizedError, Equatable {
   var recoverySuggestion: String? {
     switch self {
     case .noExecutor, .connectionFailed:
-      return "Please check the Docker socket path in Settings and ensure Docker (or your Docker provider like Colima/Rancher Desktop) is running."
+      return
+        "Please check the Docker socket path in Settings and ensure Docker (or your Docker provider like Colima/Rancher Desktop) is running."
     case .containerNotRunning:
       return "Please start the container before attempting this operation."
     case .socketReadError, .socketWriteError, .timeoutOccurred, .apiError:
-      return "Please ensure the Docker daemon is running and responsive. You may need to restart Docker."
+      return
+        "Please ensure the Docker daemon is running and responsive. You may need to restart Docker."
     case .invalidResponse, .responseParsingFailed:
-      return "An unexpected issue occurred while communicating with Docker. If the problem persists, please report it."
+      return
+        "An unexpected issue occurred while communicating with Docker. If the problem persists, please report it."
     case .execFailed:
       return "Check the command being executed and the container's logs for more details."
     case .unknownError:
@@ -427,31 +454,31 @@ enum DockerError: Error, LocalizedError, Equatable {
   }
 
   // Equatable conformance
-  static func == (lhs: DockerError, rhs: DockerError) -> Bool {
+  static func == (lhs: Self, rhs: Self) -> Bool {
     switch (lhs, rhs) {
     // 1. Cases requiring specific associated value comparisons
     case (.apiError(let lhsCode, let lhsMsg), .apiError(let rhsCode, let rhsMsg)):
-        return lhsCode == rhsCode && lhsMsg == rhsMsg
+      return lhsCode == rhsCode && lhsMsg == rhsMsg
     case (.invalidResponse(let lhsDetails), .invalidResponse(let rhsDetails)):
-        return lhsDetails == rhsDetails
+      return lhsDetails == rhsDetails
     case (.execFailed(let lhsCode), .execFailed(let rhsCode)):
-        return lhsCode == rhsCode
+      return lhsCode == rhsCode
 
     // 2. Cases where matching case implies equality
     // (No associated value or associated Error is ignored for comparison)
     case (.noExecutor, .noExecutor),
-         (.containerNotRunning, .containerNotRunning),
-         (.connectionFailed, .connectionFailed),
-         (.socketReadError, .socketReadError),
-         (.socketWriteError, .socketWriteError),
-         (.timeoutOccurred, .timeoutOccurred),
-         (.responseParsingFailed, .responseParsingFailed),
-         (.unknownError, .unknownError):
-        return true
+      (.containerNotRunning, .containerNotRunning),
+      (.connectionFailed, .connectionFailed),
+      (.socketReadError, .socketReadError),
+      (.socketWriteError, .socketWriteError),
+      (.timeoutOccurred, .timeoutOccurred),
+      (.responseParsingFailed, .responseParsingFailed),
+      (.unknownError, .unknownError):
+      return true
 
     // 3. If none of the above pairs match, the errors are not equal
     default:
-        return false
+      return false
     }
   }
 }

@@ -101,7 +101,7 @@ struct ContainerActionsView: View {
         Button("Stop") {
           // Wrap async call in Task
           Task {
-              await manager.stopContainer(id: container.id)
+            await manager.stopContainer(id: container.id)
           }
         }
         .buttonStyle(.bordered)
@@ -110,7 +110,7 @@ struct ContainerActionsView: View {
         Button("Start") {
           // Wrap async call in Task
           Task {
-              await manager.startContainer(id: container.id)
+            await manager.startContainer(id: container.id)
           }
         }
         .buttonStyle(.borderedProminent)

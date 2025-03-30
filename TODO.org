@@ -8,11 +8,11 @@
      - [X] Test functionality after move
      - DEPENDS ON: Technical Debt > Refactor DockerExecutor error handling
 **** TODO Error Handling Enhancement
-     - Expand DockerError enum with more specific cases
-     - Add user-friendly error messages
-     - Implement error recovery suggestions
-     - Create reusable ErrorView component
-     - Update UI components to use new error display
+     - [X] Expand DockerError enum with more specific cases
+     - [X] Add user-friendly error messages
+     - [X] Implement error recovery suggestions
+     - [X] Create reusable ErrorView component
+     - [X] Update UI components to use new error display
      - REPLACES: Technical Debt > Refactor DockerExecutor error handling
 **** TODO Type Safety Improvements
      - Eliminate force unwrapping where possible

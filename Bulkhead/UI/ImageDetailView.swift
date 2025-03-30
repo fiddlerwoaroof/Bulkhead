@@ -105,7 +105,8 @@ struct ImageDetailView: View {
                   DetailRow(title: "Volumes", value: volumes.keys.joined(separator: "\n"))
                 }
                 if let exposedPorts = config.exposedPorts {
-                  DetailRow(title: "Exposed Ports", value: exposedPorts.keys.joined(separator: "\n"))
+                  DetailRow(
+                    title: "Exposed Ports", value: exposedPorts.keys.joined(separator: "\n"))
                 }
                 if let configLabels = config.labels, !configLabels.isEmpty {
                   DetailRow(
@@ -214,18 +215,20 @@ class ImageDetailModel: ObservableObject {
       {
         rawInspectionData = string
       }
-      
+
       // Ensure error is cleared on success (redundant due to resetState/initial clear, but safe)
-      self.error = nil 
-      
+      self.error = nil
+
     } catch let dockerError as DockerError {
       // Store the specific DockerError
       self.error = dockerError
-      LogManager.shared.addLog("DockerError loading image details: \(dockerError.localizedDescription)", level: "ERROR")
+      LogManager.shared.addLog(
+        "DockerError loading image details: \(dockerError.localizedDescription)", level: "ERROR")
     } catch {
       // Wrap other errors
       self.error = .unknownError(error)
-      LogManager.shared.addLog("Unknown error loading image details: \(error.localizedDescription)", level: "ERROR")
+      LogManager.shared.addLog(
+        "Unknown error loading image details: \(error.localizedDescription)", level: "ERROR")
     }
 
     isLoading = false
@@ -279,25 +282,25 @@ struct DetailRow: View {
 }
 
 extension ImageInspection {
-    func asDictionary() -> [String: Any] {
-        // Simplified example - needs actual implementation based on ImageInspection properties
-        return [
-            "Id": Id,
-            "Parent": Parent as Any,
-            "RepoTags": RepoTags as Any,
-            // ... include all other relevant properties ...
-            "Config": Config.asDictionary()
-        ]
-    }
+  func asDictionary() -> [String: Any] {
+    // Simplified example - needs actual implementation based on ImageInspection properties
+    [
+      "Id": Id,
+      "Parent": Parent as Any,
+      "RepoTags": RepoTags as Any,
+      // ... include all other relevant properties ...
+      "Config": Config.asDictionary(),
+    ]
+  }
 }
 
 extension ImageConfig {
-    func asDictionary() -> [String: Any] {
-        // Simplified example - needs actual implementation
-        return [
-            "Entrypoint": entrypoint as Any,
-            "Cmd": cmd as Any,
-            // ... include all other relevant properties ...
-        ]
-    }
+  func asDictionary() -> [String: Any] {
+    // Simplified example - needs actual implementation
+    [
+      "Entrypoint": entrypoint as Any,
+      "Cmd": cmd as Any,
+        // ... include all other relevant properties ...
+    ]
+  }
 }

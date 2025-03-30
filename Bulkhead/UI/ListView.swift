@@ -33,12 +33,12 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   var shadowColor: Color
   var searchConfig: SearchConfiguration<T>?
   var listError: DockerError?
-  var listErrorTitle: String = "Error Loading List"
+  var listErrorTitle = "Error Loading List"
   @FocusState private var focusedField: ListViewFocusTarget?
   @StateObject private var viewState = ListViewState()
   @State private var selectionTask: Task<Void, Never>?  // Task for debouncing
   @Binding var searchFocused: Bool
-  @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing // Read environment
+  @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing  // Read environment
   @ViewBuilder var content: (T) -> Master
   @ViewBuilder var detail: (T) -> Detail
 

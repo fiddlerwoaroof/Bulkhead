@@ -148,14 +148,19 @@ struct FilesystemBrowserView: View {
       } else {
         HStack {
           Text("Path:")
-          TextField("/", text: $path, onCommit: {
+          TextField(
+            "/", text: $path,
+            onCommit: {
               Task { await fetch() }
-          })
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .font(.system(.body, design: .monospaced))
-          Button("Go", action: {
+            }
+          )
+          .textFieldStyle(RoundedBorderTextFieldStyle())
+          .font(.system(.body, design: .monospaced))
+          Button(
+            "Go",
+            action: {
               Task { await fetch() }
-          })
+            })
         }
         .padding()
 
@@ -202,13 +207,13 @@ struct FilesystemBrowserView: View {
       }
     }
     .onChange(of: container.isRunning) { _, isNowRunning in
-        // If the container starts running again and we were showing an error
-        // (especially the 'not running' error), trigger a refresh.
-        if isNowRunning && fetchError != nil {
-            Task {
-                await setupAndFetch() // Use setup to clear state and fetch
-            }
+      // If the container starts running again and we were showing an error
+      // (especially the 'not running' error), trigger a refresh.
+      if isNowRunning && fetchError != nil {
+        Task {
+          await setupAndFetch()  // Use setup to clear state and fetch
         }
+      }
     }
     .task(id: container.id) {
       await setupAndFetch()
@@ -250,10 +255,14 @@ struct FilesystemBrowserView: View {
       }
     } catch let dockerError as DockerError {
       fetchError = dockerError
-      LogManager.shared.addLog("Error handling tap in FilesystemBrowser: \(dockerError.localizedDescription)", level: "ERROR")
+      LogManager.shared.addLog(
+        "Error handling tap in FilesystemBrowser: \(dockerError.localizedDescription)",
+        level: "ERROR")
     } catch {
       fetchError = .unknownError(error)
-      LogManager.shared.addLog("Unknown error handling tap in FilesystemBrowser: \(error.localizedDescription)", level: "ERROR")
+      LogManager.shared.addLog(
+        "Unknown error handling tap in FilesystemBrowser: \(error.localizedDescription)",
+        level: "ERROR")
     }
   }
 
@@ -264,24 +273,27 @@ struct FilesystemBrowserView: View {
       fetchError = DockerError.containerNotRunning
       return
     }
-    
+
     guard let executor = manager.executor else {
-        await MainActor.run { self.fetchError = .noExecutor }
-        isExecuting = false
-        return
+      await MainActor.run { fetchError = .noExecutor }
+      isExecuting = false
+      return
     }
-    
+
     currentTask?.cancel()
 
     currentTask = Task {
       isExecuting = true
       fetchError = nil
       entries = []
-      
+
       do {
         try await Task.sleep(nanoseconds: 100_000_000)
 
-        if Task.isCancelled { isExecuting = false; return }
+        if Task.isCancelled {
+          isExecuting = false
+          return
+        }
 
         let queryPath = path.hasSuffix("/") ? path : path + "/"
         let data = try await executor.exec(
@@ -290,40 +302,49 @@ struct FilesystemBrowserView: View {
           addCarriageReturn: false
         )
 
-        if Task.isCancelled { isExecuting = false; return }
+        if Task.isCancelled {
+          isExecuting = false
+          return
+        }
 
         if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(
           in: .whitespacesAndNewlines)
         {
-          let parsedEntries = output.split(separator: "\n", omittingEmptySubsequences: true).compactMap {
-            line -> FileEntry? in
-            let name = String(line).trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !name.isEmpty else { return nil }
-            let isDir = name.hasSuffix("/")
-            let isLink = name.hasSuffix("@")
-            let isExec = name.hasSuffix("*")
-            let cleanName = name.trimmingCharacters(in: CharacterSet(charactersIn: "/@*"))
-            guard cleanName != "." else { return nil }
-            return FileEntry(
-              name: cleanName,
-              isDirectory: isDir,
-              isSymlink: isLink,
-              isExecutable: isExec
-            )
-          }
+          let parsedEntries = output.split(separator: "\n", omittingEmptySubsequences: true)
+            .compactMap {
+              line -> FileEntry? in
+              let name = String(line).trimmingCharacters(in: .whitespacesAndNewlines)
+              guard !name.isEmpty else { return nil }
+              let isDir = name.hasSuffix("/")
+              let isLink = name.hasSuffix("@")
+              let isExec = name.hasSuffix("*")
+              let cleanName = name.trimmingCharacters(in: CharacterSet(charactersIn: "/@*"))
+              guard cleanName != "." else { return nil }
+              return FileEntry(
+                name: cleanName,
+                isDirectory: isDir,
+                isSymlink: isLink,
+                isExecutable: isExec
+              )
+            }
           await MainActor.run {
-            self.entries = parsedEntries
-            self.fetchError = nil
+            entries = parsedEntries
+            fetchError = nil
           }
         } else {
-          throw DockerError.responseParsingFailed(NSError(domain: "FilesystemBrowser", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid UTF-8 output from ls command"]))
+          throw DockerError.responseParsingFailed(
+            NSError(
+              domain: "FilesystemBrowser", code: 1,
+              userInfo: [NSLocalizedDescriptionKey: "Invalid UTF-8 output from ls command"]))
         }
       } catch let dockerError as DockerError {
-        await MainActor.run { self.fetchError = dockerError }
-        LogManager.shared.addLog("DockerError fetching filesystem: \(dockerError.localizedDescription)", level: "ERROR")
+        await MainActor.run { fetchError = dockerError }
+        LogManager.shared.addLog(
+          "DockerError fetching filesystem: \(dockerError.localizedDescription)", level: "ERROR")
       } catch {
-        await MainActor.run { self.fetchError = .unknownError(error) }
-        LogManager.shared.addLog("Unknown error fetching filesystem: \(error.localizedDescription)", level: "ERROR")
+        await MainActor.run { fetchError = .unknownError(error) }
+        LogManager.shared.addLog(
+          "Unknown error fetching filesystem: \(error.localizedDescription)", level: "ERROR")
       }
       await MainActor.run { isExecuting = false }
     }

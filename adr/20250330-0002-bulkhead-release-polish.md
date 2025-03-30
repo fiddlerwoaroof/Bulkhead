@@ -80,12 +80,12 @@ Perform comprehensive testing across different Docker environments (Colima, Dock
   - [x] Ensure proper imports and references are updated
   - [x] Test functionality after the move
 
-- [ ] **Error Handling Enhancement**
-  - [ ] Expand DockerError enum with more specific error cases
-  - [ ] Add user-friendly error messages for each error case
-  - [ ] Implement error recovery suggestions where applicable
-  - [ ] Create a reusable ErrorView component for consistent error display
-  - [ ] Update UI components to use the new error display approach
+- [X] **Error Handling Enhancement**
+  - [X] Expand DockerError enum with more specific error cases
+  - [X] Add user-friendly error messages for each error case
+  - [X] Implement error recovery suggestions where applicable
+  - [X] Create a reusable ErrorView component for consistent error display
+  - [X] Update UI components to use the new error display approach
 
 - [ ] **Type Safety Improvements**
   - [ ] Review and eliminate force unwrapping (!) where possible

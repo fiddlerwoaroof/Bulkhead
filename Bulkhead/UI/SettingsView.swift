@@ -59,28 +59,29 @@ struct SettingsView: View {
     }
     .frame(
       minWidth: 400, idealWidth: 480, maxWidth: 500, minHeight: 250, idealHeight: 250,
-      maxHeight: 300)
+      maxHeight: 300
+    )
     .onChange(of: manager.socketPath) { _, newPath in
-       handleSocketPathChange(newValue: newPath)
+      handleSocketPathChange(newValue: newPath)
     }
     .onChange(of: manager.refreshInterval) { _, newInterval in
-       handleRefreshIntervalChange(newValue: newInterval)
+      handleRefreshIntervalChange(newValue: newInterval)
     }
   }
 
-  private func handleSocketPathChange(newValue: String) {
+  private func handleSocketPathChange(newValue _: String) {
     Task {
-        await manager.fetchContainers()
-        await manager.fetchImages()
+      await manager.fetchContainers()
+      await manager.fetchImages()
     }
     showSaved()
   }
-  
-  private func handleRefreshIntervalChange(newValue: Double) {
+
+  private func handleRefreshIntervalChange(newValue _: Double) {
     manager.saveRefreshInterval()
     showSaved()
   }
-  
+
   private func showSaved() {
     withAnimation {
       showSavedConfirmation = true

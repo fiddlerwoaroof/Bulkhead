@@ -83,49 +83,49 @@ struct ContainerDetailView: View {
 
   // Determine if there's a *relevant* connection error from the manager
   private var connectionError: DockerError? {
-      // Ignore connection errors if a global one is already showing
-      guard !isGlobalErrorShowing else { return nil }
+    // Ignore connection errors if a global one is already showing
+    guard !isGlobalErrorShowing else { return nil }
 
-      if let err = manager.containerListError, err.isConnectionError { return err }
-      return nil // No relevant connection error
+    if let err = manager.containerListError, err.isConnectionError { return err }
+    return nil  // No relevant connection error
   }
 
   var body: some View {
     // Check for global connection error first (or if we should ignore local one)
     if let connError = connectionError {
-        ErrorView(error: connError, title: "Connection Error")
-            .padding()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-    } else {
-        // Original content if no connection error
-        VSplitView {
-          ScrollView {
-            VStack(alignment: .leading, spacing: 8) {
-              if model.isLoading {
-                ProgressView("Loading container details...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding()
-              } else if let error = localError { // Local model error (e.g., enrich failed)
-                 ErrorView(error: error, title: "Failed to Load Details")
-                    .padding()
-              } else if let base = model.base { // Use base container as fallback
-                detailContent(base, enriched: model.enriched)
-              } else {
-                 // Should not happen if base is always set, but provides fallback
-                 Text("Select a container.").foregroundColor(.secondary)
-              }
-            }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-          }
-          
-          FilesystemBrowserView(container: container, initialPath: selectedPath ?? "/")
-            .frame(minHeight: 200)
-        }
+      ErrorView(error: connError, title: "Connection Error")
         .padding()
-        .task(id: container.id) {
-          await model.load(for: container, using: manager)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    } else {
+      // Original content if no connection error
+      VSplitView {
+        ScrollView {
+          VStack(alignment: .leading, spacing: 8) {
+            if model.isLoading {
+              ProgressView("Loading container details...")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding()
+            } else if let error = localError {  // Local model error (e.g., enrich failed)
+              ErrorView(error: error, title: "Failed to Load Details")
+                .padding()
+            } else if let base = model.base {  // Use base container as fallback
+              detailContent(base, enriched: model.enriched)
+            } else {
+              // Should not happen if base is always set, but provides fallback
+              Text("Select a container.").foregroundColor(.secondary)
+            }
+          }
+          .padding()
+          .frame(maxWidth: .infinity, alignment: .topLeading)
         }
+
+        FilesystemBrowserView(container: container, initialPath: selectedPath ?? "/")
+          .frame(minHeight: 200)
+      }
+      .padding()
+      .task(id: container.id) {
+        await model.load(for: container, using: manager)
+      }
     }
   }
 
@@ -327,10 +327,13 @@ final class ContainerDetailModel: ObservableObject {
       self.error = nil
     } catch let dockerError as DockerError {
       self.error = dockerError
-      LogManager.shared.addLog("DockerError loading container details: \(dockerError.localizedDescription)", level: "ERROR")
+      LogManager.shared.addLog(
+        "DockerError loading container details: \(dockerError.localizedDescription)", level: "ERROR"
+      )
     } catch {
       self.error = .unknownError(error)
-      LogManager.shared.addLog("Unknown error loading container details: \(error.localizedDescription)", level: "ERROR")
+      LogManager.shared.addLog(
+        "Unknown error loading container details: \(error.localizedDescription)", level: "ERROR")
     }
 
     isLoading = false
