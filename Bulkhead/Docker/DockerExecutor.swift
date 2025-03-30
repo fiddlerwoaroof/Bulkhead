@@ -348,7 +348,7 @@ class DockerExecutor {
   }
 }
 
-enum DockerError: Error, LocalizedError {
+enum DockerError: Error, LocalizedError, Equatable {
   // Core Errors
   case noExecutor // DockerManager couldn't create an executor (likely invalid path)
   case containerNotRunning // Attempted action on a non-running container
@@ -423,6 +423,35 @@ enum DockerError: Error, LocalizedError {
       return "Check the command being executed and the container's logs for more details."
     case .unknownError:
       return "An unknown error occurred. Please check the underlying error for more details."
+    }
+  }
+
+  // Equatable conformance
+  static func == (lhs: DockerError, rhs: DockerError) -> Bool {
+    switch (lhs, rhs) {
+    // 1. Cases requiring specific associated value comparisons
+    case (.apiError(let lhsCode, let lhsMsg), .apiError(let rhsCode, let rhsMsg)):
+        return lhsCode == rhsCode && lhsMsg == rhsMsg
+    case (.invalidResponse(let lhsDetails), .invalidResponse(let rhsDetails)):
+        return lhsDetails == rhsDetails
+    case (.execFailed(let lhsCode), .execFailed(let rhsCode)):
+        return lhsCode == rhsCode
+
+    // 2. Cases where matching case implies equality
+    // (No associated value or associated Error is ignored for comparison)
+    case (.noExecutor, .noExecutor),
+         (.containerNotRunning, .containerNotRunning),
+         (.connectionFailed, .connectionFailed),
+         (.socketReadError, .socketReadError),
+         (.socketWriteError, .socketWriteError),
+         (.timeoutOccurred, .timeoutOccurred),
+         (.responseParsingFailed, .responseParsingFailed),
+         (.unknownError, .unknownError):
+        return true
+
+    // 3. If none of the above pairs match, the errors are not equal
+    default:
+        return false
     }
   }
 }
