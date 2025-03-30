@@ -8,21 +8,24 @@ let package = Package(
     .iOS(.v16),
   ],
   products: [
-    .executable(name: "BulkheadUI", targets: ["BulkheadUI"]),
+    .library(name: "BulkheadUI", targets: ["BulkheadUI"]),
     .library(name: "BulkheadCore", targets: ["BulkheadCore"]),
   ],
   dependencies: [
     .package(url: "https://github.com/krzyzanowskim/SwiftTerm", branch: "master")
   ],
   targets: [
-    // Main executable target
-    .executableTarget(
+    // Main app target
+    .target(
       name: "BulkheadUI",
       dependencies: [
         "BulkheadCore",
         .product(name: "SwiftTerm", package: "SwiftTerm")
       ],
-      path: "Bulkhead/UI"
+      path: "Bulkhead/UI",
+      resources: [
+        .process("Resources")
+      ]
     ),
 
     // Core module
