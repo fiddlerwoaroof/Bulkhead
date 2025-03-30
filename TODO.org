@@ -1,10 +1,10 @@
 * High Priority Tasks [0%]
-** TODO UI/UX Improvements [60%]
+** TODO UI/UX Improvements [70%]
 *** TODO Add keyboard shortcuts help overlay
     - Command palette style interface
     - List all available shortcuts
     - Context-sensitive help
-*** TODO Re-wire Command-F shortcut
+*** DONE Re-wire Command-F shortcut
     - Pass focus request from DockerUIApp down to active ListView.
     - Consider using NotificationCenter or a shared state object.
 *** TODO Refine visual feedback for navigation/selection
