@@ -9,6 +9,7 @@ enum ListViewFocusTarget: Hashable {
 // ObservableObject to hold state that needs to persist
 class ListViewState: ObservableObject {
     @Published var lastKnownFocus: ListViewFocusTarget? = nil
+    @Published var searchText = ""
 }
 
 struct SearchOptions {
@@ -34,15 +35,16 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   var searchConfig: SearchConfiguration<T>? = nil
   @FocusState private var focusedField: ListViewFocusTarget?
   @StateObject private var viewState = ListViewState()
-  @State private var searchText = ""
   @State private var selectionTask: Task<Void, Never>? = nil // Task for debouncing
 
   // Computed property for filtered items
   private var filteredItems: [T] {
-    guard let config = searchConfig, !searchText.isEmpty else {
+    // Read searchText from viewState
+    guard let config = searchConfig, !viewState.searchText.isEmpty else {
         return items
     }
-    return items.filter { config.filter($0, searchText) }
+    // Use viewState.searchText for filtering
+    return items.filter { config.filter($0, viewState.searchText) }
   }
 
   private func selectNextItem() {
@@ -193,9 +195,9 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
         if let config = searchConfig {
             SearchField<T, Master, Detail>(
                 placeholder: config.placeholder,
-                text: $searchText,
+                text: $viewState.searchText,
                 focusBinding: $focusedField,
-                focusCase: .search
+                focusCase: ListViewFocusTarget.search
             )
             Divider()
         }
@@ -259,11 +261,11 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
       return .handled
     }
     .onKeyPress(.escape) {
-        if focusedField == .search && !searchText.isEmpty {
-            searchText = ""
+        if focusedField == ListViewFocusTarget.search && !viewState.searchText.isEmpty { // Read from viewState
+            viewState.searchText = "" // Write to viewState
             return .handled
-        } else if focusedField != .search { 
-            focusedField = .search
+        } else if focusedField != ListViewFocusTarget.search { 
+            focusedField = ListViewFocusTarget.search
             return .handled
         }
         return .ignored
