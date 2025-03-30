@@ -35,8 +35,8 @@ jobs:
         # Assuming swift-format might be installed via brew or comes with Xcode
         # If using a specific package manager or version, adjust this step
         # For now, let's try running it directly, it might be bundled
-        # run: brew install swift-format # Or use specific installation method
-        run: echo "Attempting to use swift-format, assuming it's available..."
+        run: brew install swift-format # Or use specific installation method
+        # run: echo "Attempting to use swift-format, assuming it's available..."
       - name: Run swift-format Lint
         # Add specific paths if needed, e.g., swift-format lint Sources/ Tests/
         run: swift-format lint --recursive . 
