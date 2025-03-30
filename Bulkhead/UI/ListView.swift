@@ -22,10 +22,10 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   @ViewBuilder var detail: (T) -> Detail
   var searchConfig: SearchConfiguration<T>? = nil
 
-  // Define focus states
+  // Define focus states (reverting to AnyHashable approach)
   enum FocusField: Hashable {
     case search
-    case item(AnyHashable)
+    case item(AnyHashable) // Revert to using AnyHashable
   }
   @FocusState private var focusedField: FocusField?
   @State private var searchText = ""
@@ -46,13 +46,13 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
       if currentIndex < currentItems.count - 1 {
         selectedItem = currentItems[currentIndex + 1]
         if let newlySelectedItem = selectedItem {
-            focusedField = .item(AnyHashable(newlySelectedItem.id))
+            focusedField = .item(AnyHashable(newlySelectedItem.id)) // Revert assignment
         }
       }
     } else {
       selectedItem = currentItems[0]
       if let newlySelectedItem = selectedItem {
-          focusedField = .item(AnyHashable(newlySelectedItem.id))
+          focusedField = .item(AnyHashable(newlySelectedItem.id)) // Revert assignment
       }
     }
   }
@@ -65,13 +65,13 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
       if currentIndex > 0 {
         selectedItem = currentItems[currentIndex - 1]
         if let newlySelectedItem = selectedItem {
-            focusedField = .item(AnyHashable(newlySelectedItem.id))
+            focusedField = .item(AnyHashable(newlySelectedItem.id)) // Revert assignment
         }
       }
     } else {
       selectedItem = currentItems[currentItems.count - 1]
       if let newlySelectedItem = selectedItem {
-          focusedField = .item(AnyHashable(newlySelectedItem.id))
+          focusedField = .item(AnyHashable(newlySelectedItem.id)) // Revert assignment
       }
     }
   }
@@ -91,11 +91,12 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
         .padding(.horizontal)
         .id(item.id)
         .accessibilityAddTraits(.isButton)
+        // Revert to single .focused modifier using AnyHashable
         .focused($focusedField, equals: .item(AnyHashable(item.id)))
         .onTapGesture {
           withAnimation {
             selectedItem = item
-            focusedField = .item(AnyHashable(item.id))
+            focusedField = .item(AnyHashable(item.id)) // Revert assignment
           }
         }
     }
@@ -115,7 +116,7 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
         if let item = newItem {
           withAnimation {
             proxy.scrollTo(item.id, anchor: .center)
-            focusedField = .item(AnyHashable(item.id))
+            focusedField = .item(AnyHashable(item.id)) // Revert assignment
           }
         }
       }
@@ -164,6 +165,7 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
         return .ignored
     }
     .onKeyPress(.return) {
+      // Revert check to use pattern matching and casting
       if case .item(let itemIdHashable) = focusedField,
          let itemId = itemIdHashable.base as? T.ID,
          let currentItem = filteredItems.first(where: { $0.id == itemId }) {
@@ -173,7 +175,7 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
       } else if focusedField == .search {
         if let firstItem = filteredItems.first {
           selectedItem = firstItem
-          focusedField = .item(AnyHashable(firstItem.id))
+          focusedField = .item(AnyHashable(firstItem.id)) // Revert assignment
           return .handled
         }
       }
