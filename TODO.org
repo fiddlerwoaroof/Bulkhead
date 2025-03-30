@@ -251,3 +251,7 @@
     - Reduced view nesting via generic ListView
     - Extracted common components (StatusBadgeView, ContainerActionsView)
     - Improved state management (moved state to ListViewState)
+*** TODO Refactor List Fetch Error Handling
+    - Currently, DockerManager holds list-specific errors (containerListError, imageListError), violating SoC.
+    - Move list fetching logic (calling manager.fetchX) and error handling into ContainerListView/ImageListView, likely using local @StateObject ViewModels.
+    - DockerManager should only provide fetch methods and potentially a general status, not UI-specific list error states.

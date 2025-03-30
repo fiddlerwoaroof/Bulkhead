@@ -98,13 +98,19 @@ struct ContainerActionsView: View {
     VStack(alignment: .leading, spacing: 8) {
       if container.status.lowercased().contains("up") {
         Button("Stop") {
-          manager.stopContainer(id: container.id)
+          // Wrap async call in Task
+          Task {
+              await manager.stopContainer(id: container.id)
+          }
         }
         .buttonStyle(.bordered)
         .controlSize(.small)
       } else {
         Button("Start") {
-          manager.startContainer(id: container.id)
+          // Wrap async call in Task
+          Task {
+              await manager.startContainer(id: container.id)
+          }
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.small)

@@ -82,8 +82,8 @@ struct ContainerDetailView: View {
           } else if model.isLoading {
             ProgressView("Loading container details...")
           } else if let error = model.error {
-            Text("Error: \(error.localizedDescription)")
-              .foregroundColor(.red)
+            ErrorView(error: error, title: "Failed to Load Details")
+                .padding()
           }
         }
         .padding()

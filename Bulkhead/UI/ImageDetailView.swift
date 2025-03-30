@@ -23,8 +23,8 @@ struct ImageDetailView: View {
           ProgressView("Loading image details...")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let error = model.error {
-          Text("Error: \(error.localizedDescription)")
-            .foregroundColor(.red)
+          ErrorView(error: error, title: "Failed to Load Image Details")
+            .padding()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
           // Basic Info

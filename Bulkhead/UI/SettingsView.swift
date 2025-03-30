@@ -13,8 +13,8 @@ struct SettingsView: View {
               .font(.headline)
             TextField("Socket Path", text: $manager.socketPath)
               .textFieldStyle(.roundedBorder)
-              .onChange(of: manager.socketPath) { _, newValue in
-                handleSocketPathChange(newValue: newValue)
+              .onChange(of: manager.socketPath) { _, newPath in
+                handleSocketPathChange(newValue: newPath)
               }
           }
 
@@ -41,7 +41,7 @@ struct SettingsView: View {
             Slider(value: $manager.refreshInterval, in: 5...60, step: 1) {
               Text("Refresh Interval")
             } onEditingChanged: { _ in
-              manager.saveRefreshInterval()
+              handleRefreshIntervalChange(newValue: manager.refreshInterval)
             }
             .frame(maxWidth: 300)
           }
@@ -60,11 +60,28 @@ struct SettingsView: View {
     .frame(
       minWidth: 400, idealWidth: 480, maxWidth: 500, minHeight: 250, idealHeight: 250,
       maxHeight: 300)
+    .onChange(of: manager.socketPath) { _, newPath in
+       handleSocketPathChange(newValue: newPath)
+    }
+    .onChange(of: manager.refreshInterval) { _, newInterval in
+       handleRefreshIntervalChange(newValue: newInterval)
+    }
   }
 
-  private func handleSocketPathChange(newValue _: String) {
-    manager.saveDockerHostPath()
-    manager.fetchContainers()
+  private func handleSocketPathChange(newValue: String) {
+    Task {
+        await manager.fetchContainers()
+        await manager.fetchImages()
+    }
+    showSaved()
+  }
+  
+  private func handleRefreshIntervalChange(newValue: Double) {
+    manager.saveRefreshInterval()
+    showSaved()
+  }
+  
+  private func showSaved() {
     withAnimation {
       showSavedConfirmation = true
     }

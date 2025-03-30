@@ -12,8 +12,10 @@ struct DockerUIApp: App {
       ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused)
         .environmentObject(manager)
         .onAppear {
-          manager.fetchContainers()
-          manager.fetchImages()
+          Task {
+              await manager.fetchContainers()
+              await manager.fetchImages()
+          }
         }
     }
 
@@ -42,8 +44,10 @@ struct DockerUIApp: App {
         Divider()
 
         Button("Refresh Containers") {
-          manager.fetchContainers()
-          manager.fetchImages()
+          Task {
+              await manager.fetchContainers()
+              await manager.fetchImages()
+          }
         }
         .keyboardShortcut("r")
 
