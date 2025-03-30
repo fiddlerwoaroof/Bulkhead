@@ -2,121 +2,137 @@ import SwiftUI
 
 struct ImageDetailView: View {
   let image: DockerImage
+  @EnvironmentObject var manager: DockerManager
   @StateObject private var model = ImageDetailModel()
   @Environment(\.colorScheme) var colorScheme
 
+  private var connectionError: DockerError? {
+    if case .connectionFailed = manager.imageListError { return manager.imageListError }
+    if case .socketReadError = manager.imageListError { return manager.imageListError }
+    if case .socketWriteError = manager.imageListError { return manager.imageListError }
+    if case .timeoutOccurred = manager.imageListError { return manager.imageListError }
+    if case .noExecutor = manager.imageListError { return manager.imageListError }
+    return nil
+  }
+
   var body: some View {
-    ScrollView {
-      VStack(alignment: .leading, spacing: 20) {
-        // Header
-        VStack(alignment: .leading, spacing: 4) {
-          Text(image.RepoTags?.first ?? "Untagged")
-            .font(.title)
-            .fontWeight(.bold)
-          Text(String(image.id.prefix(12)))
-            .font(.subheadline)
-            .foregroundColor(.secondary)
-        }
-        .padding(.bottom, 8)
-
-        if model.isLoading {
-          ProgressView("Loading image details...")
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if let error = model.error {
-          ErrorView(error: error, title: "Failed to Load Image Details")
-            .padding()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else {
-          // Basic Info
-          DetailSection(title: "Basic Information") {
-            DetailRow(title: "ID", value: String(image.id.prefix(12)))
-            DetailRow(title: "Size", value: model.formatSize(Int64(image.Size)))
-            if let virtualSize = model.virtualSize {
-              DetailRow(title: "Virtual Size", value: model.formatSize(virtualSize))
-            }
-            if let createdDate = model.createdDate {
-              DetailRow(title: "Created", value: model.formatDate(createdDate))
-            }
-            if let parentId = model.parentId {
-              DetailRow(title: "Parent", value: String(parentId.prefix(12)))
-            }
-            if let repoDigests = model.repoDigests, !repoDigests.isEmpty {
-              DetailRow(title: "Repo Digests", value: repoDigests.joined(separator: "\n"))
-            }
-            if let tags = image.RepoTags, !tags.isEmpty {
-              DetailRow(title: "Tags", value: tags.joined(separator: "\n"))
-            }
+    if let connError = connectionError {
+      ErrorView(error: connError, title: "Connection Error")
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    } else {
+      ScrollView {
+        VStack(alignment: .leading, spacing: 20) {
+          // Header
+          VStack(alignment: .leading, spacing: 4) {
+            Text(image.RepoTags?.first ?? "Untagged")
+              .font(.title)
+              .fontWeight(.bold)
+            Text(String(image.id.prefix(12)))
+              .font(.subheadline)
+              .foregroundColor(.secondary)
           }
+          .padding(.bottom, 8)
 
-          // Labels
-          if let labels = model.labels, !labels.isEmpty {
-            DetailSection(title: "Labels") {
-              ForEach(Array(labels.keys.sorted()), id: \.self) { key in
-                if let value = labels[key] {
-                  DetailRow(title: key, value: value)
+          if model.isLoading {
+            ProgressView("Loading image details...")
+              .frame(maxWidth: .infinity, maxHeight: .infinity)
+          } else if let error = model.error {
+            ErrorView(error: error, title: "Failed to Load Image Details")
+              .padding()
+              .frame(maxWidth: .infinity, maxHeight: .infinity)
+          } else {
+            // Basic Info
+            DetailSection(title: "Basic Information") {
+              DetailRow(title: "ID", value: String(image.id.prefix(12)))
+              DetailRow(title: "Size", value: model.formatSize(Int64(image.Size)))
+              if let virtualSize = model.virtualSize {
+                DetailRow(title: "Virtual Size", value: model.formatSize(virtualSize))
+              }
+              if let createdDate = model.createdDate {
+                DetailRow(title: "Created", value: model.formatDate(createdDate))
+              }
+              if let parentId = model.parentId {
+                DetailRow(title: "Parent", value: String(parentId.prefix(12)))
+              }
+              if let repoDigests = model.repoDigests, !repoDigests.isEmpty {
+                DetailRow(title: "Repo Digests", value: repoDigests.joined(separator: "\n"))
+              }
+              if let tags = image.RepoTags, !tags.isEmpty {
+                DetailRow(title: "Tags", value: tags.joined(separator: "\n"))
+              }
+            }
+
+            // Labels
+            if let labels = model.labels, !labels.isEmpty {
+              DetailSection(title: "Labels") {
+                ForEach(Array(labels.keys.sorted()), id: \.self) { key in
+                  if let value = labels[key] {
+                    DetailRow(title: key, value: value)
+                  }
                 }
               }
             }
-          }
 
-          // Layers
-          if !model.layers.isEmpty {
-            DetailSection(title: "Layers") {
-              ForEach(Array(model.layers.enumerated()), id: \.element) { index, layer in
-                DetailRow(title: "Layer \(index + 1)", value: String(layer.prefix(12)))
+            // Layers
+            if !model.layers.isEmpty {
+              DetailSection(title: "Layers") {
+                ForEach(Array(model.layers.enumerated()), id: \.element) { index, layer in
+                  DetailRow(title: "Layer \(index + 1)", value: String(layer.prefix(12)))
+                }
               }
             }
-          }
 
-          // Configuration
-          if let config = model.config {
-            DetailSection(title: "Configuration") {
-              if let entrypoint = config.entrypoint {
-                DetailRow(title: "Entrypoint", value: entrypoint.joined(separator: " "))
-              }
-              if let cmd = config.cmd {
-                DetailRow(title: "Command", value: cmd.joined(separator: " "))
-              }
-              if let workingDir = config.workingDir {
-                DetailRow(title: "Working Directory", value: workingDir)
-              }
-              if let env = config.env, !env.isEmpty {
-                DetailRow(title: "Environment Variables", value: env.joined(separator: "\n"))
-              }
-              if let volumes = config.volumes {
-                DetailRow(title: "Volumes", value: volumes.keys.joined(separator: "\n"))
-              }
-              if let exposedPorts = config.exposedPorts {
-                DetailRow(title: "Exposed Ports", value: exposedPorts.keys.joined(separator: "\n"))
-              }
-              if let configLabels = config.labels, !configLabels.isEmpty {
-                DetailRow(
-                  title: "Config Labels",
-                  value: configLabels.map { "\($0.key): \($0.value)" }.joined(separator: "\n"))
+            // Configuration
+            if let config = model.config {
+              DetailSection(title: "Configuration") {
+                if let entrypoint = config.entrypoint {
+                  DetailRow(title: "Entrypoint", value: entrypoint.joined(separator: " "))
+                }
+                if let cmd = config.cmd {
+                  DetailRow(title: "Command", value: cmd.joined(separator: " "))
+                }
+                if let workingDir = config.workingDir {
+                  DetailRow(title: "Working Directory", value: workingDir)
+                }
+                if let env = config.env, !env.isEmpty {
+                  DetailRow(title: "Environment Variables", value: env.joined(separator: "\n"))
+                }
+                if let volumes = config.volumes {
+                  DetailRow(title: "Volumes", value: volumes.keys.joined(separator: "\n"))
+                }
+                if let exposedPorts = config.exposedPorts {
+                  DetailRow(title: "Exposed Ports", value: exposedPorts.keys.joined(separator: "\n"))
+                }
+                if let configLabels = config.labels, !configLabels.isEmpty {
+                  DetailRow(
+                    title: "Config Labels",
+                    value: configLabels.map { "\($0.key): \($0.value)" }.joined(separator: "\n"))
+                }
               }
             }
-          }
 
-          // Raw Inspection Data
-          if let rawData = model.rawInspectionData {
-            DetailSection(title: "Raw Inspection Data") {
-              Text(rawData)
-                .font(.system(.body, design: .monospaced))
-                .foregroundColor(.secondary)
+            // Raw Inspection Data
+            if let rawData = model.rawInspectionData {
+              DetailSection(title: "Raw Inspection Data") {
+                Text(rawData)
+                  .font(.system(.body, design: .monospaced))
+                  .foregroundColor(.secondary)
+              }
             }
           }
         }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
       }
-      .padding()
-      .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    .frame(maxWidth: .infinity)
-    .background(
-      colorScheme == .dark
-        ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color(red: 0.95, green: 0.95, blue: 0.95)
-    )
-    .task(id: image.id) {
-      await model.loadImageDetails(id: image.id, using: DockerManager())
+      .frame(maxWidth: .infinity)
+      .background(
+        colorScheme == .dark
+          ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color(red: 0.95, green: 0.95, blue: 0.95)
+      )
+      .task(id: image.id) {
+        await model.loadImageDetails(id: image.id, using: manager)
+      }
     }
   }
 }

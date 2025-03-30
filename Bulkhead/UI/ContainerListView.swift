@@ -37,6 +37,8 @@ struct ContainerListView: View {
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
       searchConfig: containerSearchConfig,
+      listError: manager.containerListError,
+      listErrorTitle: "Failed to Load Containers",
       searchFocused: $searchFocused
     ) { container in
       // Type erase the content view
@@ -64,7 +66,6 @@ struct ContainerListView: View {
       // Type erase the detail view
       AnyView(ContainerDetailView(container: container))
     }
-
   }
 }
 

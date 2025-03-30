@@ -201,6 +201,15 @@ struct FilesystemBrowserView: View {
         }
       }
     }
+    .onChange(of: container.isRunning) { _, isNowRunning in
+        // If the container starts running again and we were showing an error
+        // (especially the 'not running' error), trigger a refresh.
+        if isNowRunning && fetchError != nil {
+            Task {
+                await setupAndFetch() // Use setup to clear state and fetch
+            }
+        }
+    }
     .task(id: container.id) {
       await setupAndFetch()
     }

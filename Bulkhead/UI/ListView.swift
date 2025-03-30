@@ -32,6 +32,8 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   var backgroundColor: Color
   var shadowColor: Color
   var searchConfig: SearchConfiguration<T>?
+  var listError: DockerError?
+  var listErrorTitle: String = "Error Loading List"
   @FocusState private var focusedField: ListViewFocusTarget?
   @StateObject private var viewState = ListViewState()
   @State private var selectionTask: Task<Void, Never>?  // Task for debouncing
@@ -135,70 +137,13 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
     }
   }
 
-  private var listContent: some View {
-    ScrollViewReader { proxy in
-      ScrollView {
-        LazyVStack(spacing: 8) {
-          ForEach(filteredItems) { item in
-            itemView(for: item)
-          }
-        }
-        .padding(.vertical)
-      }
-      .onChange(of: searchFocused) { oldValue, newValue in
-        if oldValue != newValue && newValue == true {
-          focusedField = .search
-        }
-      }
-      .onChange(of: selectedItem) { _, newItem in
-        // Cancel any previous task
-        selectionTask?.cancel()
-
-        // Create a new debounced task
-        selectionTask = Task {
-          do {
-            // Wait for 100ms
-            try await Task.sleep(nanoseconds: 100_000_000)
-
-            // Check if cancelled during the sleep
-            guard !Task.isCancelled else { return }
-
-            // --- Actions to perform after debounce ---
-            if let item = newItem {
-              // Scroll and update focus (UI updates on main actor)
-              await MainActor.run {
-                withAnimation {
-                  proxy.scrollTo(item.id, anchor: .center)
-                  let newFocus: ListViewFocusTarget = .item(AnyHashable(item.id))
-                  focusedField = newFocus
-                }
-              }
-              // TODO: Trigger any data fetching or other actions for the new item here
-              // Example: manager.fetchDetails(for: item.id)
-            } else {
-              // Handle deselection (e.g., focus search field)
-              if searchConfig != nil {
-                await MainActor.run {
-                  focusedField = .search
-                }
-              }
-            }
-            // --- End Actions ---
-
-          } catch is CancellationError {
-            // Task was cancelled, normal operation
-          } catch {
-            // Handle other potential errors from sleep
-            print("Error during selection debounce sleep: \(error)")
-          }
-        }
-      }
-    }
-  }
-
-  var body: some View {
-    NavigationSplitView {
-      VStack(spacing: 0) {
+  private var listColumnContent: some View {
+    VStack(spacing: 0) {
+      if let error = listError {
+        ErrorView(error: error, title: listErrorTitle, style: .compact)
+          .padding()
+          .frame(maxHeight: .infinity)
+      } else {
         if let config = searchConfig {
           SearchField<T, Master, Detail>(
             placeholder: config.placeholder,
@@ -208,37 +153,68 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
           )
           Divider()
         }
-        listContent
-      }
-      .onChange(of: focusedField) { _, newValue in
-        viewState.lastKnownFocus = newValue
-        if newValue != .search {
-          searchFocused = false
+        ScrollViewReader { proxy in
+          ScrollView {
+            LazyVStack(spacing: 8) {
+              ForEach(filteredItems) { item in
+                itemView(for: item)
+              }
+            }
+            .padding(.vertical)
+          }
+          .onChange(of: searchFocused) { oldValue, newValue in
+            if oldValue != newValue && newValue == true {
+              focusedField = .search
+            }
+          }
+          .onChange(of: selectedItem) { _, newItem in
+            handleSelectionChange(newItem: newItem, proxy: proxy)
+          }
         }
       }
-      .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
-      .onAppear {
-        // Use persisted focus state from viewState if available
-        if let initialFocus = viewState.lastKnownFocus {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            if focusedField == nil {
-              focusedField = initialFocus
+    }
+  }
+
+  private func handleSelectionChange(newItem: T?, proxy: ScrollViewProxy) {
+    selectionTask?.cancel()
+    selectionTask = Task {
+      do {
+        try await Task.sleep(nanoseconds: 100_000_000)
+        guard !Task.isCancelled else { return }
+
+        if let item = newItem {
+          await MainActor.run {
+            withAnimation {
+              proxy.scrollTo(item.id, anchor: .center)
+              let newFocus: ListViewFocusTarget = .item(AnyHashable(item.id))
+              focusedField = newFocus
             }
           }
-        } else if let firstItem = items.first {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            if focusedField == nil {
-              focusedField = .item(AnyHashable(firstItem.id))
-            }
-          }
-        } else if searchConfig != nil {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            if focusedField == nil {
+        } else {
+          if searchConfig != nil {
+            await MainActor.run {
               focusedField = .search
             }
           }
         }
+      } catch is CancellationError {
+      } catch {
+        print("Error during selection debounce sleep: \(error)")
       }
+    }
+  }
+
+  var body: some View {
+    NavigationSplitView {
+      listColumnContent
+        .onChange(of: focusedField) { _, newValue in
+          viewState.lastKnownFocus = newValue
+          if newValue != .search {
+            searchFocused = false
+          }
+        }
+        .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
+        .onAppear { setupInitialFocus() }
     } detail: {
       if let selected = selectedItem {
         detail(selected)
@@ -261,16 +237,14 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
       return .handled
     }
     .onKeyPress(.upArrow) {
-      // If focus is on search, do nothing
       if focusedField == .search {
-        return .handled  // Keep focus in search field
+        return .handled
       }
-      // Otherwise, perform normal upward navigation
       selectPreviousItem()
       return .handled
     }
     .onKeyPress(.escape) {
-      if focusedField == ListViewFocusTarget.search && !viewState.searchText.isEmpty {  // Read from viewState
+      if focusedField == ListViewFocusTarget.search && !viewState.searchText.isEmpty {
         DispatchQueue.main.async {
           viewState.searchText = ""
         }
@@ -283,7 +257,6 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
       return .ignored
     }
     .onKeyPress(.return) {
-      // Revert check to use pattern matching and casting
       if case .item(let itemIdHashable) = focusedField,
         let itemId = itemIdHashable.base as? T.ID,
         let currentItem = filteredItems.first(where: { $0.id == itemId })
@@ -301,6 +274,22 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
         }
       }
       return .ignored
+    }
+  }
+
+  private func setupInitialFocus() {
+    if let initialFocus = viewState.lastKnownFocus {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        if focusedField == nil { focusedField = initialFocus }
+      }
+    } else if let firstItem = items.first {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        if focusedField == nil { focusedField = .item(AnyHashable(firstItem.id)) }
+      }
+    } else if searchConfig != nil {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        if focusedField == nil { focusedField = .search }
+      }
     }
   }
 }

@@ -31,55 +31,62 @@ struct ErrorView: View {
 
     // Prominent style view body with actions
     private var prominentBody: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: "exclamationmark.octagon.fill")
+        VStack(alignment: .leading, spacing: 10) { // Increased spacing
+            HStack(spacing: 8) { // Added spacing
+                Image(systemName: "exclamationmark.triangle.fill") // Changed icon
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 20, height: 20)
+                    .frame(width: 22, height: 22) // Slightly larger icon
                     .foregroundColor(.red)
                 
                 Text(title ?? "Error")
                     .font(.headline)
-                    .foregroundColor(.red)
+                    .foregroundColor(.primary) // Use primary color for title text
             }
 
             if let description = error.errorDescription {
                 Text(description)
                     .font(.body)
+                    .foregroundColor(.primary) // Use primary for description too
             }
 
             if let recovery = error.recoverySuggestion {
+                Divider().padding(.vertical, 4) // Add divider
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Suggestion:")
                         .font(.caption.weight(.semibold))
+                        .foregroundColor(.secondary)
                     Text(recovery)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                .padding(.top, 4)
             }
             
             // Display actions if provided
             if let actions = actions, !actions.isEmpty {
-                HStack(spacing: 8) {
+                // Add divider if recovery suggestion was also present
+                if error.recoverySuggestion != nil { Divider().padding(.vertical, 4) }
+                else { Spacer(minLength: 10) } // Add space otherwise
+                
+                HStack(spacing: 12) { // Increased button spacing
                     Spacer() // Push buttons to the right
                     ForEach(actions.indices, id: \.self) { index in
                         Button(actions[index].label) {
                             actions[index].action()
                         }
-                        // Optionally add styling like .buttonStyle(.bordered)
+                        .buttonStyle(.bordered) // Add some default styling
+                        .controlSize(.small)  // Make buttons smaller
                     }
                 }
-                .padding(.top, 8)
             }
         }
         .padding()
-        .background(Color.red.opacity(0.1))
+        // Remove background, keep border
+        // .background(Color.red.opacity(0.1))
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                .stroke(Color.red, lineWidth: 1) // Use solid red border
         )
     }
     

@@ -6,6 +6,7 @@ struct ImageListView: View {
   @Binding var images: [DockerImage]
   @Binding var searchFocused: Bool
   @Binding var selectedImage: DockerImage?
+  let manager: DockerManager
 
   private var imageSearchConfig: SearchConfiguration<DockerImage> {
     SearchConfiguration(
@@ -46,6 +47,8 @@ struct ImageListView: View {
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
       searchConfig: imageSearchConfig,
+      listError: manager.imageListError,
+      listErrorTitle: "Failed to Load Images",
       searchFocused: $searchFocused
     ) { image in
       // Type erase the content view

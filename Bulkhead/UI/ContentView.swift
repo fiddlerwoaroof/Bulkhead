@@ -23,41 +23,24 @@ struct ContentView: View {
   }
     
     private var containerListView: some View {
-        ZStack {
-          ContainerListView(
-            containers: $manager.containers,
-            selectedContainer: $selectedContainer,
-            searchFocused: $searchFocused,
-            backgroundColor: backgroundColor,
-            shadowColor: shadowColor
-          )
-          
-          // Overlay ErrorView if container list fetch failed
-          if let error = manager.containerListError {
-            ErrorView(error: error, title: "Failed to Load Containers")
-              .padding()
-              .frame(maxWidth: 400)
-          }
-        }
+      ContainerListView(
+          containers: $manager.containers,
+          selectedContainer: $selectedContainer,
+          searchFocused: $searchFocused,
+          backgroundColor: backgroundColor,
+          shadowColor: shadowColor
+      )
     }
     
     private var imageListView: some View {
-        ZStack {
-          ImageListView(
-            backgroundColor: backgroundColor,
-            shadowColor: shadowColor,
-            images: $manager.images,
-            searchFocused: $searchFocused,
-            selectedImage: $selectedImage
-          )
-          
-          // Overlay ErrorView if image list fetch failed
-          if let error = manager.imageListError {
-            ErrorView(error: error, title: "Failed to Load Images")
-              .padding()
-              .frame(maxWidth: 400)
-          }
-        }
+      ImageListView(
+        backgroundColor: backgroundColor,
+        shadowColor: shadowColor,
+        images: $manager.images,
+        searchFocused: $searchFocused,
+        selectedImage: $selectedImage,
+        manager: manager
+      )
     }
 
   var body: some View {

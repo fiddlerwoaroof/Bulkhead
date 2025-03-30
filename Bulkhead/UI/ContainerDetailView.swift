@@ -73,30 +73,50 @@ struct ContainerDetailView: View {
   @StateObject private var model = ContainerDetailModel()
   @State private var selectedPath: String?
 
+  // Determine if there's a relevant connection error from the manager
+  private var connectionError: DockerError? {
+      if case .connectionFailed = manager.containerListError { return manager.containerListError }
+      if case .socketReadError = manager.containerListError { return manager.containerListError }
+      if case .socketWriteError = manager.containerListError { return manager.containerListError }
+      if case .timeoutOccurred = manager.containerListError { return manager.containerListError }
+      if case .noExecutor = manager.containerListError { return manager.containerListError }
+      return nil // No relevant connection error
+  }
+
   var body: some View {
-    VSplitView {
-      ScrollView {
-        VStack(alignment: .leading, spacing: 8) {
-          if let base = model.base {
-            detailContent(base, enriched: model.enriched)
-          } else if model.isLoading {
-            ProgressView("Loading container details...")
-          } else if let error = model.error {
-            ErrorView(error: error, title: "Failed to Load Details")
-                .padding()
+    // Check for global connection error first
+    if let connError = connectionError {
+        ErrorView(error: connError, title: "Connection Error")
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    } else {
+        // Original content if no connection error
+        VSplitView {
+          ScrollView {
+            VStack(alignment: .leading, spacing: 8) {
+              if let error = model.error { // Local model error (e.g., enrich failed)
+                 ErrorView(error: error, title: "Failed to Load Details")
+                    .padding()
+              } else if let base = model.base { // Use base container as fallback
+                detailContent(base, enriched: model.enriched)
+              } else if model.isLoading {
+                ProgressView("Loading container details...")
+              } else {
+                 // Should not happen if base is always set, but provides fallback
+                 Text("Select a container.").foregroundColor(.secondary)
+              }
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .topLeading)
           }
+          
+          FilesystemBrowserView(container: container, initialPath: selectedPath ?? "/")
+            .frame(minHeight: 200)
         }
         .padding()
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-
-      }
-
-      FilesystemBrowserView(container: container, initialPath: selectedPath ?? "/")
-        .frame(minHeight: 200)
-    }
-    .padding()
-    .task(id: container.id) {
-      await model.load(for: container, using: manager)
+        .task(id: container.id) {
+          await model.load(for: container, using: manager)
+        }
     }
   }
 
