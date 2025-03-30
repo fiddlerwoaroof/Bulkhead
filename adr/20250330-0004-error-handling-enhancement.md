@@ -69,22 +69,15 @@ We will enhance the error handling system across the application by:
 
 ## Implementation Checklist
 
-- [ ] **Expand `DockerError` Enum (`DockerExecutor.swift`)**
-    - [ ] Add cases for connection errors (e.g.,
-          `connectionFailed(Error)`).
-    - [ ] Add cases for API errors (e.g., `apiError(statusCode: Int,
-          message: String)`).
-    - [ ] Add cases for parsing errors (e.g.,
-          `responseParsingFailed(Error)`).
-    - [ ] Add cases for timeout errors (e.g., `timeoutOccurred`).
-    - [ ] Review existing cases (`noExecutor`, `execFailed`,
-          `invalidResponse`, `containerNotRunning`) for clarity and
-          specificity.
-- [ ] **Conform `DockerError` to `LocalizedError`**
-    - [ ] Implement `errorDescription` for each case, providing a
-          user-friendly summary.
-    - [ ] Implement `recoverySuggestion` for relevant cases (e.g.,
-          check socket path, restart Docker, check container status).
+- [x] **Expand `DockerError` Enum (`DockerExecutor.swift`)**
+    - [x] Add cases for connection errors (e.g., `connectionFailed(Error)`).
+    - [x] Add cases for API errors (e.g., `apiError(statusCode: Int, message: String)`).
+    - [x] Add cases for parsing errors (e.g., `responseParsingFailed(Error)`).
+    - [x] Add cases for timeout errors (e.g., `timeoutOccurred`).
+    - [x] Review existing cases (`noExecutor`, `execFailed`, `invalidResponse`, `containerNotRunning`) for clarity and specificity.
+- [x] **Conform `DockerError` to `LocalizedError`**
+    - [x] Implement `errorDescription` for each case, providing a user-friendly summary.
+    - [x] Implement `recoverySuggestion` for relevant cases (e.g., check socket path, restart Docker, check container status).
 - [ ] **Create `ErrorView.swift`**
     - [ ] Design a SwiftUI view to display an error.
     - [ ] Include parameters for title (optional), `errorDescription`,
@@ -95,7 +88,7 @@ We will enhance the error handling system across the application by:
     - [ ] Modify `catch` blocks in `DockerManager`, detail view models (`ContainerDetailModel`, `ImageDetailModel`), and potentially `FilesystemBrowserView` to:
         - Catch specific error types where possible.
         - Log detailed underlying errors if needed.
-        - Store the user-facing `DockerError` (conforming to `LocalizedError`) in a `@Published` property for the UI.
+        - Store the user-facing `DockerError` (conforming to `LocalizedError`) in a `@Published`    property for the UI.
         - [ ] Ensure error responses are not cached (e.g., in `DockerManager.enrichContainer`).
 - [ ] **Integrate `ErrorView` into UI**
     - [ ] Replace generic `Text("Error: ...")` displays in detail
