@@ -48,6 +48,7 @@ struct ErrorView: View {
                 Text(description)
                     .font(.body)
                     .foregroundColor(.primary) // Use primary for description too
+                    .fixedSize(horizontal: false, vertical: true) // Ensure text wraps
             }
 
             if let recovery = error.recoverySuggestion {
@@ -59,6 +60,7 @@ struct ErrorView: View {
                     Text(recovery)
                         .font(.caption)
                         .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true) // Ensure text wraps
                 }
             }
             
@@ -81,8 +83,9 @@ struct ErrorView: View {
             }
         }
         .padding()
+        .frame(maxWidth: 600) // Apply max width constraint here
         // Remove background, keep border
-        // .background(Color.red.opacity(0.1))
+        .background(.thickMaterial)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
