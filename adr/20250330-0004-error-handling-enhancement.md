@@ -92,13 +92,11 @@ We will enhance the error handling system across the application by:
     - [ ] Style the view appropriately (e.g., using standard alert
           colors/icons).
 - [ ] **Update Error Catching Logic**
-    - [ ] Modify `catch` blocks in `DockerManager`, detail view models
-          (`ContainerDetailModel`, `ImageDetailModel`), and
-          potentially `FilesystemBrowserView` to:
+    - [ ] Modify `catch` blocks in `DockerManager`, detail view models (`ContainerDetailModel`, `ImageDetailModel`), and potentially `FilesystemBrowserView` to:
         - Catch specific error types where possible.
         - Log detailed underlying errors if needed.
-        - Store the user-facing `DockerError` (conforming to
-          `LocalizedError`) in a `@Published` property for the UI.
+        - Store the user-facing `DockerError` (conforming to `LocalizedError`) in a `@Published` property for the UI.
+        - [ ] Ensure error responses are not cached (e.g., in `DockerManager.enrichContainer`).
 - [ ] **Integrate `ErrorView` into UI**
     - [ ] Replace generic `Text("Error: ...")` displays in detail
           views with `ErrorView(error: publishedErrorProperty)`.

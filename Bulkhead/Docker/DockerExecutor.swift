@@ -316,11 +316,66 @@ class DockerExecutor {
   }
 }
 
-enum DockerError: Error {
-  case noExecutor
-  case execFailed(code: Int)
-  case invalidResponse(String)
-  case containerNotRunning
+enum DockerError: Error, LocalizedError {
+  // Core Errors
+  case noExecutor // DockerManager couldn't create an executor (likely invalid path)
+  case containerNotRunning // Attempted action on a non-running container
+  
+  // Connection Errors
+  case connectionFailed(Error) // Failed to connect to the Docker socket
+  case socketReadError(Error) // Error reading data from the socket
+  case socketWriteError(Error) // Error writing data to the socket
+  case timeoutOccurred // Operation timed out waiting for socket response
+
+  // API & Response Errors
+  case apiError(statusCode: Int, message: String) // Docker API returned an error status code
+  case invalidResponse(String) // General invalid/unexpected response from API
+  case responseParsingFailed(Error) // Failed to decode JSON or parse response data
+
+  // Execution Errors
+  case execFailed(code: Int) // `docker exec` command finished with a non-zero exit code
+
+  // MARK: - LocalizedError Conformance
+
+  var errorDescription: String? {
+    switch self {
+    case .noExecutor:
+      return "Could not connect to Docker. The configured socket path may be invalid."
+    case .containerNotRunning:
+      return "The operation could not be completed because the container is not running."
+    case .connectionFailed(let underlyingError):
+      return "Failed to connect to the Docker socket: \(underlyingError.localizedDescription)"
+    case .socketReadError(let underlyingError):
+      return "An error occurred while reading from the Docker socket: \(underlyingError.localizedDescription)"
+    case .socketWriteError(let underlyingError):
+      return "An error occurred while writing to the Docker socket: \(underlyingError.localizedDescription)"
+    case .timeoutOccurred:
+      return "The operation timed out while waiting for a response from the Docker daemon."
+    case .apiError(let statusCode, let message):
+      return "Docker API Error (\(statusCode)): \(message)"
+    case .invalidResponse(let details):
+      return "Received an invalid or unexpected response from the Docker API: \(details)"
+    case .responseParsingFailed(let underlyingError):
+      return "Failed to parse the response from the Docker API: \(underlyingError.localizedDescription)"
+    case .execFailed(let code):
+      return "The command executed in the container failed with exit code \(code)."
+    }
+  }
+
+  var recoverySuggestion: String? {
+    switch self {
+    case .noExecutor, .connectionFailed:
+      return "Please check the Docker socket path in Settings and ensure Docker (or your Docker provider like Colima/Rancher Desktop) is running."
+    case .containerNotRunning:
+      return "Please start the container before attempting this operation."
+    case .socketReadError, .socketWriteError, .timeoutOccurred, .apiError:
+      return "Please ensure the Docker daemon is running and responsive. You may need to restart Docker."
+    case .invalidResponse, .responseParsingFailed:
+      return "An unexpected issue occurred while communicating with Docker. If the problem persists, please report it."
+    case .execFailed:
+      return "Check the command being executed and the container's logs for more details."
+    }
+  }
 }
 
 extension DockerContainer {
