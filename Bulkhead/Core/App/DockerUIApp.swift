@@ -1,4 +1,7 @@
 import SwiftUI
+import BulkheadCore
+import BulkheadFeatures
+import BulkheadUI
 
 @main
 struct DockerUIApp: App {

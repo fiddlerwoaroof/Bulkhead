@@ -1,5 +1,6 @@
 import SwiftTerm
 import SwiftUI
+import BulkheadCore
 
 final class TerminalSessionManager {
   let terminal: Terminal
@@ -19,9 +20,7 @@ final class TerminalSessionManager {
         let logs = try fetcher.fetchLogs(for: self.containerID, stream: .stdout)
 
         DispatchQueue.main.async {
-          for chunk in logs {
-            self.terminal.feed(byteArray: chunk)
-          }
+          self.terminal.feed(byteArray: logs)
         }
       } catch {
         DispatchQueue.main.async {

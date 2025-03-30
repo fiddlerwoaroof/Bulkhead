@@ -165,7 +165,7 @@ class SocketConnection {
   }
 }
 
-class DockerExecutor {
+public class DockerExecutor {
   let socketPath: String
 
   init(socketPath: String) {
@@ -237,7 +237,7 @@ class DockerExecutor {
     _ = try makeRequest(path: "/v1.41/containers/\(id)/stop", method: "POST")
   }
 
-  func exec(containerId: String, command: [String], addCarriageReturn: Bool = true) throws -> Data {
+  public func exec(containerId: String, command: [String], addCarriageReturn: Bool = true) throws -> Data {
     // Check container state first
     let containerData = try makeRequest(path: "/v1.41/containers/\(containerId)/json")
     let json = try JSONSerialization.jsonObject(with: containerData, options: []) as? [String: Any]
@@ -312,31 +312,29 @@ class DockerExecutor {
       case exitCode = "ExitCode"
     }
   }
+
+  public var executor: DockerExecutor? {
+    socketPath.isEmpty ? nil : DockerExecutor(socketPath: socketPath)
+  }
 }
 
-class DockerManager: ObservableObject {
-  @Published var containers: [DockerContainer] = []
-  @Published var images: [DockerImage] = []
-  @Published var socketPath: String =
-    UserDefaults.standard.string(forKey: "dockerHostPath")
-    ?? DockerEnvironmentDetector.detectDockerHostPath() ?? ""
-  @Published var refreshInterval: Double =
-    UserDefaults.standard.double(forKey: "refreshInterval") == 0
-    ? 10 : UserDefaults.standard.double(forKey: "refreshInterval")
+public class DockerManager: ObservableObject {
+  @Published public var containers: [DockerContainer] = []
+  @Published public var images: [DockerImage] = []
+  @Published public var socketPath: String = UserDefaults.standard.string(forKey: "dockerHostPath") ?? DockerEnvironmentDetector.detectDockerHostPath() ?? ""
+  @Published public var refreshInterval: Double = UserDefaults.standard.double(forKey: "refreshInterval") == 0 ? 10 : UserDefaults.standard.double(forKey: "refreshInterval")
+  @Published public var isLoading = false
+  @Published public var error: DockerError?
 
-  var executor: DockerExecutor? {
+  public var executor: DockerExecutor? {
     socketPath.isEmpty ? nil : DockerExecutor(socketPath: socketPath)
   }
 
   private var timer: Timer?
   private var enrichmentCache: [String: (container: DockerContainer, timestamp: Date)] = [:]
-  private let enrichmentTTL: TimeInterval = 10
+  private let enrichmentTTL: TimeInterval = 60
 
-  init() {
-    if socketPath.isEmpty, let detected = DockerEnvironmentDetector.detectDockerHostPath() {
-      socketPath = detected
-      saveDockerHostPath()
-    }
+  public init() {
     startAutoRefresh()
   }
 
@@ -344,7 +342,7 @@ class DockerManager: ObservableObject {
     LogManager.shared.addLog(message, level: level, source: "docker-manager")
   }
 
-  func fetchContainers() {
+  public func fetchContainers() {
     tryCommand { [weak self] in
       guard let executor = self?.executor else { return }
       let list = try executor.listContainers()
@@ -354,7 +352,38 @@ class DockerManager: ObservableObject {
     }
   }
 
-  func enrichContainer(_ container: DockerContainer) async throws -> DockerContainer {
+  public func fetchImages() {
+    tryCommand { [weak self] in
+      guard let executor = self?.executor else { return }
+      let list = try executor.listImages()
+      DispatchQueue.main.async {
+        self?.images = list
+      }
+    }
+  }
+
+  public func startContainer(id: String) {
+    tryCommand { [weak self] in
+      try self?.executor?.startContainer(id: id)
+    }
+  }
+
+  public func stopContainer(id: String) {
+    tryCommand {
+      [weak self]
+      in try self?.executor?.stopContainer(id: id)
+    }
+  }
+
+  public func removeContainer(id: String) {
+    // Implementation needed
+  }
+
+  public func removeImage(id: String) {
+    // Implementation needed
+  }
+
+  public func enrichContainer(_ container: DockerContainer) async throws -> DockerContainer {
     guard let executor else { throw DockerError.noExecutor }
 
     let now = Date()
@@ -375,30 +404,7 @@ class DockerManager: ObservableObject {
     enrichmentCache.removeAll()
   }
 
-  func fetchImages() {
-    tryCommand { [weak self] in
-      guard let executor = self?.executor else { return }
-      let list = try executor.listImages()
-      DispatchQueue.main.async {
-        self?.images = list
-      }
-    }
-  }
-
-  func startContainer(id: String) {
-    tryCommand { [weak self] in
-      try self?.executor?.startContainer(id: id)
-    }
-  }
-
-  func stopContainer(id: String) {
-    tryCommand {
-      [weak self]
-      in try self?.executor?.stopContainer(id: id)
-    }
-  }
-
-  func inspectImage(id: String) async throws -> ImageInspection {
+  public func inspectImage(id: String) async throws -> ImageInspection {
     guard let executor else { throw DockerError.noExecutor }
     return try executor.inspectImage(id: id)
   }
@@ -432,11 +438,18 @@ class DockerManager: ObservableObject {
   }
 }
 
-enum DockerError: Error {
+public enum DockerError: Error {
   case noExecutor
-  case execFailed(code: Int)
-  case invalidResponse(String)
   case containerNotRunning
+  case invalidResponse(_: String)
+  case invalidData
+  case invalidPath
+  case invalidRequest
+  case invalidState
+  case invalidContainer
+  case invalidImage
+  case invalidConfig
+  case execFailed(code: Int)
 }
 
 extension DockerContainer {

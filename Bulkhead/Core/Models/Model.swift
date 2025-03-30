@@ -1,19 +1,19 @@
 import Foundation
 
-struct DockerContainer: Identifiable, Codable, Hashable {
-  let id: String
-  let names: [String]
-  let image: String
-  let status: String
+public struct DockerContainer: Identifiable, Codable, Hashable {
+  public let id: String
+  public let names: [String]
+  public let image: String
+  public let status: String
 
   // Optional detail fields
-  var created: Date?
-  var command: String?
-  var ports: [PortBinding] = []
-  var mounts: [MountInfo] = []
-  var env: [String] = []
-  var health: String?
-  var state: ContainerState?
+  public var created: Date?
+  public var command: String?
+  public var ports: [PortBinding] = []
+  public var mounts: [MountInfo] = []
+  public var env: [String] = []
+  public var health: String?
+  public var state: ContainerState?
 
   enum CodingKeys: String, CodingKey {
     case id = "Id"
@@ -22,7 +22,7 @@ struct DockerContainer: Identifiable, Codable, Hashable {
     case status = "Status"
   }
 
-  var healthStatus: HealthStatus {
+  public var healthStatus: HealthStatus {
     if let health = health?.lowercased() {
       switch health {
       case "healthy": return .healthy
@@ -35,7 +35,7 @@ struct DockerContainer: Identifiable, Codable, Hashable {
     return .none
   }
 
-  var containerState: ContainerState {
+  public var containerState: ContainerState {
     let lowercasedStatus = status.lowercased()
     if lowercasedStatus.contains("up") {
       return .running
@@ -55,11 +55,11 @@ struct DockerContainer: Identifiable, Codable, Hashable {
   }
 }
 
-struct PortBinding: Codable, Hashable {
-  let ip: String?
-  let privatePort: Int
-  let publicPort: Int?
-  let type: String
+public struct PortBinding: Codable, Hashable {
+  public let ip: String?
+  public let privatePort: Int
+  public let publicPort: Int?
+  public let type: String
 
   enum CodingKeys: String, CodingKey {
     case ip = "IP"
@@ -69,10 +69,10 @@ struct PortBinding: Codable, Hashable {
   }
 }
 
-struct MountInfo: Codable, Hashable {
-  let source: String
-  let destination: String
-  let type: String
+public struct MountInfo: Codable, Hashable {
+  public let source: String
+  public let destination: String
+  public let type: String
 
   enum CodingKeys: String, CodingKey {
     case source = "Source"
@@ -81,24 +81,24 @@ struct MountInfo: Codable, Hashable {
   }
 }
 
-struct DockerImage: Identifiable, Codable, Hashable {
-  var id: String { Id }
-  let Id: String
-  let RepoTags: [String]?
-  let Created: Int
-  let Size: Int
+public struct DockerImage: Identifiable, Codable, Hashable {
+  public var id: String { Id }
+  public let Id: String
+  public let RepoTags: [String]?
+  public let Created: Int
+  public let Size: Int
 }
 
-struct ImageInspection: Codable {
-  let Id: String
-  let Parent: String?
-  let RepoTags: [String]?
-  let RepoDigests: [String]?
-  let Created: String  // Docker returns ISO8601 format
-  let Size: Int64
-  let VirtualSize: Int64
-  let Labels: [String: String]?
-  let Config: ImageConfig
+public struct ImageInspection: Codable {
+  public let Id: String
+  public let Parent: String?
+  public let RepoTags: [String]?
+  public let RepoDigests: [String]?
+  public let Created: String  // Docker returns ISO8601 format
+  public let Size: Int64
+  public let VirtualSize: Int64
+  public let Labels: [String: String]?
+  public let Config: ImageConfig
   
   enum CodingKeys: String, CodingKey {
     case Id
@@ -112,22 +112,22 @@ struct ImageInspection: Codable {
     case Config
   }
   
-  var createdDate: Date? {
+  public var createdDate: Date? {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     return formatter.date(from: Created)
   }
 }
 
-struct ImageConfig: Codable {
-  let entrypoint: [String]?
-  let cmd: [String]?
-  let workingDir: String?
-  let env: [String]?
-  let labels: [String: String]?
-  let volumes: [String: [String: String]]?
-  let exposedPorts: [String: [String: String]]?
-  let layers: [String]?
+public struct ImageConfig: Codable {
+  public let entrypoint: [String]?
+  public let cmd: [String]?
+  public let workingDir: String?
+  public let env: [String]?
+  public let labels: [String: String]?
+  public let volumes: [String: [String: String]]?
+  public let exposedPorts: [String: [String: String]]?
+  public let layers: [String]?
   
   enum CodingKeys: String, CodingKey {
     case entrypoint = "Entrypoint"
@@ -141,8 +141,8 @@ struct ImageConfig: Codable {
   }
 }
 
-class DockerEnvironmentDetector {
-  static func detectDockerHostPath() -> String? {
+public class DockerEnvironmentDetector {
+  public static func detectDockerHostPath() -> String? {
     let potentialPaths = [
       "\(NSHomeDirectory())/.rd/docker.sock",
       "\(NSHomeDirectory())/.colima/docker.sock",
@@ -154,7 +154,7 @@ class DockerEnvironmentDetector {
   }
 }
 
-enum ContainerState: String {
+public enum ContainerState: String {
   case created
   case running
   case paused
@@ -164,7 +164,7 @@ enum ContainerState: String {
   case dead
 }
 
-enum HealthStatus: String {
+public enum HealthStatus: String {
   case healthy
   case unhealthy
   case starting

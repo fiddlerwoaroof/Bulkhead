@@ -1,4 +1,5 @@
 import SwiftUI
+import BulkheadCore
 
 struct ImageDetailView: View {
   let image: DockerImage

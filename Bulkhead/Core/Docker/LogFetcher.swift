@@ -1,14 +1,14 @@
 import Foundation
 
-final class LogFetcher {
+public final class LogFetcher {
   private let executor: DockerExecutor
 
-  init(executor: DockerExecutor) {
+  public init(executor: DockerExecutor) {
     self.executor = executor
   }
 
   /// Fetches logs from a container, auto-detecting whether to use multiplexed parsing or raw.
-  func fetchLogs(for containerID: String, tail: Int = 100, stream: DockerLogStreamType = .stdout)
+  public func fetchLogs(for containerID: String, tail: Int = 100, stream: DockerLogStreamType = .stdout)
     throws -> [[UInt8]]
   {
     let isTTY = try executor.isTTYEnabled(forContainer: containerID)

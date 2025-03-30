@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import BulkheadCore
 
 class LogTableViewCoordinator: NSObject, NSTableViewDataSource, NSTableViewDelegate {
   var entries: [LogEntry] = [] {

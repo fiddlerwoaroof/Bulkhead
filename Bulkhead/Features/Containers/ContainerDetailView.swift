@@ -1,4 +1,5 @@
 import SwiftUI
+import BulkheadCore
 
 struct FilesystemLocation: Hashable {
   let container: DockerContainer

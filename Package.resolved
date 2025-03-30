@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "swiftterm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/krzyzanowskim/SwiftTerm",
+      "state" : {
+        "branch" : "master",
+        "revision" : "35f80d52cc1681f0b0000679cdb31b3d80462d3f"
+      }
+    }
+  ],
+  "version" : 2
+}
