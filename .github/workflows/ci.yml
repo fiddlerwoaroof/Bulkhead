@@ -2,16 +2,20 @@ name: CI and Release
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  push:
+    branches:
+      - main
     tags:
       - 'v*'  # Trigger on version tags
+  pull_request:
+    branches:
+      - main
+
+env:
+  SCHEME: "Bulkhead"  # Replace with your actual scheme name
 
 jobs:
-  build:
-    name: Build and analyse default scheme using xcodebuild command
+  build_debug:
+    name: Build and analyze Debug scheme
     runs-on: macos-15
 
     steps:
@@ -20,48 +24,32 @@ jobs:
       - name: Build
         run: |
           xcodebuild clean build analyze \
-            -scheme "$scheme" \
+            -scheme "${{ env.SCHEME }}" \
             -workspace "Bulkhead.xcodeproj/project.xcworkspace" \
             -configuration Debug \
             -destination 'platform=macOS,arch=arm64' \
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty && exit ${PIPESTATUS[0]}
 
-  release:
-    name: Release
-    runs-on: macos-15
-    needs: build
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-  build:
-    name: Build and analyse default scheme using xcodebuild command
+  build_release:
+    name: Build and analyze Release scheme
     runs-on: macos-15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build
+      
+      - name: Create Archive
         run: |
-          xcodebuild clean build analyze \
-            -scheme "$scheme" \
+          xcodebuild archive \
+            -scheme "${{ env.SCHEME }}" \
             -workspace "Bulkhead.xcodeproj/project.xcworkspace" \
             -configuration Release \
-            -destination 'platform=macOS,arch=arm64' \
+            -destination 'generic/platform=macOS' \
+            -archivePath ./Bulkhead.xcarchive \
             | xcpretty && exit ${PIPESTATUS[0]}
-
-
-      - name: Get Build Products Directory
-        id: build_dir
-        run: |
-          export BUILT_PRODUCTS_DIR=$(xcodebuild -workspace "Bulkhead.xcodeproj/project.xcworkspace" \
-            -scheme "$scheme" \
-            -configuration Release \
-            -showBuildSettings | grep BUILT_PRODUCTS_DIR | head -1 | awk '{print $3}')
-          echo "BUILT_PRODUCTS_DIR=$BUILT_PRODUCTS_DIR" >> $GITHUB_ENV
+          
+          echo "ARCHIVE_PATH=$(pwd)/Bulkhead.xcarchive" >> $GITHUB_ENV
 
       - name: Code Sign
         env:
@@ -70,29 +58,82 @@ jobs:
           TEAM_ID: ${{ secrets.TEAM_ID }}
         run: |
           xcodebuild -exportArchive \
-            -archivePath ${{ env.BUILT_PRODUCTS_DIR }}/Bulkhead.xcarchive \
+            -archivePath ${{ env.ARCHIVE_PATH }} \
             -exportOptionsPlist exportOptions.plist \
-            -exportPath ${{ env.BUILT_PRODUCTS_DIR }} \
+            -exportPath ./export \
             CODE_SIGN_IDENTITY="Developer ID Application: Edward Langley" \
             PROVISIONING_PROFILE_SPECIFIER="Developer ID Application: Edward Langley"
+          
+          echo "EXPORT_PATH=$(pwd)/export" >> $GITHUB_ENV
+
+      - name: Notarize App
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+        run: |
+          # Zip the application for notarization submission
+          cd ${{ env.EXPORT_PATH }}
+          zip -r BulkheadForNotarization.zip Bulkhead.app
+          
+          # Submit for notarization
+          xcrun notarytool submit BulkheadForNotarization.zip \
+            --apple-id "$APPLE_ID" \
+            --password "$APP_SPECIFIC_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+
+      - name: Staple Notarization Ticket
+        run: |
+          echo "Stapling notarization ticket to the app..."
+          xcrun stapler staple ${{ env.EXPORT_PATH }}/Bulkhead.app
 
       - name: Zip App
         run: |
-          cd ${{ env.BUILT_PRODUCTS_DIR }}
-          # Extract the app from the xcarchive
-          APP_PATH="${{ env.BUILT_PRODUCTS_DIR }}/Bulkhead.xcarchive/Products/Applications/Bulkhead.app"
-          zip -r Bulkhead.app.zip "$APP_PATH"
+          cd ${{ env.EXPORT_PATH }}
+          zip -r ${{ env.EXPORT_PATH }}/Bulkhead.app.zip ${{ env.EXPORT_PATH }}/Bulkhead.app
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Bulkhead
-          path: ${{ env.BUILT_PRODUCTS_DIR }}/Bulkhead.app.zip
+          path: ${{ env.EXPORT_PATH }}/Bulkhead.app.zip
 
+  release:
+    name: Release
+    runs-on: macos-15
+    needs: build_release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: Bulkhead
+          path: ./
+      
       - name: Create Draft Release
+        id: create_release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           draft: true
           prerelease: false
+      
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./Bulkhead.app.zip
+          asset_name: Bulkhead.app.zip
+          asset_content_type: application/zip
