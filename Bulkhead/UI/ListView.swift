@@ -21,7 +21,6 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   @ViewBuilder var content: (T) -> Master
   @ViewBuilder var detail: (T) -> Detail
   var searchConfig: SearchConfiguration<T>? = nil
-  var initialFocus: FocusField? = nil
 
   // Define focus states (reverting to AnyHashable approach)
   enum FocusField: Hashable {
@@ -92,32 +91,32 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   private func itemView(for item: T) -> some View {
     let isSelected = selectedItem?.id == item.id
 
+    // Revert to HStack structure
     return HStack {
-      content(item)
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        // Use a slightly different background for selected item
-        .background(isSelected ? backgroundColor.opacity(0.8) : backgroundColor)
-        .cornerRadius(10)
-        .overlay(
-          // Keep stroke for selection for now, but could change to focus
-          // Or remove stroke and rely solely on system focus ring + background change
-          RoundedRectangle(cornerRadius: 10)
-            // Stroke based on selection OR focus? Let's try SELECTION for clarity
-            // .stroke(isFocused ? Color.accentColor : .clear, lineWidth: 2)
+        content(item)
+            .padding() // Padding inside the background
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    // Apply background and shape styling to the HStack
+    .background(isSelected ? backgroundColor.opacity(0.8) : backgroundColor)
+    .cornerRadius(10)
+    .overlay(
+        RoundedRectangle(cornerRadius: 10)
             .stroke(isSelected ? Color.accentColor.opacity(0.7) : .clear, lineWidth: 1.5)
-        )
-        .shadow(color: shadowColor, radius: 2, x: 0, y: 1)
-        .padding(.horizontal)
-        .id(item.id)
-        .accessibilityAddTraits(.isButton)
-        // Keep the focus state binding
-        .focused($focusedField, equals: .item(AnyHashable(item.id)))
-        .onTapGesture {
-          withAnimation {
+    )
+    .shadow(color: shadowColor, radius: 2, x: 0, y: 1)
+    // Modifiers applied to the HStack
+    .contentShape(Rectangle()) // Explicitly define the shape for interaction
+    .padding(.horizontal) // Padding outside the background/shadow for spacing
+    .id(item.id)
+    .accessibilityElement(children: .combine)
+    .accessibilityAddTraits(.isButton)
+    .focusable(true) // <<< Make the HStack itself focusable
+    .focused($focusedField, equals: .item(AnyHashable(item.id))) // Bind focus state
+    .onTapGesture { // Use tap gesture for selection
+        withAnimation {
             selectedItem = item
-            focusedField = .item(AnyHashable(item.id)) // Revert assignment
-          }
+            focusedField = .item(AnyHashable(item.id))
         }
     }
   }
@@ -194,14 +193,11 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
       .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
       .onAppear {
           DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-              if let focusTarget = initialFocus {
-                  focusedField = focusTarget
-              } else if focusedField == nil, let firstItem = filteredItems.first {
+              // Always use default logic: focus first item or search
+              if let firstItem = filteredItems.first {
                   focusedField = .item(AnyHashable(firstItem.id))
-              } else if focusedField == nil && filteredItems.isEmpty {
-                    if searchConfig != nil {
-                        focusedField = .search
-                    }
+              } else if searchConfig != nil {
+                  focusedField = .search
               }
           }
       }
