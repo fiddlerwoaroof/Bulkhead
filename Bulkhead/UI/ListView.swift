@@ -271,7 +271,9 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
     }
     .onKeyPress(.escape) {
       if focusedField == ListViewFocusTarget.search && !viewState.searchText.isEmpty {  // Read from viewState
-        viewState.searchText = ""  // Write to viewState
+        DispatchQueue.main.async {
+          viewState.searchText = ""
+        }
         return .handled
       }
       if focusedField != ListViewFocusTarget.search {
