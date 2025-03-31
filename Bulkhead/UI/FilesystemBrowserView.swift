@@ -103,10 +103,12 @@ struct FilesystemBrowserView: View {
   @EnvironmentObject var manager: DockerManager
   @State private var path = "/"
   @State private var entries: [FileEntry] = []
-  @State private var hoveredID: String?
+  @State private var hoveredEntry: FileEntry?
   @State private var currentTask: Task<Void, Never>?
   @State private var isExecuting = false
   @State private var fetchError: DockerError?
+    
+    var hoveredId: String? { hoveredEntry?.id }
 
   init(container: DockerContainer, initialPath: String? = nil) {
     self.container = container
@@ -179,7 +181,7 @@ struct FilesystemBrowserView: View {
                   FilesystemRow(
                     entry: entry,
                     isSelected: false,
-                    isHovered: hoveredID == entry.id
+                    isHovered: hoveredId == entry.id
                   )
                   .accessibilityAddTraits(.isButton)
                   .onTapGesture {
@@ -188,7 +190,7 @@ struct FilesystemBrowserView: View {
                     }
                   }
                   .onHover { hovering in
-                      hoveredID = entry.id
+                      hoveredEntry = entry
                   }
                 }
               }
@@ -211,10 +213,12 @@ struct FilesystemBrowserView: View {
         }
       }
     }
-    .onChange(of: hoveredID) { _, newValue in
+    .onChange(of: hoveredEntry) { _, newValue in
         DispatchQueue.main.async {
-            if (newValue != nil) {
-                NSCursor.pointingHand.push()
+            if let entry = newValue  {
+                if (entry.isDirectory) {
+                    NSCursor.pointingHand.push()
+                }
             } else {
                 NSCursor.pop()
                 
