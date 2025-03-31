@@ -118,7 +118,7 @@ class SocketConnection {
       throw error
     }
 
-    if Date().timeIntervalSince(startTime) >= timeout && response.range(of: Self.crlf2Data) == nil {
+    if Date().timeIntervalSince(startTime) >= timeout && !response.contains(Self.crlf2Data) {
       throw DockerError.timeoutOccurred
     }
 
@@ -437,7 +437,8 @@ enum DockerError: Error, LocalizedError, Equatable {
     switch self {
     case .noExecutor, .connectionFailed:
       return
-        "Please check the Docker socket path in Settings and ensure Docker (or your Docker provider like Colima/Rancher Desktop) is running."
+        "Please check the Docker socket path in Settings and ensure Docker" +
+        " (or your Docker provider like Colima/Rancher Desktop) is running."
     case .containerNotRunning:
       return "Please start the container before attempting this operation."
     case .socketReadError, .socketWriteError, .timeoutOccurred, .apiError:

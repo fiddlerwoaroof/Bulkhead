@@ -37,6 +37,7 @@ struct ErrorView: View {
           .scaledToFit()
           .frame(width: 22, height: 22)  // Slightly larger icon
           .foregroundColor(.red)
+          .accessibilityLabel("Error Icon")
 
         Text(title ?? "Error")
           .font(.headline)
@@ -100,6 +101,7 @@ struct ErrorView: View {
     HStack(spacing: 4) {
       Image(systemName: "exclamationmark.circle.fill")  // Smaller icon
         .foregroundColor(.red)
+        .accessibilityLabel("Error Icon")
 
       if let description = error.errorDescription {
         Text(description)

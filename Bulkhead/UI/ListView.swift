@@ -208,6 +208,7 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
           }
         }
       } catch is CancellationError {
+          // no action here
       } catch {
         print("Error during selection debounce sleep: \(error)")
       }
