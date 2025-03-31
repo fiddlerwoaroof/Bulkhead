@@ -55,7 +55,11 @@ struct ContainerLogsView: View {
 
   private var connectionError: DockerError? {
     if isGlobalErrorShowing {
-      return manager.containerListError ?? DockerError.connectionFailed(NSError(domain: "Bulkhead", code: -1, userInfo: [NSLocalizedDescriptionKey: "Docker connection unavailable."]))
+      return manager.containerListError
+        ?? DockerError.connectionFailed(
+          NSError(
+            domain: "Bulkhead", code: -1,
+            userInfo: [NSLocalizedDescriptionKey: "Docker connection unavailable."]))
     }
     if manager.executor == nil {
       return DockerError.noExecutor

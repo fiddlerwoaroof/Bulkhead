@@ -73,7 +73,7 @@ struct FilesystemRow: View {
       RoundedRectangle(cornerRadius: 8)
         .fill(
           isSelected
-          ? Color.accentColor.opacity(0.2) : isHovered ? Color.gray.opacity(0.05) : Color.clear)
+            ? Color.accentColor.opacity(0.2) : isHovered ? Color.gray.opacity(0.05) : Color.clear)
     )
     .contentShape(Rectangle())
   }
@@ -107,8 +107,8 @@ struct FilesystemBrowserView: View {
   @State private var currentTask: Task<Void, Never>?
   @State private var isExecuting = false
   @State private var fetchError: DockerError?
-    
-    var hoveredId: String? { hoveredEntry?.id }
+
+  var hoveredId: String? { hoveredEntry?.id }
 
   init(container: DockerContainer, initialPath: String? = nil) {
     self.container = container
@@ -159,8 +159,8 @@ struct FilesystemBrowserView: View {
           .textFieldStyle(RoundedBorderTextFieldStyle())
           .font(.system(.body, design: .monospaced))
           Button("Go") {
-              Task { await fetch() }
-            }
+            Task { await fetch() }
+          }
         }
         .padding()
 
@@ -189,8 +189,8 @@ struct FilesystemBrowserView: View {
                       await handleTap(on: entry)
                     }
                   }
-                  .onHover { hovering in
-                      hoveredEntry = entry
+                  .onHover { _ in
+                    hoveredEntry = entry
                   }
                 }
               }
@@ -214,16 +214,16 @@ struct FilesystemBrowserView: View {
       }
     }
     .onChange(of: hoveredEntry) { _, newValue in
-        DispatchQueue.main.async {
-            if let entry = newValue  {
-                if (entry.isDirectory) {
-                    NSCursor.pointingHand.push()
-                }
-            } else {
-                NSCursor.pop()
-                
-            }
+      DispatchQueue.main.async {
+        if let entry = newValue {
+          if entry.isDirectory {
+            NSCursor.pointingHand.push()
+          }
+        } else {
+          NSCursor.pop()
+
         }
+      }
     }
     .task(id: container.id) {
       await setupAndFetch()

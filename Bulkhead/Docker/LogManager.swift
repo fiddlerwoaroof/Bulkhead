@@ -1,6 +1,6 @@
 import Foundation
-import os.log
 import OSLog
+import os.log
 
 func getDateFormatter() -> DateFormatter {
   let dateFormatter = DateFormatter()
@@ -34,7 +34,7 @@ class LogManager: ObservableObject {
   private var loggers: [String: OSLog]
   private let loggersAccessQueue: DispatchQueue
   @Published var logs: [LogEntry]
-  private let maxEntries = 1000 // Limit the number of log entries
+  private let maxEntries = 1000  // Limit the number of log entries
 
   init() {
     self.loggers = [:]
