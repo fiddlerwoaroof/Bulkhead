@@ -94,34 +94,60 @@ struct ContainerActionsView: View {
   @Environment(\.openWindow) private var openWindow
   let container: DockerContainer
   @ObservedObject var manager: DockerManager  // Use ObservedObject if manager might change
+  @State private var isActionPending = false // State for loading indicator
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      if container.status.lowercased().contains("up") {
-        Button("Stop") {
-          // Wrap async call in Task
-          Task {
-            await manager.stopContainer(id: container.id)
+      // Start/Stop Button or Progress Indicator
+      Group {
+          if isActionPending {
+              ProgressView()
+                  .controlSize(.small)
+                  .frame(width: 50, height: 15) // Approximate button size
+          } else if container.status.lowercased().contains("up") {
+              Button("Stop") {
+                  isActionPending = true
+                  Task {
+                      await manager.stopContainer(id: container.id)
+                      // Let list refresh handle final state, just reset pending
+                      isActionPending = false
+                  }
+              }
+              .buttonStyle(.bordered)
+              .controlSize(.small)
+              .disabled(isActionPending) // Disable button while pending
+              .onHover { isHovering in
+                  if isHovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+              }
+          } else {
+              Button("Start") {
+                  isActionPending = true
+                  Task {
+                      await manager.startContainer(id: container.id)
+                      // Let list refresh handle final state, just reset pending
+                      isActionPending = false
+                  }
+              }
+              .buttonStyle(.borderedProminent)
+              .controlSize(.small)
+              .disabled(isActionPending) // Disable button while pending
+              .onHover { isHovering in
+                  if isHovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+              }
           }
-        }
-        .buttonStyle(.bordered)
-        .controlSize(.small)
-      } else {
-        Button("Start") {
-          // Wrap async call in Task
-          Task {
-            await manager.startContainer(id: container.id)
-          }
-        }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.small)
       }
+      .frame(height: 20) // Ensure consistent height for button/progress
 
+      // Logs Button
       Button("Logs") {
         openWindow(value: container)
       }
       .buttonStyle(.bordered)
       .controlSize(.small)
+      .disabled(isActionPending) // Optionally disable Logs button during action
+      .onHover { isHovering in
+          if isHovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+      }
     }
   }
 }
