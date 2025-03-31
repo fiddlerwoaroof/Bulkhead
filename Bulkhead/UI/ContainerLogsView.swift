@@ -50,15 +50,37 @@ struct TerminalWrapper: NSViewRepresentable {
 
 struct ContainerLogsView: View {
   let container: DockerContainer
-  @ObservedObject var manager: DockerManager
+  @EnvironmentObject var manager: DockerManager
+  @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
+
+  private var connectionError: DockerError? {
+    if isGlobalErrorShowing {
+      return manager.containerListError ?? DockerError.connectionFailed(NSError(domain: "Bulkhead", code: -1, userInfo: [NSLocalizedDescriptionKey: "Docker connection unavailable."]))
+    }
+    if manager.executor == nil {
+      return DockerError.noExecutor
+    }
+    return nil
+  }
 
   var body: some View {
-    TerminalWrapper { terminal in
-      TerminalSessionManager(
-        terminal: terminal,
-        executor: manager.executor!,
-        containerID: container.id
-      ).start()
+    Group {
+      if let error = connectionError {
+        ErrorView(error: error, title: "Cannot Fetch Logs")
+          .padding()
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+      } else if let executor = manager.executor {
+        TerminalWrapper { terminal in
+          TerminalSessionManager(
+            terminal: terminal,
+            executor: executor,
+            containerID: container.id
+          ).start()
+        }
+      } else {
+        Text("Unexpected state: Executor unavailable but no connection error detected.")
+          .padding()
+      }
     }
     .navigationTitle(container.names.first ?? "Logs")
     .frame(minWidth: 600, minHeight: 400)

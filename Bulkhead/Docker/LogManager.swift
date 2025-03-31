@@ -1,5 +1,6 @@
 import Foundation
 import os.log
+import OSLog
 
 func getDateFormatter() -> DateFormatter {
   let dateFormatter = DateFormatter()
@@ -29,10 +30,11 @@ struct LogEntry: CustomStringConvertible {
 
 class LogManager: ObservableObject {
   static let shared = LogManager()
-  private static var subsystem = Bundle.main.bundleIdentifier!
+  private static var subsystem = Bundle.main.bundleIdentifier ?? "co.fwoar.Bulkhead.unknown"
   private var loggers: [String: OSLog]
   private let loggersAccessQueue: DispatchQueue
   @Published var logs: [LogEntry]
+  private let maxEntries = 1000 // Limit the number of log entries
 
   init() {
     self.loggers = [:]

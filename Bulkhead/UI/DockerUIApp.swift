@@ -25,9 +25,10 @@ struct DockerUIApp: App {
     // swiftlint:disable:next unused_parameter
     WindowGroup(for: DockerContainer.self) { $container in
       if let container {
-        ContainerLogsView(container: container, manager: manager)
+        ContainerLogsView(container: container)
       }
     }
+    .environmentObject(manager)
 
     .commands {
       CommandGroup(replacing: .appInfo) {

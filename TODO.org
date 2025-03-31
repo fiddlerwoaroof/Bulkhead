@@ -15,13 +15,13 @@
      - [X] Update UI components to use new error display
      - REPLACES: Technical Debt > Refactor DockerExecutor error handling
 **** TODO Type Safety Improvements
-     - Eliminate force unwrapping where possible
-     - Implement proper nil handling with optionals
-     - Add appropriate assertions and preconditions
-     - Use specific types instead of generic dictionaries
+     - [X] Eliminate force unwrapping where possible
+     - [X] Implement proper nil handling with optionals
+     - [ ] Add appropriate assertions and preconditions
+     - [ ] Use specific types instead of generic dictionaries
      - REPLACES: Technical Debt > Improve type safety in model layer
 
-*** TODO UI/UX Refinements [0%]
+*** TODO UI/UX Refinements [25%]
 **** TODO Visual Feedback Enhancements
      - Add loading indicators for operations
      - Implement success/failure feedback for actions
@@ -42,6 +42,12 @@
      - Group shortcuts logically by function
      - REPLACES: UI/UX Improvements > Add keyboard shortcuts help overlay
      - REPLACES: Documentation > Create keyboard shortcut reference
+**** DONE Fix cursor appearance for clickable areas
+     - [X] Ensure NSCursor.pointingHand is used on hover for buttons/interactive elements
+     - [X] Check ListView items
+     - [X] Check ContainerActionsView buttons
+     - [X] Check FilesystemBrowserView items
+     - [X] Check ErrorView actions (if any added later)
 
 *** TODO Documentation and Testing [0%]
 **** TODO User Documentation
