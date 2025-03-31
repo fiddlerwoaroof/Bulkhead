@@ -1,7 +1,7 @@
 # ADR 0004: Enhance Error Handling
 
 ## Status
-Proposed
+Implemented
 
 ## Date
 2024-03-30
@@ -90,18 +90,18 @@ We will enhance the error handling system across the application by:
     - [x] Log detailed underlying errors if needed.
     - [x] Store the user-facing `DockerError` (conforming to `LocalizedError`) in a `@Published` or `@State` property for the UI.
     - [x] Ensure error responses are not cached (e.g., in `DockerManager.enrichContainer`).
-- [ ] **Integrate `ErrorView` into UI**
-    - [ ] Replace generic `Text("Error: ...")` displays in detail
+- [x] **Integrate `ErrorView` into UI**
+    - [x] Replace generic `Text("Error: ...")` displays in detail
           views with `ErrorView(error: publishedErrorProperty)`.
-    - [ ] Consider adding error display for list fetching failures
+    - [x] Consider adding error display for list fetching failures
           (e.g., overlay on `ListView`).
-- [ ] **Testing**
-    - [ ] Manually trigger different error conditions (e.g., invalid
+- [x] **Testing**
+    - [x] Manually trigger different error conditions (e.g., invalid
           socket path, stop Docker daemon, invalid API requests) to
           verify error display.
-    - [ ] Check that user-friendly messages and recovery suggestions
+    - [x] Check that user-friendly messages and recovery suggestions
           appear correctly.
-- [ ] **Update `TODO.org`:** Mark `Release Polish > Code Architecture
+- [x] **Update `TODO.org`:** Mark `Release Polish > Code Architecture
       Improvements > Error Handling Enhancement` subtasks as complete.
-- [ ] **Update `adr/20250330-0002-bulkhead-release-polish.md`:** Mark
+- [x] **Update `adr/20250330-0002-bulkhead-release-polish.md`:** Mark
       the `Error Handling Enhancement` checklist items as complete.

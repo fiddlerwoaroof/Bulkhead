@@ -95,7 +95,7 @@ Perform comprehensive testing across different Docker environments (Colima, Dock
 
 ### UI/UX Refinements
 - [ ] **Visual Feedback Enhancements**
-  - [ ] Add loading indicators for container start/stop operations
+  - [x] Add loading indicators for container start/stop operations
   - [ ] Implement success/failure feedback for actions
   - [ ] Improve state transitions in the UI when container states change
   - [ ] Ensure color scheme consistently indicates state (running, stopped, etc.)

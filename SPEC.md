@@ -126,25 +126,29 @@ Bulkhead is a SwiftUI-based macOS application for interacting with the local Doc
   - Focus indicated by system focus ring
 
 ### Error Handling
-- `DockerExecutor` functions `throw` errors (network, Docker API, container state)
-- Detail view models catch errors during data loading and expose them via `@Published var error: Error?`
-- Basic error display (`Text("Error: ...")`) implemented in detail views
-- *(User-friendly, inline error surfacing is a goal but needs refinement)*
+- `DockerError` enum now conforms to `LocalizedError` with user-friendly `errorDescription` and `recoverySuggestion` properties
+- `DockerError.isConnectionError` helper identifies connection-related failures
+- `ErrorView` component provides consistent presentation for errors (`.prominent` and `.compact` display styles)
+- Global error overlay in `ContentView` for connection errors, preventing redundant error displays
+- Detail view models catch errors during data loading and expose them via `@Published var error: DockerError?`
+- `.task(id:)` modifiers ensure error state is refreshed when the view's identity changes
 
 ### Code Organization
 *(Note: Keep this section updated when adding/moving files)*
 - **Core Logic:**
-  - `Bulkhead/Docker/DockerExecutor.swift`: Low-level Docker socket communication and API requests. Also contains the `DockerManager` class that manages application state and coordinates Docker actions.
+  - `Bulkhead/Docker/DockerExecutor.swift`: Low-level Docker socket communication and API requests. Contains the `DockerError` enum with localization support.
+  - `Bulkhead/Docker/DockerManager.swift`: Manages application state and coordinates Docker actions, wrapping executor calls in background Tasks.
   - `Bulkhead/Docker/Model.swift`: Core data structures (`DockerContainer`, `DockerImage`, etc.).
   - `Bulkhead/UI/DockerUIApp.swift`: Main application entry point, window setup, and scene definitions.
 - **UI Components:**
-  - `Bulkhead/UI/ContentView.swift`: Root view containing the `TabView`.
+  - `Bulkhead/UI/ContentView.swift`: Root view containing the `TabView` and global error overlay for connection issues.
   - `Bulkhead/UI/ListView.swift`: Generic reusable list view component (handles layout, search, focus, nav, selection).
   - `Bulkhead/UI/ContainerListView.swift`: Specific implementation using `ListView` for containers.
   - `Bulkhead/UI/ImageListView.swift`: Specific implementation using `ListView` for images.
   - `Bulkhead/UI/ContainerDetailView.swift`: Detail view for containers.
   - `Bulkhead/UI/ImageDetailView.swift`: Detail view for images.
   - `Bulkhead/UI/SearchField.swift`: Reusable search text field.
+  - `Bulkhead/UI/ErrorView.swift`: Reusable error display component with prominent and compact styles.
   - `Bulkhead/UI/FilesystemBrowserView.swift`: View for browsing container filesystem.
   - `Bulkhead/UI/ContainerLogsView.swift`: View for displaying container logs (`SwiftTerm`).
   - `Bulkhead/UI/LogTableView.swift`: View for displaying log entries in a tabular format.
@@ -186,12 +190,13 @@ Bulkhead is a SwiftUI-based macOS application for interacting with the local Doc
 - Focus management, including persistence across tab switches
 - Visual distinction between selected and focused items
 - Debounced selection actions
+- Comprehensive error handling with user-friendly messages and recovery suggestions
+- Loading indicators for container start/stop operations
 
 ### In Progress / To Verify
 - `DockerManager` implementation details (caching strategy, detailed error handling, background refresh?)
 - Container management actions (Start/Stop actual implementation and feedback)
 - Log viewer real-time streaming
-- Refined error display
 
 ### Planned Features (From TODO)
 - Container creation, deletion, restart, rename

@@ -14,7 +14,7 @@ responsive interface for inspecting, starting, stopping, and exploring container
 - **Filesystem Browser:** Navigate the filesystem of *running* containers (read-only).
 - **Keyboard Navigation:** Robust focus management and keyboard shortcuts (arrows, escape, enter) for navigating lists and interacting with search, mimicking native macOS behavior.
 - **Search:** Filter containers (by name, image, status) and images (by tag, ID).
-- **Basic Actions:** Start/Stop buttons are present (full implementation pending).
+- **User-Friendly Error Handling:** Helpful error messages and recovery suggestions for common issues.
 
 
 <img width="1908" alt="image" src="https://github.com/user-attachments/assets/463905fe-6fd2-4608-ae1f-b04e7a8ba99f" />
@@ -25,6 +25,8 @@ responsive interface for inspecting, starting, stopping, and exploring container
 
 - **Native macOS:** Built entirely with SwiftUI for a responsive, platform-integrated feel.
 - **Direct Docker API Access:** Communicates directly with the Docker daemon via its Unix socket (no CLI dependency). Searches common socket locations (`~/.docker/run/docker.sock`, `~/.colima/docker.sock`, `~/.rd/docker.sock`).
+- **Structured Error Handling:** Comprehensive `DockerError` system with localized descriptions and recovery suggestions.
+- **Clean Architecture:** Separation of concerns with distinct `DockerExecutor` (low-level API), `DockerManager` (app state/coordination), and UI layers.
 
 ## Current Limitations
 
