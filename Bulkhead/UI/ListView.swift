@@ -136,6 +136,14 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
         focusedField = newFocus
       }
     }
+    // Add onHover to change cursor
+    .onHover { isHovering in
+        if isHovering {
+            NSCursor.pointingHand.push()
+        } else {
+            NSCursor.pop()
+        }
+    }
   }
 
   private var listColumnContent: some View {

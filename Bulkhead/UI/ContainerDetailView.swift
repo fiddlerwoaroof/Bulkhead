@@ -276,6 +276,9 @@ struct ContainerDetailView: View {
                     .foregroundStyle(.blue)
                 }
                 .buttonStyle(.link)
+                .onHover { isHovering in
+                  if isHovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                }
               }
             }
           }

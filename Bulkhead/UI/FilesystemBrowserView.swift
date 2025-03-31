@@ -73,7 +73,7 @@ struct FilesystemRow: View {
       RoundedRectangle(cornerRadius: 8)
         .fill(
           isSelected
-            ? Color.accentColor.opacity(0.2) : isHovered ? Color.gray.opacity(0.05) : Color.clear)
+          ? Color.accentColor.opacity(0.2) : isHovered ? Color.gray.opacity(0.05) : Color.clear)
     )
     .contentShape(Rectangle())
   }
@@ -156,11 +156,9 @@ struct FilesystemBrowserView: View {
           )
           .textFieldStyle(RoundedBorderTextFieldStyle())
           .font(.system(.body, design: .monospaced))
-          Button(
-            "Go",
-            action: {
+          Button("Go") {
               Task { await fetch() }
-            })
+            }
         }
         .padding()
 
@@ -190,7 +188,7 @@ struct FilesystemBrowserView: View {
                     }
                   }
                   .onHover { hovering in
-                    hoveredID = hovering ? entry.id : nil
+                      hoveredID = entry.id
                   }
                 }
               }
@@ -207,13 +205,21 @@ struct FilesystemBrowserView: View {
       }
     }
     .onChange(of: container.isRunning) { _, isNowRunning in
-      // If the container starts running again and we were showing an error
-      // (especially the 'not running' error), trigger a refresh.
       if isNowRunning && fetchError != nil {
         Task {
-          await setupAndFetch()  // Use setup to clear state and fetch
+          await setupAndFetch()
         }
       }
+    }
+    .onChange(of: hoveredID) { _, newValue in
+        DispatchQueue.main.async {
+            if (newValue != nil) {
+                NSCursor.pointingHand.push()
+            } else {
+                NSCursor.pop()
+                
+            }
+        }
     }
     .task(id: container.id) {
       await setupAndFetch()
