@@ -97,8 +97,6 @@ enabled_rules:
   - shorthand_argument
   - shorthand_optional_binding
   - single_test_class
-  - sorted_first_last
-  - sorted_imports
   - static_operator
   - strong_iboutlet
   - superfluous_else
