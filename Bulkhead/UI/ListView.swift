@@ -36,9 +36,9 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   var listErrorTitle = "Error Loading List"
   @FocusState private var focusedField: ListViewFocusTarget?
   @StateObject private var viewState = ListViewState()
-  @State private var selectionTask: Task<Void, Never>?  // Task for debouncing
+  @State private var selectionTask: Task<Void, Never>?
   @Binding var searchFocused: Bool
-  @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing  // Read environment
+  @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
   @ViewBuilder var content: (T) -> Master
   @ViewBuilder var detail: (T) -> Detail
 
@@ -224,8 +224,12 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
             searchFocused = false
           }
         }
+        .onChange(of: items) { oldItems, newItems in
+             if oldItems.isEmpty && !newItems.isEmpty && focusedField == nil {
+                 setupInitialFocus()
+             }
+         }
         .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
-        .onAppear { setupInitialFocus() }
     } detail: {
       if let selected = selectedItem {
         detail(selected)
@@ -289,18 +293,12 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   }
 
   private func setupInitialFocus() {
-    if let initialFocus = viewState.lastKnownFocus {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-        if focusedField == nil { focusedField = initialFocus }
-      }
-    } else if let firstItem = items.first {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-        if focusedField == nil { focusedField = .item(AnyHashable(firstItem.id)) }
-      }
-    } else if searchConfig != nil {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-        if focusedField == nil { focusedField = .search }
-      }
+    if focusedField == nil && !items.isEmpty {
+        focusedField = .item(AnyHashable(items[0].id))
+        selectedItem = items[0]
+    } else if focusedField == nil && searchConfig != nil {
+        focusedField = .search
     }
+    viewState.lastKnownFocus = focusedField
   }
 }
