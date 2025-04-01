@@ -145,19 +145,6 @@ struct ImageConfig: Codable {
   }
 }
 
-class DockerEnvironmentDetector {
-  static func detectDockerHostPath() -> String? {
-    let potentialPaths = [
-      "\(NSHomeDirectory())/.rd/docker.sock",
-      "\(NSHomeDirectory())/.colima/docker.sock",
-    ]
-    for path in potentialPaths where FileManager.default.fileExists(atPath: path) {
-      return path
-    }
-    return nil
-  }
-}
-
 enum ContainerState: String {
   case created
   case running

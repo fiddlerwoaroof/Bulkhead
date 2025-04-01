@@ -4,6 +4,10 @@ struct SettingsView: View {
   @ObservedObject var manager: DockerManager
   @State private var showSavedConfirmation = false
 
+  private var detectedEnvironment: String {
+    DockerEnvironmentDetector.getEnvironmentDescription()
+  }
+
   var body: some View {
     GeometryReader { geometry in
       ScrollView {
@@ -16,6 +20,10 @@ struct SettingsView: View {
               .onChange(of: manager.socketPath) { _, newPath in
                 handleSocketPathChange(newValue: newPath)
               }
+
+            Text("Detected Environment: \(detectedEnvironment)")
+              .font(.subheadline)
+              .foregroundStyle(.secondary)
           }
 
           Text("Quick Configuration")
@@ -24,6 +32,10 @@ struct SettingsView: View {
             .padding(.top, 8)
 
           HStack(spacing: 10) {
+            Button("Use Docker Desktop") {
+              manager.socketPath = "/var/run/docker.sock"
+            }
+            .buttonStyle(.bordered)
             Button("Use Rancher Desktop") {
               manager.socketPath = "\(NSHomeDirectory())/.rd/docker.sock"
             }
