@@ -96,14 +96,6 @@ struct ContentView: View {
           )
       }
     }
-    .onAppear {
-      Task {
-        await manager.fetchContainers()
-      }
-      Task {
-        await manager.fetchImages()
-      }
-    }
     .onChange(of: manager.containers) { _, newContainers in
       if selectedContainer == nil && !newContainers.isEmpty {
         selectedContainer = newContainers[0]

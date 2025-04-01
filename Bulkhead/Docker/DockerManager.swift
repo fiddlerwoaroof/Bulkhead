@@ -77,14 +77,16 @@ class DockerManager: ObservableObject {
   init(logManager: LogManager) {
     self.logManager = logManager
     self.publication = DockerPublication(logManager: logManager)
-    if publication.socketPath.isEmpty,
-      let detected = DockerEnvironmentDetector.detectDockerHostPath(logManager: logManager)
-    {
-      DispatchQueue.main.async {
-        self.publication.updateSocketPath(detected)
-        self.publication.saveDockerHostPath()
+
+    // Set socket path synchronously if empty
+    if publication.socketPath.isEmpty {
+      if let detected = DockerEnvironmentDetector.detectDockerHostPath(logManager: logManager) {
+        // Directly set the socket path since we're in initialization
+        publication.socketPath = detected
+        publication.saveDockerHostPath()
       }
     }
+
     startAutoRefresh()
   }
 

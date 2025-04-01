@@ -8,6 +8,12 @@ class ApplicationEnvironment: ObservableObject {
     let logManager = LogManager()
     self.logManager = logManager
     self.manager = DockerManager(logManager: logManager)
+
+    // Start initial data fetch
+    Task {
+      await manager.fetchContainers()
+      await manager.fetchImages()
+    }
   }
 }
 
@@ -20,6 +26,7 @@ struct DockerUIApp: App {
   @State private var isSearchFocused = false
 
   init() {
+    // needed for the protocol
   }
 
   var body: some Scene {
@@ -27,13 +34,6 @@ struct DockerUIApp: App {
       ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused)
         .environmentObject(manager)
         .environmentObject(appEnv)
-        .onAppear {
-          let manager = manager
-          Task {
-            await manager.fetchContainers()
-            await manager.fetchImages()
-          }
-        }
     }
 
     SettingsWindow(manager: manager)
