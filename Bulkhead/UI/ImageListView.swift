@@ -1,12 +1,14 @@
 import SwiftUI
 
 struct ImageListView: View {
+  @EnvironmentObject var publication: DockerPublication
   var backgroundColor: Color
   var shadowColor: Color
-  @Binding var images: [DockerImage]
+  let images: [DockerImage]
   @Binding var searchFocused: Bool
   @Binding var selectedImage: DockerImage?
   let manager: DockerManager
+  let appEnv: ApplicationEnvironment
 
   private var imageSearchConfig: SearchConfiguration<DockerImage> {
     SearchConfiguration(
@@ -42,12 +44,12 @@ struct ImageListView: View {
 
   var body: some View {
     ListView(
-      items: $images,
+      items: images,
       selectedItem: $selectedImage,
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
       searchConfig: imageSearchConfig,
-      listError: manager.imageListError,
+      listError: publication.imageListError,
       listErrorTitle: "Failed to Load Images",
       searchFocused: $searchFocused
     ) { image in
@@ -90,7 +92,7 @@ struct ImageListView: View {
       )
     } detail: { image in
       // Type erase the detail view
-      ImageDetailView(image: image)
+      ImageDetailView(image: image, appEnv: appEnv)
     }
 
     .onChange(of: images) { _, newImages in

@@ -1,11 +1,13 @@
 import SwiftUI
 
-class ApplicationEnvironment: ObservableObject {
+class ApplicationEnvironment {
+  let publication: DockerPublication
   let logManager = LogManager()
   let manager: DockerManager
 
   init() {
-    self.manager = DockerManager(logManager: logManager)
+    self.publication = DockerPublication(logManager: logManager)
+    self.manager = DockerManager(logManager: logManager, publication: publication)
 
     // Start initial data fetch
     Task {
@@ -17,7 +19,7 @@ class ApplicationEnvironment: ObservableObject {
 
 @main
 struct DockerUIApp: App {
-  @StateObject private var appEnv = ApplicationEnvironment()
+  private let appEnv = ApplicationEnvironment()
   private var manager: DockerManager { appEnv.manager }
   @Environment(\.openWindow) private var openWindow
   @State private var selectedTab = 0
@@ -29,9 +31,9 @@ struct DockerUIApp: App {
 
   var body: some Scene {
     WindowGroup {
-      ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused, manager: manager)
-        .environmentObject(appEnv.manager.publication)
-        .environmentObject(appEnv)
+      ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused, manager: manager, appEnv: appEnv)
+        .environmentObject(appEnv.logManager)
+        .environmentObject(appEnv.publication)
         .onAppear {
           Task {
             await appEnv.manager.fetchContainers()
@@ -40,16 +42,27 @@ struct DockerUIApp: App {
         }
     }
 
-    SettingsWindow(manager: appEnv.manager)
+    SettingsWindow(manager: appEnv.manager, publication: appEnv.publication, logManager: appEnv.logManager)
+      .environmentObject(appEnv.logManager)
+      .environmentObject(appEnv.publication)
+
+
+
     LogWindowScene()
+      .environmentObject(appEnv.logManager)
+      .environmentObject(appEnv.publication)
+
+
 
     // swiftlint:disable:next unused_parameter
     WindowGroup(for: DockerContainer.self) { $container in
       if let container {
-        ContainerLogsView(container: container, manager: appEnv.manager)
+        ContainerLogsView(container: container)
       }
     }
-    .environmentObject(appEnv.manager.publication)
+    .environmentObject(appEnv.logManager)
+    .environmentObject(appEnv.publication)
+
 
     .commands {
       CommandGroup(replacing: .appInfo) {
@@ -66,7 +79,6 @@ struct DockerUIApp: App {
         Divider()
 
         Button("Refresh Containers") {
-          let manager = manager
           Task {
             await appEnv.manager.fetchContainers()
             await appEnv.manager.fetchImages()

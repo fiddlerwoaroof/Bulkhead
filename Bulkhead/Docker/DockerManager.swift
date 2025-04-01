@@ -79,72 +79,9 @@ class DockerManager {
   private let enrichmentTTL: TimeInterval = 10
   private let cacheQueue = DispatchQueue(label: "com.bulkhead.cacheQueue", attributes: .concurrent)
 
-  var containerListError: DockerError? {
-    publication.containerListError
-  }
-  var containers: [DockerContainer] {
-    get { publication.containers }
-    set {
-      if Thread.isMainThread {
-        publication.containers = newValue
-      } else {
-        DispatchQueue.main.sync {
-          publication.containers = newValue
-        }
-      }
-    }
-  }
-  var imageListError: DockerError? {
-    publication.imageListError
-  }
-  var images: [DockerImage] {
-    get { publication.images }
-    set {
-      if Thread.isMainThread {
-        publication.images = newValue
-      } else {
-        DispatchQueue.main.sync {
-          publication.images = newValue
-        }
-      }
-    }
-  }
-
-  var socketPath: String {
-    get { publication.socketPath }
-    set {
-      if Thread.isMainThread {
-        publication.socketPath = newValue
-      } else {
-        DispatchQueue.main.sync {
-          publication.socketPath = newValue
-        }
-      }
-    }
-  }
-  var refreshInterval: Double {
-    get { publication.refreshInterval }
-    set {
-      if Thread.isMainThread {
-        publication.refreshInterval = newValue
-      } else {
-        DispatchQueue.main.sync {
-          publication.refreshInterval = newValue
-        }
-      }
-
-      publication.saveRefreshInterval()
-      startAutoRefresh()
-    }
-  }
-
-  var executor: DockerExecutor? {
-    publication.executor
-  }
-
-  init(logManager: LogManager) {
+  init(logManager: LogManager, publication: DockerPublication) {
     self.logManager = logManager
-    self.publication = DockerPublication(logManager: logManager)
+    self.publication = publication
 
     // Set socket path synchronously if empty
     if publication.socketPath.isEmpty {
@@ -168,9 +105,9 @@ class DockerManager {
     await publication.clearContainerListError()
 
     // Get the task handle from tryCommand
-    let fetchTask: Task<[DockerContainer], Error> = tryCommand {
+    let fetchTask: Task<[DockerContainer], Error> = tryCommand { [weak self] in
       // This block runs in background via Task.detached inside tryCommand
-      guard let executor = self.executor else { throw DockerError.noExecutor }
+      guard let executor = self?.publication.executor else { throw DockerError.noExecutor }
       return try executor.listContainers()  // Assuming sync for now
     }
 
@@ -189,7 +126,7 @@ class DockerManager {
   }
 
   func enrichContainer(_ container: DockerContainer) async throws -> DockerContainer {
-    guard let executor else { throw DockerError.noExecutor }
+    guard let executor = publication.executor else { throw DockerError.noExecutor }
 
     let now = Date()
     // Read operation - can happen concurrently with other reads
@@ -220,8 +157,8 @@ class DockerManager {
   func fetchImages() async {
     await publication.clearImageListError()
 
-    let fetchTask: Task<[DockerImage], Error> = tryCommand {
-      guard let executor = self.executor else { throw DockerError.noExecutor }
+    let fetchTask: Task<[DockerImage], Error> = tryCommand { [weak self] in
+      guard let executor = self?.publication.executor else { throw DockerError.noExecutor }
       return try executor.listImages()  // Assuming sync for now
     }
 
@@ -240,7 +177,7 @@ class DockerManager {
   // Make async to await task and handle errors
   func startContainer(id: String) async {
     let task: Task<Void, Error> = tryCommand { [weak self] in  // Task returns Void
-      guard let self, let executor else { throw DockerError.noExecutor }
+      guard let self, let executor = self.publication.executor else { throw DockerError.noExecutor }
       try executor.startContainer(id: id)
     }
 
@@ -259,7 +196,7 @@ class DockerManager {
   // Make async to await task and handle errors
   func stopContainer(id: String) async {
     let task: Task<Void, Error> = tryCommand { [weak self] in  // Task returns Void
-      guard let self, let executor else { throw DockerError.noExecutor }
+      guard let self, let executor = publication.executor else { throw DockerError.noExecutor }
       try executor.stopContainer(id: id)
     }
 
@@ -276,7 +213,7 @@ class DockerManager {
   }
 
   func inspectImage(id: String) async throws -> ImageInspection {
-    guard let executor else { throw DockerError.noExecutor }
+    guard let executor = publication.executor else { throw DockerError.noExecutor }
     return try executor.inspectImage(id: id)
   }
 
@@ -321,6 +258,14 @@ class DockerManager {
         await self?.fetchImages()
       }
     }
+  }
+
+  func saveRefreshInterval() {
+    publication.saveRefreshInterval()
+  }
+
+  func saveSocketPath() {
+    publication.saveDockerHostPath()
   }
 }
 

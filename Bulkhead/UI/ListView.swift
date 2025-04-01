@@ -27,7 +27,7 @@ struct SearchConfiguration<T> {
 }
 
 struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
-  @Binding var items: [T]
+  let items: [T]
   @Binding var selectedItem: T?
   var backgroundColor: Color
   var shadowColor: Color

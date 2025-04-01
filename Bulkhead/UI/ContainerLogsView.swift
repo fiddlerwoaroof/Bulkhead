@@ -50,7 +50,7 @@ struct TerminalWrapper: NSViewRepresentable {
 
 struct ContainerLogsView: View {
   let container: DockerContainer
-  let manager: DockerManager
+//  let manager: DockerManager
   @EnvironmentObject var publication: DockerPublication
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
 
@@ -62,7 +62,7 @@ struct ContainerLogsView: View {
             domain: "Bulkhead", code: -1,
             userInfo: [NSLocalizedDescriptionKey: "Docker connection unavailable."]))
     }
-    if manager.executor == nil {
+    if publication.executor == nil {
       return DockerError.noExecutor
     }
     return nil
@@ -74,7 +74,7 @@ struct ContainerLogsView: View {
         ErrorView(error: error, title: "Cannot Fetch Logs")
           .padding()
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-      } else if let executor = manager.executor {
+      } else if let executor = publication.executor {
         TerminalWrapper { terminal in
           TerminalSessionManager(
             terminal: terminal,

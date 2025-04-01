@@ -1,27 +1,39 @@
 import SwiftUI
 
 struct SettingsView: View {
-  let manager: DockerManager
   @EnvironmentObject var publication: DockerPublication
+  let manager: DockerManager
+  let logManager: LogManager
   @State private var showSavedConfirmation = false
-  @EnvironmentObject var appEnv: ApplicationEnvironment
 
   private var detectedEnvironment: String {
-    DockerEnvironmentDetector.getEnvironmentDescription(logManager: appEnv.logManager)
+    DockerEnvironmentDetector.getEnvironmentDescription(logManager: logManager)
+  }
+
+  private var socketPathBinding: Binding<String> {
+    Binding(
+      get: { publication.socketPath },
+      set: { publication.socketPath = $0; manager.saveSocketPath(); showSaved() }
+    )
+  }
+  
+  private var refreshIntervalBinding: Binding<Double> {
+    Binding(
+      get: { publication.refreshInterval },
+      set: { publication.refreshInterval = $0; manager.saveRefreshInterval(); showSaved() }
+    )
   }
 
   var body: some View {
     GeometryReader { geometry in
       ScrollView {
-        VStack(alignment: .leading, spacing: 12) {
-          Group {
-            Text("Docker Socket Path")
-              .font(.headline)
-            TextField("Socket Path", text: $publication.socketPath)
-              .textFieldStyle(.roundedBorder)
-              .onChange(of: manager.socketPath) { _, newPath in
-                handleSocketPathChange(newValue: newPath)
-              }
+        VStack(alignment: .leading, spacing: 15) {
+          Text("Docker Settings")
+            .font(.title)
+            .padding(.bottom, 10)
+
+          VStack(alignment: .leading) {
+            TextField("Docker Socket Path", text: socketPathBinding)
 
             Text("Detected Environment: \(detectedEnvironment)")
               .font(.subheadline)
@@ -29,81 +41,69 @@ struct SettingsView: View {
           }
 
           Text("Quick Configuration")
-            .font(.subheadline)
-            .bold()
+            .font(.headline)
             .padding(.top, 8)
 
           HStack(spacing: 10) {
             Button("Use Docker Desktop") {
-              manager.socketPath = "/var/run/docker.sock"
+              publication.socketPath = "/var/run/docker.sock"
+              manager.saveSocketPath()
+              showSaved()
             }
             .buttonStyle(.bordered)
             Button("Use Rancher Desktop") {
-              manager.socketPath = "\(NSHomeDirectory())/.rd/docker.sock"
+              publication.socketPath = "\(NSHomeDirectory())/.rd/docker.sock"
+              manager.saveSocketPath()
+              showSaved()
             }
             .buttonStyle(.bordered)
             Button("Use Colima") {
-              manager.socketPath = "\(NSHomeDirectory())/.colima/docker.sock"
+              publication.socketPath = "\(NSHomeDirectory())/.colima/docker.sock"
+              manager.saveSocketPath()
+              showSaved()
             }
             .buttonStyle(.bordered)
           }
+          .padding(.bottom, 10)
 
-          Group {
-            Text("Refresh Interval: \(Int(manager.refreshInterval)) seconds")
+          Divider()
+
+          VStack(alignment: .leading) {
+            Text("Auto-Refresh Interval (seconds)")
               .font(.headline)
-              .padding(.top, 12)
-            Slider(value: $publication.refreshInterval, in: 5...60, step: 1) {
-              Text("Refresh Interval")
-            } onEditingChanged: { _ in
-              handleRefreshIntervalChange(newValue: manager.refreshInterval)
-            }
-            .frame(maxWidth: 300)
+            Slider(
+              value: refreshIntervalBinding,
+              in: 1...60,
+              step: 1
+            )
+            Text("\(publication.refreshInterval, specifier: "%.0f") seconds")
+              .font(.subheadline)
+              .foregroundStyle(.secondary)
           }
-
+          .padding(.top, 10)
+          
           if showSavedConfirmation {
-            Text("✔ Saved")
+            Text("Settings Saved")
               .foregroundStyle(.green)
-              .transition(.opacity)
+              .transition(.opacity.combined(with: .slide))
           }
         }
         .padding()
-        .frame(maxWidth: min(geometry.size.width * 0.9, 500), alignment: .center)
+        .frame(width: geometry.size.width * 0.8, alignment: .center)
         .frame(maxWidth: .infinity)
       }
     }
-    .frame(
-      minWidth: 400, idealWidth: 480, maxWidth: 500, minHeight: 250, idealHeight: 250,
-      maxHeight: 300
-    )
-    .onChange(of: manager.socketPath) { _, newPath in
-      handleSocketPathChange(newValue: newPath)
-    }
-    .onChange(of: manager.refreshInterval) { _, newInterval in
-      handleRefreshIntervalChange(newValue: newInterval)
-    }
-  }
-
-  private func handleSocketPathChange(newValue _: String) {
-    Task {
-      await manager.fetchContainers()
-      await manager.fetchImages()
-    }
-    showSaved()
-  }
-
-  private func handleRefreshIntervalChange(newValue _: Double) {
-    showSaved()
   }
 
   private func showSaved() {
     withAnimation {
       showSavedConfirmation = true
     }
-    Task { @MainActor in
-      try? await Task.sleep(for: .seconds(2))
-      withAnimation {
-        showSavedConfirmation = false
-      }
-    }
+     Task { @MainActor in
+       try? await Task.sleep(for: .seconds(2))
+       withAnimation {
+         showSavedConfirmation = false
+       }
+     }
   }
 }

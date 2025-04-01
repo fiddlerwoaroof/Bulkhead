@@ -100,8 +100,8 @@ struct FilesystemRow: View {
 struct FilesystemBrowserView: View {
   let container: DockerContainer
   let initialPath: String
-  @EnvironmentObject var appEnv: ApplicationEnvironment
-  private var manager: DockerManager { appEnv.manager }
+  let appEnv: ApplicationEnvironment
+  @EnvironmentObject var logManager: LogManager
   @EnvironmentObject var publication: DockerPublication
   @State private var path = "/"
   @State private var entries: [FileEntry] = []
@@ -110,11 +110,13 @@ struct FilesystemBrowserView: View {
   @State private var isExecuting = false
   @State private var fetchError: DockerError?
 
+  private var manager: DockerManager { appEnv.manager }
   var hoveredId: String? { hoveredEntry?.id }
 
-  init(container: DockerContainer, initialPath: String? = nil) {
+  init(container: DockerContainer, appEnv: ApplicationEnvironment, initialPath: String? = nil) {
     self.container = container
     self.initialPath = initialPath ?? "/"
+    self.appEnv = appEnv
   }
 
   private var displayedEntries: [FileEntry] {
@@ -267,12 +269,12 @@ struct FilesystemBrowserView: View {
       }
     } catch let dockerError as DockerError {
       fetchError = dockerError
-      appEnv.logManager.addLog(
+      logManager.addLog(
         "Error handling tap in FilesystemBrowser: \(dockerError.localizedDescription)",
         level: "ERROR")
     } catch {
       fetchError = .unknownError(error)
-      appEnv.logManager.addLog(
+      logManager.addLog(
         "Unknown error handling tap in FilesystemBrowser: \(error.localizedDescription)",
         level: "ERROR")
     }
@@ -351,11 +353,11 @@ struct FilesystemBrowserView: View {
         }
       } catch let dockerError as DockerError {
         await MainActor.run { fetchError = dockerError }
-        appEnv.logManager.addLog(
+        logManager.addLog(
           "DockerError fetching filesystem: \(dockerError.localizedDescription)", level: "ERROR")
       } catch {
         await MainActor.run { fetchError = .unknownError(error) }
-        appEnv.logManager.addLog(
+        logManager.addLog(
           "Unknown error fetching filesystem: \(error.localizedDescription)", level: "ERROR")
       }
       await MainActor.run { isExecuting = false }

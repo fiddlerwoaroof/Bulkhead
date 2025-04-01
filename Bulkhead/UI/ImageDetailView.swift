@@ -1,14 +1,21 @@
 import SwiftUI
 
-struct ImageDetailView: View {
+struct ImageDetailViewInner: View {
   let image: DockerImage
-  @EnvironmentObject var publication: DockerPublication
-  @StateObject private var model = ImageDetailModel()
+  @ObservedObject var publication: DockerPublication
+  @StateObject private var model: ImageDetailModel
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
 
-  @EnvironmentObject var appEnv: ApplicationEnvironment
+  let appEnv: ApplicationEnvironment
   var manager: DockerManager { appEnv.manager }
+  
+  init(image: DockerImage, publication: DockerPublication, appEnv: ApplicationEnvironment) {
+    _publication = ObservedObject(wrappedValue: publication)
+    self.image = image
+    _model = StateObject(wrappedValue: ImageDetailModel(publication:publication, logManager: appEnv.logManager))
+    self.appEnv = appEnv
+  }
 
   private var connectionError: DockerError? {
     guard !isGlobalErrorShowing else { return nil }
@@ -144,6 +151,19 @@ struct ImageDetailView: View {
   }
 }
 
+struct ImageDetailView: View {
+  @EnvironmentObject var publication: DockerPublication
+  @Environment(\.colorScheme) var colorScheme
+  @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
+  
+  let image: DockerImage
+  let appEnv: ApplicationEnvironment
+  
+  var body: some View {
+    ImageDetailViewInner(image: image, publication: publication, appEnv: appEnv)
+  }
+}
+
 class ImageDetailModel: ObservableObject {
   @Published var parentId: String?
   @Published var layers: [String] = []
@@ -156,9 +176,14 @@ class ImageDetailModel: ObservableObject {
   @Published var createdDate: Date?
   @Published var virtualSize: Int64?
 
-  @EnvironmentObject var publication: DockerPublication
-  @EnvironmentObject var appEnv: ApplicationEnvironment
-
+  let publication: DockerPublication
+  let logManager: LogManager
+  
+  init(publication: DockerPublication, logManager: LogManager) {
+    self.publication = publication
+    self.logManager = logManager
+  }
+  
   func formatSize(_ size: Int64) -> String {
     let formatter = ByteCountFormatter()
     formatter.allowedUnits = [.useBytes, .useKB, .useMB, .useGB]
@@ -226,12 +251,12 @@ class ImageDetailModel: ObservableObject {
     } catch let dockerError as DockerError {
       // Store the specific DockerError
       self.error = dockerError
-      appEnv.logManager.addLog(
+      logManager.addLog(
         "DockerError loading image details: \(dockerError.localizedDescription)", level: "ERROR")
     } catch {
       // Wrap other errors
       self.error = .unknownError(error)
-      appEnv.logManager.addLog(
+      logManager.addLog(
         "Unknown error loading image details: \(error.localizedDescription)", level: "ERROR")
     }
 

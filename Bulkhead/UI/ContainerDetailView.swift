@@ -68,10 +68,11 @@ extension HealthStatus {
 }
 
 struct ContainerDetailViewInner: View {
-  @ObservedObject private var appEnv: ApplicationEnvironment
+  @EnvironmentObject var publication: DockerPublication
+  private let appEnv: ApplicationEnvironment
+  @ObservedObject var logManager: LogManager
   @StateObject private var model: ContainerDetailModel
   let container: DockerContainer
-  @EnvironmentObject var publication: DockerPublication
   @State private var selectedPath: String?
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
@@ -93,10 +94,11 @@ struct ContainerDetailViewInner: View {
     return nil  // No relevant connection error
   }
 
-  init(appEnv: ApplicationEnvironment, container: DockerContainer) {
+  init(appEnv: ApplicationEnvironment, container: DockerContainer, logManager: LogManager) {
     self.appEnv = appEnv
     self.container = container
-    _model = StateObject(wrappedValue: ContainerDetailModel(appEnv: appEnv))
+    self.logManager = logManager
+    _model = StateObject(wrappedValue: ContainerDetailModel(appEnv: appEnv, logManager: logManager))
   }
 
   var body: some View {
@@ -128,7 +130,7 @@ struct ContainerDetailViewInner: View {
           .frame(maxWidth: .infinity, alignment: .topLeading)
         }
 
-        FilesystemBrowserView(container: container, initialPath: selectedPath ?? "/")
+        FilesystemBrowserView(container: container, appEnv: appEnv, initialPath: selectedPath ?? "/")
           .frame(minHeight: 200)
       }
       .padding()
@@ -320,11 +322,12 @@ struct ContainerDetailViewInner: View {
 
 struct ContainerDetailView: View {
   let container: DockerContainer
-  @EnvironmentObject var appEnv: ApplicationEnvironment
+  let appEnv: ApplicationEnvironment
+  @EnvironmentObject var logManager: LogManager
   private var manager: DockerManager { appEnv.manager }
 
   var body: some View {
-    ContainerDetailViewInner(appEnv: appEnv, container: container)
+    ContainerDetailViewInner(appEnv: appEnv, container: container, logManager: logManager)
   }
 }
 
@@ -336,10 +339,11 @@ final class ContainerDetailModel: ObservableObject {
   @Published var sortedEnvironmentVariables: [(key: String, value: String)] = []
 
   let appEnv: ApplicationEnvironment
-  var logManager: LogManager { appEnv.logManager }
+  var logManager: LogManager
 
-  init(appEnv: ApplicationEnvironment) {
+  init(appEnv: ApplicationEnvironment, logManager: LogManager) {
     self.appEnv = appEnv
+    self.logManager = logManager
   }
 
   var base: DockerContainer?

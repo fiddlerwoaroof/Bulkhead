@@ -14,16 +14,21 @@ extension EnvironmentValues {
 }
 
 struct ContentView: View {
+  // Observe publication directly
   @EnvironmentObject var publication: DockerPublication
+  // Receive manager via init
   let manager: DockerManager
+  let appEnv: ApplicationEnvironment
   @Binding var selectedTab: Int
   @Environment(\.colorScheme) private var colorScheme
   @State private var selectedContainer: DockerContainer?
   @State private var selectedImage: DockerImage?
   @Binding private var searchFocused: Bool
 
-  init(selectedTab: Binding<Int>, searchFocused: Binding<Bool>, manager: DockerManager) {
+  // Updated init
+  init(selectedTab: Binding<Int>, searchFocused: Binding<Bool>, manager: DockerManager, appEnv: ApplicationEnvironment) {
     self.manager = manager
+    self.appEnv = appEnv
     _selectedTab = selectedTab
     _searchFocused = searchFocused
   }
@@ -36,9 +41,8 @@ struct ContentView: View {
     colorScheme == .dark ? Color.black.opacity(0.2) : Color.black.opacity(0.05)
   }
 
-  // Check for any global connection error
+  // Get errors from observed publication
   private var globalConnectionError: DockerError? {
-    // Prioritize container list error, then image list error
     if let err = publication.containerListError, err.isConnectionError { return err }
     if let err = publication.imageListError, err.isConnectionError { return err }
     return nil
@@ -46,12 +50,15 @@ struct ContentView: View {
 
   private var containerListView: some View {
     ContainerListView(
-      containers: $publication.containers,
+      // Pass data array from publication
+      containers: publication.containers,
       selectedContainer: $selectedContainer,
       searchFocused: $searchFocused,
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
-      manager: manager
+      // Pass manager instance
+      manager: manager,
+      appEnv: appEnv
     )
   }
 
@@ -59,10 +66,13 @@ struct ContentView: View {
     ImageListView(
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
-      images: $publication.images,
+      // Pass data array from publication
+      images: publication.images,
       searchFocused: $searchFocused,
       selectedImage: $selectedImage,
-      manager: manager
+      // Pass manager instance
+      manager: manager,
+      appEnv: appEnv
     )
   }
 
@@ -105,6 +115,7 @@ struct ContentView: View {
         await manager.fetchImages()
       }
     }
+    // .onChange can monitor publication.containers directly
     .onChange(of: publication.containers) { _, newContainers in
       if selectedContainer == nil && !newContainers.isEmpty {
         selectedContainer = newContainers[0]
