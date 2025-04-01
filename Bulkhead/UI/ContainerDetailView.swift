@@ -69,7 +69,8 @@ extension HealthStatus {
 
 struct ContainerDetailView: View {
   let container: DockerContainer
-  @EnvironmentObject var manager: DockerManager
+  let manager: DockerManager
+  @EnvironmentObject var publication: DockerPublication
   @StateObject private var model = ContainerDetailModel()
   @State private var selectedPath: String?
   @Environment(\.colorScheme) var colorScheme
@@ -86,7 +87,7 @@ struct ContainerDetailView: View {
     // Ignore connection errors if a global one is already showing
     guard !isGlobalErrorShowing else { return nil }
 
-    if let err = manager.containerListError, err.isConnectionError { return err }
+    if let err = publication.containerListError, err.isConnectionError { return err }
     return nil  // No relevant connection error
   }
 
@@ -318,7 +319,7 @@ final class ContainerDetailModel: ObservableObject {
 
   var base: DockerContainer?
 
-  func load(for container: DockerContainer, using manager: DockerManager) async {
+func load(for container: DockerContainer, using manager: DockerManager) async {
     base = container
     enriched = nil
     error = nil

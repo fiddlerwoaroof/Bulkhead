@@ -1,34 +1,38 @@
 import SwiftUI
 
+class AppState: ObservableObject {
+  let manager = DockerManager()
+}
+
 @main
 struct DockerUIApp: App {
-  @StateObject private var manager = DockerManager()
+  @StateObject var ass = AppState()
   @Environment(\.openWindow) private var openWindow
   @State private var selectedTab = 0
   @State private var isSearchFocused = false
 
   var body: some Scene {
     WindowGroup {
-      ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused)
-        .environmentObject(manager)
+      ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused, manager:ass.manager)
+        .environmentObject(ass.manager.publication)
         .onAppear {
           Task {
-            await manager.fetchContainers()
-            await manager.fetchImages()
+            await ass.manager.fetchContainers()
+            await ass.manager.fetchImages()
           }
         }
     }
 
-    SettingsWindow(manager: manager)
+    SettingsWindow(manager: ass.manager)
     LogWindowScene()
 
     // swiftlint:disable:next unused_parameter
     WindowGroup(for: DockerContainer.self) { $container in
       if let container {
-        ContainerLogsView(container: container)
+        ContainerLogsView(container: container, manager: ass.manager)
       }
     }
-    .environmentObject(manager)
+    .environmentObject(ass.manager.publication)
 
     .commands {
       CommandGroup(replacing: .appInfo) {
@@ -46,8 +50,8 @@ struct DockerUIApp: App {
 
         Button("Refresh Containers") {
           Task {
-            await manager.fetchContainers()
-            await manager.fetchImages()
+            await ass.manager.fetchContainers()
+            await ass.manager.fetchImages()
           }
         }
         .keyboardShortcut("r")

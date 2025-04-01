@@ -90,7 +90,7 @@ struct ImageListView: View {
       )
     } detail: { image in
       // Type erase the detail view
-      AnyView(ImageDetailView(image: image))
+      ImageDetailView(image: image, manager: manager)
     }
 
     .onChange(of: images) { _, newImages in

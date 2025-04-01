@@ -50,12 +50,13 @@ struct TerminalWrapper: NSViewRepresentable {
 
 struct ContainerLogsView: View {
   let container: DockerContainer
-  @EnvironmentObject var manager: DockerManager
+  let manager: DockerManager
+  @EnvironmentObject var publication: DockerPublication
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
 
   private var connectionError: DockerError? {
     if isGlobalErrorShowing {
-      return manager.containerListError
+      return publication.containerListError
         ?? DockerError.connectionFailed(
           NSError(
             domain: "Bulkhead", code: -1,

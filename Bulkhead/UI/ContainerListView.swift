@@ -3,13 +3,14 @@ import SwiftUI
 
 struct ContainerListView: View {
   @Environment(\.openWindow) private var openWindow
-  @EnvironmentObject var manager: DockerManager
+  @EnvironmentObject var publication: DockerPublication
   @Binding var containers: [DockerContainer]
   @Binding var selectedContainer: DockerContainer?
   @Binding var searchFocused: Bool
 
   var backgroundColor: Color
   var shadowColor: Color
+  let manager: DockerManager
 
   private var containerSearchConfig: SearchConfiguration<DockerContainer> {
     SearchConfiguration(
@@ -37,34 +38,34 @@ struct ContainerListView: View {
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
       searchConfig: containerSearchConfig,
-      listError: manager.containerListError,
+      listError: publication.containerListError,
       listErrorTitle: "Failed to Load Containers",
       searchFocused: $searchFocused
     ) { container in
       // Type erase the content view
-      AnyView(
-        HStack {
-          VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 8) {
-              Text(container.names.first ?? "Unnamed")
-                .font(.headline)
-            }
-            if container.status.lowercased().contains("up") {
-              StatusBadgeView(text: container.status, color: .green)
-            } else {
-              StatusBadgeView(text: container.status, color: .secondary)
-            }
-            Text(container.image)
-              .font(.subheadline)
-              .foregroundStyle(.secondary)
+      
+      HStack {
+        VStack(alignment: .leading, spacing: 2) {
+          HStack(spacing: 8) {
+            Text(container.names.first ?? "Unnamed")
+              .font(.headline)
           }
-          Spacer()
-          ContainerActionsView(container: container, manager: manager)
+          if container.status.lowercased().contains("up") {
+            StatusBadgeView(text: container.status, color: .green)
+          } else {
+            StatusBadgeView(text: container.status, color: .secondary)
+          }
+          Text(container.image)
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
         }
-      )
+        Spacer()
+        ContainerActionsView(container: container, manager: manager)
+      }
+      
     } detail: { container in
       // Type erase the detail view
-      AnyView(ContainerDetailView(container: container))
+      ContainerDetailView(container: container, manager: manager)
     }
   }
 }
@@ -93,7 +94,8 @@ struct StatusBadgeView: View {
 struct ContainerActionsView: View {
   @Environment(\.openWindow) private var openWindow
   let container: DockerContainer
-  @ObservedObject var manager: DockerManager  // Use ObservedObject if manager might change
+  let manager: DockerManager
+  @EnvironmentObject var publication: DockerPublication  // Use ObservedObject if manager might change
   @State private var isActionPending = false  // State for loading indicator
 
   var body: some View {

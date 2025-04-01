@@ -2,7 +2,7 @@ import Combine
 import Foundation
 import SwiftUI
 
-class DockerManager: ObservableObject {
+class DockerPublication: ObservableObject {
   @Published var containers: [DockerContainer] = []
   @Published var images: [DockerImage] = []
   @Published var containerListError: DockerError?  // Error fetching containers
@@ -18,14 +18,110 @@ class DockerManager: ObservableObject {
     socketPath.isEmpty ? nil : DockerExecutor(socketPath: socketPath)
   }
 
+  @MainActor
+  func updateContainerList(_ list: [DockerContainer]) {
+    self.containers = list
+    self.containerListError = nil  // Clear error on success
+    clearContainerListError()
+  }
+
+  @MainActor
+  func updateImageList(_ list: [DockerImage]) {
+    self.images = list
+    clearImageListError()
+  }
+
+  @MainActor
+  func updateSocketPath(_ new: String) {
+    socketPath = new
+  }
+
+  @MainActor
+  func clearContainerListError() {
+    containerListError = nil
+  }
+  @MainActor
+  func setImageListError(_ value: DockerError) {
+    imageListError = value
+  }
+  @MainActor
+  func clearImageListError() {
+    imageListError = nil
+  }
+
+  @MainActor
+  func setError(_ error: DockerError) {
+    containerListError = error
+  }
+
+  func saveDockerHostPath() {
+    UserDefaults.standard.set(socketPath, forKey: "dockerHostPath")
+  }
+
+  func saveRefreshInterval() {
+    UserDefaults.standard.set(refreshInterval, forKey: "refreshInterval")
+  }
+}
+
+class DockerManager {
+  var publication: DockerPublication = DockerPublication()
   private var timer: Timer?
   private var enrichmentCache: [String: (container: DockerContainer, timestamp: Date)] = [:]
   private let enrichmentTTL: TimeInterval = 10
 
+  var containerListError: DockerError? {
+    publication.containerListError
+  }
+  var containers: [DockerContainer] {
+    get { publication.containers }
+    set {
+      DispatchQueue.main.sync {
+        publication.containers = newValue
+      }
+    }
+  }
+  var imageListError: DockerError? {
+    publication.imageListError
+  }
+    var images: [DockerImage] {
+        get { publication.images }
+      set {
+        DispatchQueue.main.sync {
+          publication.images = newValue
+        }
+      }
+    }
+
+    var socketPath: String {
+        get { publication.socketPath }
+      set {
+        DispatchQueue.main.sync {
+          publication.socketPath = newValue
+        }
+      }
+    }
+    var refreshInterval: Double {
+        get { publication.refreshInterval }
+      set {
+        DispatchQueue.main.sync {
+          publication.refreshInterval = newValue
+        }
+          publication.saveRefreshInterval()
+      }
+    }
+
+  var executor: DockerExecutor? {
+    publication.executor
+  }
+
   init() {
-    if socketPath.isEmpty, let detected = DockerEnvironmentDetector.detectDockerHostPath() {
-      socketPath = detected
-      saveDockerHostPath()
+    if publication.socketPath.isEmpty,
+      let detected = DockerEnvironmentDetector.detectDockerHostPath()
+    {
+      DispatchQueue.main.async { [self] in
+        publication.updateSocketPath(detected)
+      }
+      publication.saveDockerHostPath()
     }
     startAutoRefresh()
   }
@@ -35,12 +131,9 @@ class DockerManager: ObservableObject {
   }
 
   // Now async again to await the Task from tryCommand
-  @MainActor
   func fetchContainers() async {
     // Clear previous error on MainActor
-    if containerListError != nil {
-      containerListError = nil
-    }
+    await publication.clearContainerListError()
 
     // Get the task handle from tryCommand
     let fetchTask: Task<[DockerContainer], Error> = tryCommand {
@@ -52,17 +145,14 @@ class DockerManager: ObservableObject {
     // Await the task's result and handle errors on the MainActor
     do {
       let list = try await fetchTask.value  // Await result, throws if task failed
-      // Update state on MainActor (already here due to @MainActor func)
-      self.containers = list
-      self.containerListError = nil  // Clear error on success
+      await publication.updateContainerList(list)
     } catch let dockerError as DockerError {
       // Handle specific DockerError
-      self.containerListError = dockerError
+      await self.publication.setError(dockerError)
       // Logging now happens inside tryCommand
     } catch {
       // Handle other errors
-      self.containerListError = .unknownError(error)
-      // Logging now happens inside tryCommand
+      await self.publication.setError(.unknownError(error))
     }
   }
 
@@ -89,39 +179,27 @@ class DockerManager: ObservableObject {
   }
 
   // Now async again to await the Task from tryCommand
-  @MainActor
   func fetchImages() async {
-    // Clear previous error on MainActor
-    if imageListError != nil {
-      imageListError = nil
-    }
+    await publication.clearImageListError()
 
-    // Get the task handle from tryCommand
     let fetchTask: Task<[DockerImage], Error> = tryCommand {
-      // This block runs in background via Task.detached inside tryCommand
       guard let executor = self.executor else { throw DockerError.noExecutor }
       return try executor.listImages()  // Assuming sync for now
     }
 
-    // Await the task's result and handle errors on the MainActor
     do {
       let list = try await fetchTask.value  // Await result, throws if task failed
-      // Update state on MainActor
-      self.images = list
-      self.imageListError = nil  // Clear error on success
+      await publication.updateImageList(list)
     } catch let dockerError as DockerError {
       // Handle specific DockerError
-      self.imageListError = dockerError
-      // Logging now happens inside tryCommand
+      await self.publication.setImageListError(dockerError)
     } catch {
       // Handle other errors
-      self.imageListError = .unknownError(error)
-      // Logging now happens inside tryCommand
+      await self.publication.setImageListError(.unknownError(error))
     }
   }
 
   // Make async to await task and handle errors
-  @MainActor
   func startContainer(id: String) async {
     let task: Task<Void, Error> = tryCommand { [weak self] in  // Task returns Void
       guard let self, let executor else { throw DockerError.noExecutor }
@@ -141,7 +219,6 @@ class DockerManager: ObservableObject {
   }
 
   // Make async to await task and handle errors
-  @MainActor
   func stopContainer(id: String) async {
     let task: Task<Void, Error> = tryCommand { [weak self] in  // Task returns Void
       guard let self, let executor else { throw DockerError.noExecutor }
@@ -195,19 +272,10 @@ class DockerManager: ObservableObject {
     }
   }
 
-  func saveDockerHostPath() {
-    UserDefaults.standard.set(socketPath, forKey: "dockerHostPath")
-  }
-
-  func saveRefreshInterval() {
-    UserDefaults.standard.set(refreshInterval, forKey: "refreshInterval")
-    startAutoRefresh()
-  }
-
   // Auto-refresh needs to call the async methods
   private func startAutoRefresh() {
     timer?.invalidate()
-    timer = Timer.scheduledTimer(withTimeInterval: refreshInterval, repeats: true) {
+    timer = Timer.scheduledTimer(withTimeInterval: publication.refreshInterval, repeats: true) {
       [weak self] _ in
       Task {  // Wrap async calls
         await self?.fetchContainers()
