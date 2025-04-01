@@ -292,7 +292,9 @@ class DockerExecutor {
     _ = try makeRequest(path: "/v1.41/containers/\(id)/stop", method: "POST")
   }
 
-  func exec(containerId: String, command: [String], addCarriageReturn: Bool = true) async throws -> Data {
+  func exec(containerId: String, command: [String], addCarriageReturn: Bool = true) async throws
+    -> Data
+  {
     // Check container state first
     let containerData = try makeRequest(path: "/v1.41/containers/\(containerId)/json")
     let json = try JSONSerialization.jsonObject(with: containerData, options: []) as? [String: Any]

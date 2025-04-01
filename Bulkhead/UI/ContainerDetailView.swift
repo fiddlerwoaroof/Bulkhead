@@ -319,7 +319,7 @@ final class ContainerDetailModel: ObservableObject {
 
   var base: DockerContainer?
 
-func load(for container: DockerContainer, using manager: DockerManager) async {
+  func load(for container: DockerContainer, using manager: DockerManager) async {
     base = container
     enriched = nil
     error = nil

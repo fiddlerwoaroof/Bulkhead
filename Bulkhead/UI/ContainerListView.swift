@@ -43,7 +43,7 @@ struct ContainerListView: View {
       searchFocused: $searchFocused
     ) { container in
       // Type erase the content view
-      
+
       HStack {
         VStack(alignment: .leading, spacing: 2) {
           HStack(spacing: 8) {
@@ -62,7 +62,7 @@ struct ContainerListView: View {
         Spacer()
         ContainerActionsView(container: container, manager: manager)
       }
-      
+
     } detail: { container in
       // Type erase the detail view
       ContainerDetailView(container: container, manager: manager)

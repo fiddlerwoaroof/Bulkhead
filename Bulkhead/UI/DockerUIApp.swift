@@ -6,14 +6,14 @@ class AppState: ObservableObject {
 
 @main
 struct DockerUIApp: App {
-  @StateObject var ass = AppState()
+  @StateObject private var ass = AppState()
   @Environment(\.openWindow) private var openWindow
   @State private var selectedTab = 0
   @State private var isSearchFocused = false
 
   var body: some Scene {
     WindowGroup {
-      ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused, manager:ass.manager)
+      ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused, manager: ass.manager)
         .environmentObject(ass.manager.publication)
         .onAppear {
           Task {

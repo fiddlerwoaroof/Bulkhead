@@ -64,7 +64,7 @@ class DockerPublication: ObservableObject {
 }
 
 class DockerManager {
-  var publication: DockerPublication = DockerPublication()
+  var publication = DockerPublication()
   private var timer: Timer?
   private var enrichmentCache: [String: (container: DockerContainer, timestamp: Date)] = [:]
   private let enrichmentTTL: TimeInterval = 10
@@ -83,32 +83,32 @@ class DockerManager {
   var imageListError: DockerError? {
     publication.imageListError
   }
-    var images: [DockerImage] {
-        get { publication.images }
-      set {
-        DispatchQueue.main.sync {
-          publication.images = newValue
-        }
+  var images: [DockerImage] {
+    get { publication.images }
+    set {
+      DispatchQueue.main.sync {
+        publication.images = newValue
       }
     }
+  }
 
-    var socketPath: String {
-        get { publication.socketPath }
-      set {
-        DispatchQueue.main.sync {
-          publication.socketPath = newValue
-        }
+  var socketPath: String {
+    get { publication.socketPath }
+    set {
+      DispatchQueue.main.sync {
+        publication.socketPath = newValue
       }
     }
-    var refreshInterval: Double {
-        get { publication.refreshInterval }
-      set {
-        DispatchQueue.main.sync {
-          publication.refreshInterval = newValue
-        }
-          publication.saveRefreshInterval()
+  }
+  var refreshInterval: Double {
+    get { publication.refreshInterval }
+    set {
+      DispatchQueue.main.sync {
+        publication.refreshInterval = newValue
       }
+      publication.saveRefreshInterval()
     }
+  }
 
   var executor: DockerExecutor? {
     publication.executor
