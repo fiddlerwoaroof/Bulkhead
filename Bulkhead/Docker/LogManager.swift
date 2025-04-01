@@ -30,7 +30,7 @@ struct LogEntry: CustomStringConvertible {
 
 class LogManager: ObservableObject {
   static let shared = LogManager()
-  private static var subsystem = Bundle.main.bundleIdentifier ?? "co.fwoar.Bulkhead.unknown"
+  private static let subsystem = Bundle.main.bundleIdentifier ?? "co.fwoar.Bulkhead.unknown"
   private var loggers: [String: OSLog]
   private let loggersAccessQueue: DispatchQueue
   @Published var logs: [LogEntry]
