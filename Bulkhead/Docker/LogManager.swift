@@ -29,12 +29,12 @@ struct LogEntry: CustomStringConvertible {
 }
 
 class LogManager: ObservableObject {
-  static let shared = LogManager()
-  private static let subsystem = Bundle.main.bundleIdentifier ?? "co.fwoar.Bulkhead.unknown"
+  //  static let shared = LogManager()
+  private static let subsystem = Bundle.main.bundleIdentifier ?? "<no bundle>"
   private var loggers: [String: OSLog]
   private let loggersAccessQueue: DispatchQueue
-  @Published var logs: [LogEntry]
   private let maxEntries = 1000  // Limit the number of log entries
+  @Published var logs: [LogEntry]
 
   init() {
     self.loggers = [:]
@@ -54,8 +54,15 @@ class LogManager: ObservableObject {
       }
     }
     NSLog("%@", logEntry.description)
-    DispatchQueue.main.async {
-      self.logs.append(logEntry)
+
+    var logs = self.logs
+
+    if !Thread.isMainThread {
+      logs.append(logEntry)
+    } else {
+      DispatchQueue.main.async {
+        logs.append(logEntry)
+      }
     }
   }
 }

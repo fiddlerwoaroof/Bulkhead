@@ -32,8 +32,10 @@ class SocketConnection {
   private static var crlf2Data = Data("\r\n\r\n".utf8)
 
   private let socket: Int32
+  private let logManager: LogManager
 
-  init(path: URL) throws {
+  init(path: URL, logManager: LogManager) throws {
+    self.logManager = logManager
     socket = Darwin.socket(AF_UNIX, SOCK_STREAM, 0)
     guard socket >= 0 else {
       let underlyingError = NSError(
@@ -84,7 +86,7 @@ class SocketConnection {
   func readResponse(timeout: TimeInterval = 5.0) throws -> (
     statusLine: String, headers: [String: String], body: Data
   ) {
-    LogManager.shared.addLog(
+    logManager.addLog(
       "Reading response from socket...", level: "DEBUG", source: "socket-connection")
 
     var buffer = [UInt8](repeating: 0, count: 4096)
@@ -98,7 +100,7 @@ class SocketConnection {
       if bytesRead > 0 {
         response.append(buffer, count: bytesRead)
       } else if bytesRead == 0 {
-        LogManager.shared.addLog(
+        logManager.addLog(
           "Connection closed by peer.", level: "DEBUG", source: "socket-connection")
         break
       } else {
@@ -127,7 +129,7 @@ class SocketConnection {
         "Connection closed or data incomplete before receiving complete HTTP headers.")
     }
 
-    LogManager.shared.addLog(
+    logManager.addLog(
       "Received headers. Raw response size: \(response.count)", level: "DEBUG",
       source: "socket-connection")
 
@@ -158,13 +160,13 @@ class SocketConnection {
     }
 
     if headers["Transfer-Encoding"]?.lowercased() == "chunked" {
-      LogManager.shared.addLog("Dechunking body...", level: "DEBUG", source: "socket-connection")
+      logManager.addLog("Dechunking body...", level: "DEBUG", source: "socket-connection")
       bodyData = try dechunk(Data(bodyData))
     } else if let contentLengthStr = headers["Content-Length"],
       let contentLength = Int(contentLengthStr),
       bodyData.count < contentLength
     {
-      LogManager.shared.addLog(
+      logManager.addLog(
         "Content-Length (\(contentLength)) > received body (\(bodyData.count)). Need to read more.",
         level: "DEBUG", source: "socket-connection")
       throw DockerError.invalidResponse(
@@ -174,13 +176,13 @@ class SocketConnection {
       let contentLength = Int(contentLengthStr),
       bodyData.count > contentLength
     {
-      LogManager.shared.addLog(
+      logManager.addLog(
         "Received body (\(bodyData.count)) > Content-Length (\(contentLength)). Truncating.",
         level: "WARN", source: "socket-connection")
       bodyData = bodyData.prefix(contentLength)
     }
 
-    LogManager.shared.addLog(
+    logManager.addLog(
       "Final body size: \(bodyData.count)", level: "DEBUG", source: "socket-connection")
     return (statusLine, headers, Data(bodyData))
   }
@@ -222,16 +224,19 @@ class SocketConnection {
 
 class DockerExecutor {
   let socketPath: String
+  let logManager: LogManager
 
-  init(socketPath: String) {
+  init(socketPath: String, logManager: LogManager) {
+    self.logManager = logManager
     self.socketPath = socketPath
   }
   private func log(_ message: String, level: String) {
-    LogManager.shared.addLog(message, level: level, source: "docker-executor")
+    logManager.addLog(message, level: level, source: "docker-executor")
   }
 
   func makeRequest(path: String, method: String = "GET", body: Data? = nil) throws -> Data {
-    let socket = try SocketConnection(path: URL(fileURLWithPath: socketPath))
+    let socket = try SocketConnection(
+      path: URL(fileURLWithPath: socketPath), logManager: logManager)
     let request = DockerHTTPRequest(path: path, method: method, body: body)
     let requestData = request.rawData()
     log("Request: \(String(data: requestData, encoding: .utf8) ?? "<invalid>")", level: "DEBUG")
@@ -487,16 +492,18 @@ enum DockerError: Error, LocalizedError, Equatable {
 }
 
 extension DockerContainer {
-  static func enrich(from jsonData: Data, into container: inout DockerContainer) throws {
+  static func enrich(from jsonData: Data, container: DockerContainer) throws -> DockerContainer {
     let json = try JSONSerialization.jsonObject(with: jsonData, options: []) as? [String: Any]
     let config = json?["Config"] as? [String: Any]
     let state = json?["State"] as? [String: Any]
 
-    enrichBasicInfo(from: json, into: &container)
-    enrichConfig(from: config, into: &container)
-    enrichState(from: state, into: &container)
-    enrichMounts(from: json, into: &container)
-    enrichPorts(from: json, into: &container)
+    var result = container
+    enrichBasicInfo(from: json, into: &result)
+    enrichConfig(from: config, into: &result)
+    enrichState(from: state, into: &result)
+    enrichMounts(from: json, into: &result)
+    enrichPorts(from: json, into: &result)
+    return result
   }
 
   private static func enrichBasicInfo(

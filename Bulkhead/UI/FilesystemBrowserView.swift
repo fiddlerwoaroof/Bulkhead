@@ -100,7 +100,9 @@ struct FilesystemRow: View {
 struct FilesystemBrowserView: View {
   let container: DockerContainer
   let initialPath: String
-  @EnvironmentObject var manager: DockerManager
+  @EnvironmentObject var appEnv: ApplicationEnvironment
+  private var manager: DockerManager { appEnv.manager }
+
   @State private var path = "/"
   @State private var entries: [FileEntry] = []
   @State private var hoveredEntry: FileEntry?
@@ -265,12 +267,12 @@ struct FilesystemBrowserView: View {
       }
     } catch let dockerError as DockerError {
       fetchError = dockerError
-      LogManager.shared.addLog(
+      appEnv.logManager.addLog(
         "Error handling tap in FilesystemBrowser: \(dockerError.localizedDescription)",
         level: "ERROR")
     } catch {
       fetchError = .unknownError(error)
-      LogManager.shared.addLog(
+      appEnv.logManager.addLog(
         "Unknown error handling tap in FilesystemBrowser: \(error.localizedDescription)",
         level: "ERROR")
     }
@@ -349,11 +351,11 @@ struct FilesystemBrowserView: View {
         }
       } catch let dockerError as DockerError {
         await MainActor.run { fetchError = dockerError }
-        LogManager.shared.addLog(
+        appEnv.logManager.addLog(
           "DockerError fetching filesystem: \(dockerError.localizedDescription)", level: "ERROR")
       } catch {
         await MainActor.run { fetchError = .unknownError(error) }
-        LogManager.shared.addLog(
+        appEnv.logManager.addLog(
           "Unknown error fetching filesystem: \(error.localizedDescription)", level: "ERROR")
       }
       await MainActor.run { isExecuting = false }

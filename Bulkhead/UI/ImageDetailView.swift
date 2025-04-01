@@ -2,10 +2,12 @@ import SwiftUI
 
 struct ImageDetailView: View {
   let image: DockerImage
-  @EnvironmentObject var manager: DockerManager
   @StateObject private var model = ImageDetailModel()
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
+
+  @EnvironmentObject var appEnv: ApplicationEnvironment
+  var manager: DockerManager { appEnv.manager }
 
   private var connectionError: DockerError? {
     guard !isGlobalErrorShowing else { return nil }
@@ -153,7 +155,8 @@ class ImageDetailModel: ObservableObject {
   @Published var createdDate: Date?
   @Published var virtualSize: Int64?
 
-  private let dockerManager = DockerManager()
+  @EnvironmentObject var manager: DockerManager
+  @EnvironmentObject var appEnv: ApplicationEnvironment
 
   func formatSize(_ size: Int64) -> String {
     let formatter = ByteCountFormatter()
@@ -222,12 +225,12 @@ class ImageDetailModel: ObservableObject {
     } catch let dockerError as DockerError {
       // Store the specific DockerError
       self.error = dockerError
-      LogManager.shared.addLog(
+      appEnv.logManager.addLog(
         "DockerError loading image details: \(dockerError.localizedDescription)", level: "ERROR")
     } catch {
       // Wrap other errors
       self.error = .unknownError(error)
-      LogManager.shared.addLog(
+      appEnv.logManager.addLog(
         "Unknown error loading image details: \(error.localizedDescription)", level: "ERROR")
     }
 

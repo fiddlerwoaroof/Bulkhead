@@ -7,12 +7,19 @@ class DockerPublication: ObservableObject {
   @Published var images: [DockerImage] = []
   @Published var containerListError: DockerError?  // Error fetching containers
   @Published var imageListError: DockerError?  // Error fetching images
-  @Published var socketPath: String =
-    UserDefaults.standard.string(forKey: "dockerHostPath")
-    ?? DockerEnvironmentDetector.detectDockerHostPath() ?? ""
+  @Published var socketPath: String
   @Published var refreshInterval: Double =
     UserDefaults.standard.double(forKey: "refreshInterval") == 0
     ? 10 : UserDefaults.standard.double(forKey: "refreshInterval")
+
+  private let logManager: LogManager
+
+  init(logManager: LogManager) {
+    self.socketPath =
+      UserDefaults.standard.string(forKey: "dockerHostPath")
+      ?? DockerEnvironmentDetector.detectDockerHostPath(logManager: logManager) ?? ""
+    self.logManager = logManager
+  }
 
   @MainActor
   func updateContainerList(_ list: [DockerContainer]) {
@@ -60,11 +67,26 @@ class DockerPublication: ObservableObject {
 }
 
 class DockerManager: ObservableObject {
-  private var publication: DockerPublication = DockerPublication()
+  private let publication: DockerPublication
+  private let logManager: LogManager
   private var timer: Timer?
   private var enrichmentCache: [String: (container: DockerContainer, timestamp: Date)] = [:]
   private let enrichmentTTL: TimeInterval = 10
   private let cacheQueue = DispatchQueue(label: "com.bulkhead.cacheQueue", attributes: .concurrent)
+
+  init(logManager: LogManager) {
+    self.logManager = logManager
+    self.publication = DockerPublication(logManager: logManager)
+    if publication.socketPath.isEmpty,
+      let detected = DockerEnvironmentDetector.detectDockerHostPath(logManager: logManager)
+    {
+      DispatchQueue.main.async {
+        self.publication.updateSocketPath(detected)
+        self.publication.saveDockerHostPath()
+      }
+    }
+    startAutoRefresh()
+  }
 
   var containerListError: DockerError? {
     publication.containerListError
@@ -126,23 +148,12 @@ class DockerManager: ObservableObject {
   }
 
   var executor: DockerExecutor? {
-    publication.socketPath.isEmpty ? nil : DockerExecutor(socketPath: publication.socketPath)
-  }
-
-  init() {
-    if publication.socketPath.isEmpty,
-      let detected = DockerEnvironmentDetector.detectDockerHostPath()
-    {
-      DispatchQueue.main.async {
-        self.publication.updateSocketPath(detected)
-        self.publication.saveDockerHostPath()
-      }
-    }
-    startAutoRefresh()
+    publication.socketPath.isEmpty
+      ? nil : DockerExecutor(socketPath: publication.socketPath, logManager: logManager)
   }
 
   private func log(_ message: String, level: String = "INFO") {
-    LogManager.shared.addLog(message, level: level, source: "docker-manager")
+    logManager.addLog(message, level: level, source: "docker-manager")
   }
 
   // Now async again to await the Task from tryCommand
@@ -182,11 +193,10 @@ class DockerManager: ObservableObject {
     }
 
     let detailData = try executor.makeRequest(path: "/v1.41/containers/\(container.id)/json")
-    var enriched = container
-    try DockerContainer.enrich(from: detailData, into: &enriched)
+    let enriched = try DockerContainer.enrich(from: detailData, container: container)
 
     // Write operation - uses barrier to ensure exclusive access
-    cacheQueue.async(flags: .barrier) { @Sendable in
+    cacheQueue.async(flags: .barrier) {
       self.enrichmentCache[container.id] = (container: enriched, timestamp: now)
     }
 
@@ -268,24 +278,25 @@ class DockerManager: ObservableObject {
   // Updated to return Task handle (Alternative 1)
   private func tryCommand<T>(_ block: @escaping () async throws -> T) -> Task<T, Error> {
     // Create and return the detached task
-    Task.detached {
+    let logManager = logManager
+    return Task.detached {
       // Log start (optional)
-      LogManager.shared.addLog(
+      logManager.addLog(
         "Executing background command...", level: "DEBUG", source: "docker-manager")
       do {
         let result = try await block()
         // Log success (optional)
-        LogManager.shared.addLog(
+        logManager.addLog(
           "Background command succeeded.", level: "DEBUG", source: "docker-manager")
         return result
       } catch {
         // Log error before task completes/throws
-        LogManager.shared.addLog(
+        logManager.addLog(
           "Background command failed: \(error.localizedDescription)", level: "ERROR",
           source: "docker-manager")
         // Log specific DockerError details if possible
         if let dockerError = error as? DockerError {
-          LogManager.shared.addLog(
+          logManager.addLog(
             "--> DockerError Details: \(String(describing: dockerError))", level: "ERROR",
             source: "docker-manager")
         }

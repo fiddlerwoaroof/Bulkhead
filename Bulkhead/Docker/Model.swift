@@ -1,6 +1,6 @@
 import Foundation
 
-struct DockerContainer: Identifiable, Codable, Hashable {
+struct DockerContainer: Identifiable, Codable, Hashable, Sendable {
   let id: String
   let names: [String]
   let image: String

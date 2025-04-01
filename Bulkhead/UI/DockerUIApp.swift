@@ -1,17 +1,35 @@
 import SwiftUI
 
+class ApplicationEnvironment: ObservableObject {
+  @Published var logManager: LogManager = LogManager()
+  @Published var manager: DockerManager
+
+  init() {
+    let logManager = LogManager()
+    self.logManager = logManager
+    self.manager = DockerManager(logManager: logManager)
+  }
+}
+
 @main
 struct DockerUIApp: App {
-  @StateObject private var manager = DockerManager()
+
+  @StateObject private var appEnv = ApplicationEnvironment()
+  private var manager: DockerManager { appEnv.manager }
   @Environment(\.openWindow) private var openWindow
   @State private var selectedTab = 0
   @State private var isSearchFocused = false
+
+  init() {
+  }
 
   var body: some Scene {
     WindowGroup {
       ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused)
         .environmentObject(manager)
+        .environmentObject(appEnv)
         .onAppear {
+          let manager = manager
           Task {
             await manager.fetchContainers()
             await manager.fetchImages()
@@ -45,6 +63,7 @@ struct DockerUIApp: App {
         Divider()
 
         Button("Refresh Containers") {
+          let manager = manager
           Task {
             await manager.fetchContainers()
             await manager.fetchImages()

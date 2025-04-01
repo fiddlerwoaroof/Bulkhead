@@ -56,7 +56,7 @@ class LogTableViewCoordinator: NSObject, NSTableViewDataSource, NSTableViewDeleg
 }
 
 struct LogTableView: NSViewRepresentable {
-  @ObservedObject private var logManager = LogManager.shared
+  @EnvironmentObject private var logManager: LogManager
 
   func makeCoordinator() -> LogTableViewCoordinator {
     let coordinator = LogTableViewCoordinator()

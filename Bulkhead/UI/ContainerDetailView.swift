@@ -67,13 +67,15 @@ extension HealthStatus {
   }
 }
 
-struct ContainerDetailView: View {
-  let container: DockerContainer
-  @EnvironmentObject var manager: DockerManager
-  @StateObject private var model = ContainerDetailModel()
+struct ContainerDetailViewInner: View {
+  @ObservedObject private var appEnv: ApplicationEnvironment
+  @StateObject private var model: ContainerDetailModel
   @State private var selectedPath: String?
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
+
+  let container: DockerContainer
+  private var manager: DockerManager { appEnv.manager }
 
   // Determine if there's a *local* model loading error
   private var localError: DockerError? {
@@ -88,6 +90,12 @@ struct ContainerDetailView: View {
 
     if let err = manager.containerListError, err.isConnectionError { return err }
     return nil  // No relevant connection error
+  }
+
+  init(appEnv: ApplicationEnvironment, container: DockerContainer) {
+    self.appEnv = appEnv
+    self.container = container
+    _model = StateObject(wrappedValue: ContainerDetailModel(appEnv: appEnv))
   }
 
   var body: some View {
@@ -309,12 +317,29 @@ struct ContainerDetailView: View {
   }
 }
 
+struct ContainerDetailView: View {
+  let container: DockerContainer
+  @EnvironmentObject var appEnv: ApplicationEnvironment
+  private var manager: DockerManager { appEnv.manager }
+
+  var body: some View {
+    ContainerDetailViewInner(appEnv: appEnv, container: container)
+  }
+}
+
 @MainActor
 final class ContainerDetailModel: ObservableObject {
   @Published var enriched: DockerContainer?
   @Published var isLoading = false
   @Published var error: DockerError?
   @Published var sortedEnvironmentVariables: [(key: String, value: String)] = []
+
+  let appEnv: ApplicationEnvironment
+  var logManager: LogManager { appEnv.logManager }
+
+  init(appEnv: ApplicationEnvironment) {
+    self.appEnv = appEnv
+  }
 
   var base: DockerContainer?
 
@@ -331,12 +356,12 @@ final class ContainerDetailModel: ObservableObject {
       self.processEnvironmentVariables(result.env)
     } catch let dockerError as DockerError {
       self.error = dockerError
-      LogManager.shared.addLog(
+      logManager.addLog(
         "DockerError loading container details: \(dockerError.localizedDescription)", level: "ERROR"
       )
     } catch {
       self.error = .unknownError(error)
-      LogManager.shared.addLog(
+      logManager.addLog(
         "Unknown error loading container details: \(error.localizedDescription)", level: "ERROR")
     }
 

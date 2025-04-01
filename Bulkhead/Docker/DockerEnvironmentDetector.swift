@@ -14,23 +14,23 @@ enum DockerEnvironmentDetector {
 
   /// Detects the Docker socket path by checking common locations
   /// Returns the first valid socket path found, or nil if none are available
-  static func detectDockerHostPath() -> String? {
-    for path in socketLocations where isSocketAccessible(path) {
-      LogManager.shared.addLog(
+  static func detectDockerHostPath(logManager: LogManager) -> String? {
+    for path in socketLocations where isSocketAccessible(path, logManager: logManager) {
+      logManager.addLog(
         "Found accessible Docker socket at: \(path)", level: "DEBUG",
         source: "docker-environment-detector")
       return path
     }
 
-    LogManager.shared.addLog(
+    logManager.addLog(
       "No accessible Docker socket found in common locations", level: "ERROR",
       source: "docker-environment-detector")
     return nil
   }
 
   /// Returns a user-friendly description of the Docker environment
-  static func getEnvironmentDescription() -> String {
-    if let path = detectDockerHostPath() {
+  static func getEnvironmentDescription(logManager: LogManager) -> String {
+    if let path = detectDockerHostPath(logManager: logManager) {
       if path.contains("colima") {
         return "Colima"
       }
@@ -45,12 +45,12 @@ enum DockerEnvironmentDetector {
   }
 
   /// Checks if a socket file exists and is accessible
-  private static func isSocketAccessible(_ path: String) -> Bool {
+  private static func isSocketAccessible(_ path: String, logManager: LogManager) -> Bool {
     let fileManager = FileManager.default
 
     // First check if the file exists
     guard fileManager.fileExists(atPath: path) else {
-      LogManager.shared.addLog(
+      logManager.addLog(
         "Socket file does not exist at: \(path)", level: "ERROR",
         source: "docker-environment-detector")
       return false
@@ -61,7 +61,7 @@ enum DockerEnvironmentDetector {
     guard fileManager.fileExists(atPath: path, isDirectory: &isDirectory),
       !isDirectory.boolValue
     else {
-      LogManager.shared.addLog("Path exists but is not a file: \(path)")
+      logManager.addLog("Path exists but is not a file: \(path)")
       return false
     }
 
@@ -71,7 +71,7 @@ enum DockerEnvironmentDetector {
       try socket.close()
       return true
     } catch {
-      LogManager.shared.addLog(
+      logManager.addLog(
         "Socket exists but is not accessible at \(path): \(error.localizedDescription)")
       return false
     }

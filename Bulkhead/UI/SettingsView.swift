@@ -3,9 +3,10 @@ import SwiftUI
 struct SettingsView: View {
   @ObservedObject var manager: DockerManager
   @State private var showSavedConfirmation = false
+  @EnvironmentObject var appEnv: ApplicationEnvironment
 
   private var detectedEnvironment: String {
-    DockerEnvironmentDetector.getEnvironmentDescription()
+    DockerEnvironmentDetector.getEnvironmentDescription(logManager: appEnv.logManager)
   }
 
   var body: some View {
