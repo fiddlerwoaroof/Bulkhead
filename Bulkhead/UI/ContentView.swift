@@ -14,14 +14,16 @@ extension EnvironmentValues {
 }
 
 struct ContentView: View {
-  @EnvironmentObject var manager: DockerManager
+  @EnvironmentObject var publication: DockerPublication
+  let manager: DockerManager
   @Binding var selectedTab: Int
   @Environment(\.colorScheme) private var colorScheme
   @State private var selectedContainer: DockerContainer?
   @State private var selectedImage: DockerImage?
   @Binding private var searchFocused: Bool
 
-  init(selectedTab: Binding<Int>, searchFocused: Binding<Bool>) {
+  init(selectedTab: Binding<Int>, searchFocused: Binding<Bool>, manager: DockerManager) {
+    self.manager = manager
     _selectedTab = selectedTab
     _searchFocused = searchFocused
   }
@@ -37,18 +39,19 @@ struct ContentView: View {
   // Check for any global connection error
   private var globalConnectionError: DockerError? {
     // Prioritize container list error, then image list error
-    if let err = manager.containerListError, err.isConnectionError { return err }
-    if let err = manager.imageListError, err.isConnectionError { return err }
+    if let err = publication.containerListError, err.isConnectionError { return err }
+    if let err = publication.imageListError, err.isConnectionError { return err }
     return nil
   }
 
   private var containerListView: some View {
     ContainerListView(
-      containers: $manager.containers,
+      containers: $publication.containers,
       selectedContainer: $selectedContainer,
       searchFocused: $searchFocused,
       backgroundColor: backgroundColor,
-      shadowColor: shadowColor
+      shadowColor: shadowColor,
+      manager: manager
     )
   }
 
@@ -56,7 +59,7 @@ struct ContentView: View {
     ImageListView(
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
-      images: $manager.images,
+      images: $publication.images,
       searchFocused: $searchFocused,
       selectedImage: $selectedImage,
       manager: manager
@@ -96,7 +99,13 @@ struct ContentView: View {
           )
       }
     }
-    .onChange(of: manager.containers) { _, newContainers in
+    .onAppear {
+      Task {
+        await manager.fetchContainers()
+        await manager.fetchImages()
+      }
+    }
+    .onChange(of: publication.containers) { _, newContainers in
       if selectedContainer == nil && !newContainers.isEmpty {
         selectedContainer = newContainers[0]
       }

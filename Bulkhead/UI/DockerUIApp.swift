@@ -1,12 +1,10 @@
 import SwiftUI
 
 class ApplicationEnvironment: ObservableObject {
-  @Published var logManager = LogManager()
-  @Published var manager: DockerManager
+  let logManager = LogManager()
+  let manager: DockerManager
 
   init() {
-    let logManager = LogManager()
-    self.logManager = logManager
     self.manager = DockerManager(logManager: logManager)
 
     // Start initial data fetch
@@ -31,21 +29,27 @@ struct DockerUIApp: App {
 
   var body: some Scene {
     WindowGroup {
-      ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused)
-        .environmentObject(manager)
+      ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused, manager: manager)
+        .environmentObject(appEnv.manager.publication)
         .environmentObject(appEnv)
+        .onAppear {
+          Task {
+            await appEnv.manager.fetchContainers()
+            await appEnv.manager.fetchImages()
+          }
+        }
     }
 
-    SettingsWindow(manager: manager)
+    SettingsWindow(manager: appEnv.manager)
     LogWindowScene()
 
     // swiftlint:disable:next unused_parameter
     WindowGroup(for: DockerContainer.self) { $container in
       if let container {
-        ContainerLogsView(container: container)
+        ContainerLogsView(container: container, manager: appEnv.manager)
       }
     }
-    .environmentObject(manager)
+    .environmentObject(appEnv.manager.publication)
 
     .commands {
       CommandGroup(replacing: .appInfo) {
@@ -64,8 +68,8 @@ struct DockerUIApp: App {
         Button("Refresh Containers") {
           let manager = manager
           Task {
-            await manager.fetchContainers()
-            await manager.fetchImages()
+            await appEnv.manager.fetchContainers()
+            await appEnv.manager.fetchImages()
           }
         }
         .keyboardShortcut("r")

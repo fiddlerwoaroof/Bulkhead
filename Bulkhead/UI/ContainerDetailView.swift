@@ -70,11 +70,12 @@ extension HealthStatus {
 struct ContainerDetailViewInner: View {
   @ObservedObject private var appEnv: ApplicationEnvironment
   @StateObject private var model: ContainerDetailModel
+  let container: DockerContainer
+  @EnvironmentObject var publication: DockerPublication
   @State private var selectedPath: String?
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
 
-  let container: DockerContainer
   private var manager: DockerManager { appEnv.manager }
 
   // Determine if there's a *local* model loading error
@@ -88,7 +89,7 @@ struct ContainerDetailViewInner: View {
     // Ignore connection errors if a global one is already showing
     guard !isGlobalErrorShowing else { return nil }
 
-    if let err = manager.containerListError, err.isConnectionError { return err }
+    if let err = publication.containerListError, err.isConnectionError { return err }
     return nil  // No relevant connection error
   }
 

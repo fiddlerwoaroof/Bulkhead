@@ -102,7 +102,7 @@ struct FilesystemBrowserView: View {
   let initialPath: String
   @EnvironmentObject var appEnv: ApplicationEnvironment
   private var manager: DockerManager { appEnv.manager }
-
+  @EnvironmentObject var publication: DockerPublication
   @State private var path = "/"
   @State private var entries: [FileEntry] = []
   @State private var hoveredEntry: FileEntry?
@@ -132,7 +132,7 @@ struct FilesystemBrowserView: View {
   }
 
   private func isSymlinkDirectory(_ path: String) async throws -> Bool {
-    guard let executor = manager.executor else { throw DockerError.noExecutor }
+    guard let executor = publication.executor else { throw DockerError.noExecutor }
     let data = try await executor.exec(
       containerId: container.id,
       command: ["sh", "-c", "test -d \"\(path)\" && echo yes || echo no"],
@@ -286,7 +286,7 @@ struct FilesystemBrowserView: View {
       return
     }
 
-    guard let executor = manager.executor else {
+    guard let executor = publication.executor else {
       await MainActor.run { fetchError = .noExecutor }
       isExecuting = false
       return

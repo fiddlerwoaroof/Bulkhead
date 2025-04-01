@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
-  @ObservedObject var manager: DockerManager
+  let manager: DockerManager
+  @EnvironmentObject var publication: DockerPublication
   @State private var showSavedConfirmation = false
   @EnvironmentObject var appEnv: ApplicationEnvironment
 
@@ -16,7 +17,7 @@ struct SettingsView: View {
           Group {
             Text("Docker Socket Path")
               .font(.headline)
-            TextField("Socket Path", text: $manager.socketPath)
+            TextField("Socket Path", text: $publication.socketPath)
               .textFieldStyle(.roundedBorder)
               .onChange(of: manager.socketPath) { _, newPath in
                 handleSocketPathChange(newValue: newPath)
@@ -51,7 +52,7 @@ struct SettingsView: View {
             Text("Refresh Interval: \(Int(manager.refreshInterval)) seconds")
               .font(.headline)
               .padding(.top, 12)
-            Slider(value: $manager.refreshInterval, in: 5...60, step: 1) {
+            Slider(value: $publication.refreshInterval, in: 5...60, step: 1) {
               Text("Refresh Interval")
             } onEditingChanged: { _ in
               handleRefreshIntervalChange(newValue: manager.refreshInterval)

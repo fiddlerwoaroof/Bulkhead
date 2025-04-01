@@ -14,6 +14,11 @@ class DockerPublication: ObservableObject {
 
   private let logManager: LogManager
 
+  var executor: DockerExecutor? {
+    socketPath.isEmpty
+      ? nil : DockerExecutor(socketPath: socketPath, logManager: logManager)
+  }
+
   init(logManager: LogManager) {
     self.socketPath =
       UserDefaults.standard.string(forKey: "dockerHostPath")
@@ -66,29 +71,13 @@ class DockerPublication: ObservableObject {
   }
 }
 
-class DockerManager: ObservableObject {
-  private let publication: DockerPublication
+class DockerManager {
+  let publication: DockerPublication
   private let logManager: LogManager
   private var timer: Timer?
   private var enrichmentCache: [String: (container: DockerContainer, timestamp: Date)] = [:]
   private let enrichmentTTL: TimeInterval = 10
   private let cacheQueue = DispatchQueue(label: "com.bulkhead.cacheQueue", attributes: .concurrent)
-
-  init(logManager: LogManager) {
-    self.logManager = logManager
-    self.publication = DockerPublication(logManager: logManager)
-
-    // Set socket path synchronously if empty
-    if publication.socketPath.isEmpty {
-      if let detected = DockerEnvironmentDetector.detectDockerHostPath(logManager: logManager) {
-        // Directly set the socket path since we're in initialization
-        publication.socketPath = detected
-        publication.saveDockerHostPath()
-      }
-    }
-
-    startAutoRefresh()
-  }
 
   var containerListError: DockerError? {
     publication.containerListError
@@ -150,8 +139,23 @@ class DockerManager: ObservableObject {
   }
 
   var executor: DockerExecutor? {
-    publication.socketPath.isEmpty
-      ? nil : DockerExecutor(socketPath: publication.socketPath, logManager: logManager)
+    publication.executor
+  }
+
+  init(logManager: LogManager) {
+    self.logManager = logManager
+    self.publication = DockerPublication(logManager: logManager)
+
+    // Set socket path synchronously if empty
+    if publication.socketPath.isEmpty {
+      if let detected = DockerEnvironmentDetector.detectDockerHostPath(logManager: logManager) {
+        // Directly set the socket path since we're in initialization
+        publication.socketPath = detected
+        publication.saveDockerHostPath()
+      }
+    }
+
+    startAutoRefresh()
   }
 
   private func log(_ message: String, level: String = "INFO") {

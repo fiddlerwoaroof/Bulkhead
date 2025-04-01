@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsWindow: Scene {
-  @ObservedObject var manager: DockerManager
+  let manager: DockerManager
 
   var body: some Scene {
     Window("Settings", id: "Settings") {

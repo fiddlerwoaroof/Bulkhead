@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ImageDetailView: View {
   let image: DockerImage
+  @EnvironmentObject var publication: DockerPublication
   @StateObject private var model = ImageDetailModel()
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
@@ -12,11 +13,11 @@ struct ImageDetailView: View {
   private var connectionError: DockerError? {
     guard !isGlobalErrorShowing else { return nil }
 
-    if let err = manager.imageListError, err.isConnectionError { return err }
-    if case .socketReadError = manager.imageListError { return manager.imageListError }
-    if case .socketWriteError = manager.imageListError { return manager.imageListError }
-    if case .timeoutOccurred = manager.imageListError { return manager.imageListError }
-    if case .noExecutor = manager.imageListError { return manager.imageListError }
+    if let err = publication.imageListError, err.isConnectionError { return err }
+    if case .socketReadError = publication.imageListError { return publication.imageListError }
+    if case .socketWriteError = publication.imageListError { return publication.imageListError }
+    if case .timeoutOccurred = publication.imageListError { return publication.imageListError }
+    if case .noExecutor = publication.imageListError { return publication.imageListError }
     return nil
   }
 
@@ -155,7 +156,7 @@ class ImageDetailModel: ObservableObject {
   @Published var createdDate: Date?
   @Published var virtualSize: Int64?
 
-  @EnvironmentObject var manager: DockerManager
+  @EnvironmentObject var publication: DockerPublication
   @EnvironmentObject var appEnv: ApplicationEnvironment
 
   func formatSize(_ size: Int64) -> String {
