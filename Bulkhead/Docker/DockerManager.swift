@@ -188,7 +188,7 @@ class DockerManager: ObservableObject {
     let now = Date()
     // Read operation - can happen concurrently with other reads
     let cached = cacheQueue.sync { enrichmentCache[container.id] }
-    if let cached = cached, now.timeIntervalSince(cached.timestamp) < enrichmentTTL {
+    if let cached, now.timeIntervalSince(cached.timestamp) < enrichmentTTL {
       return cached.container
     }
 

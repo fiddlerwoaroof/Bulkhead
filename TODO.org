@@ -1,48 +1,48 @@
 * High Priority Tasks [25%]
 ** TODO Release Polish (v1.0) [0%]
-*** TODO Code Architecture Improvements [0%]
-**** DONE DockerManager Refactoring
+*** TODO Code Architecture Improvements [66%]
+**** DONE DockerManager Refactoring [100%]
      - [X] Create new file DockerManager.swift in Docker directory
      - [X] Move DockerManager class from DockerExecutor.swift
      - [X] Update imports and references
      - [X] Test functionality after move
      - DEPENDS ON: Technical Debt > Refactor DockerExecutor error handling
-**** TODO Error Handling Enhancement
+**** DONE Error Handling Enhancement [100%]
      - [X] Expand DockerError enum with more specific cases
      - [X] Add user-friendly error messages
      - [X] Implement error recovery suggestions
      - [X] Create reusable ErrorView component
      - [X] Update UI components to use new error display
      - REPLACES: Technical Debt > Refactor DockerExecutor error handling
-**** TODO Type Safety Improvements
+**** TODO Type Safety Improvements [50%]
      - [X] Eliminate force unwrapping where possible
      - [X] Implement proper nil handling with optionals
      - [ ] Add appropriate assertions and preconditions
      - [ ] Use specific types instead of generic dictionaries
      - REPLACES: Technical Debt > Improve type safety in model layer
 
-*** TODO UI/UX Refinements [25%]
-**** TODO Visual Feedback Enhancements
-     - Add loading indicators for operations
-     - Implement success/failure feedback for actions
-     - Improve state transitions in the UI
-     - Ensure consistent color scheme for states
+*** TODO UI/UX Refinements [50%]
+**** TODO Visual Feedback Enhancements [25%]
+     - [X] Add loading indicators for operations
+     - [ ] Implement success/failure feedback for actions
+     - [ ] Improve state transitions in the UI
+     - [ ] Ensure consistent color scheme for states
      - INCLUDES: UI/UX Improvements > Refine visual feedback for navigation/selection
-**** TODO Keyboard Navigation Completion
-     - Test Tab key navigation throughout app
-     - Verify Enter key behavior in all contexts
-     - Ensure ESC key properly dismisses/clears
-     - Confirm arrow key behavior
-     - Test focus persistence when switching tabs
+**** DONE Keyboard Navigation Completion [100%]
+     - [X] Test Tab key navigation throughout app
+     - [X] Verify Enter key behavior in all contexts
+     - [X] Ensure ESC key properly dismisses/clears
+     - [X] Confirm arrow key behavior
+     - [X] Test focus persistence when switching tabs
      - INCLUDES: UI/UX Improvements > Ensure list selection debounce is effective
-**** TODO Help Overlay Implementation
-     - Design simple help overlay UI
-     - Implement keyboard shortcut (?) to display
-     - Document all keyboard shortcuts
-     - Group shortcuts logically by function
+**** TODO Help Overlay Implementation [0%]
+     - [ ] Design simple help overlay UI
+     - [ ] Implement keyboard shortcut (?) to display
+     - [ ] Document all keyboard shortcuts
+     - [ ] Group shortcuts logically by function
      - REPLACES: UI/UX Improvements > Add keyboard shortcuts help overlay
      - REPLACES: Documentation > Create keyboard shortcut reference
-**** DONE Fix cursor appearance for clickable areas
+**** DONE Fix cursor appearance for clickable areas [100%]
      - [X] Ensure NSCursor.pointingHand is used on hover for buttons/interactive elements
      - [X] Check ListView items
      - [X] Check ContainerActionsView buttons
@@ -50,214 +50,212 @@
      - [X] Check ErrorView actions (if any added later)
 
 *** TODO Documentation and Testing [0%]
-**** TODO User Documentation
-     - Write "Getting Started" guide
-     - Document connection configuration
-     - Create container management overview
-     - Document image browsing capabilities
-     - Explain filesystem browser usage
-     - Detail log viewing functionality
+**** TODO User Documentation [0%]
+     - [ ] Write "Getting Started" guide
+     - [ ] Document connection configuration
+     - [ ] Create container management overview
+     - [ ] Document image browsing capabilities
+     - [ ] Explain filesystem browser usage
+     - [ ] Detail log viewing functionality
      - REPLACES: Documentation > Write user documentation
-**** TODO Developer Documentation
-     - Add documentation headers to key classes
-     - Document complex methods (DockerExecutor, etc.)
-     - Update README.md with development setup
-     - Add inline comments for complex logic
-**** TODO Cross-Environment Testing
-     - Test with Colima
-     - Test with Docker Desktop
-     - Test with Rancher Desktop
-     - Verify on both arm64 and x86_64 architectures
-     - Test with variety of containers
-     - Test with large numbers of containers/images
-     - Monitor memory usage during extended use
+**** TODO Developer Documentation [25%]
+     - [X] Add documentation headers to key classes
+     - [ ] Document complex methods (DockerExecutor, etc.)
+     - [ ] Update README.md with development setup
+     - [ ] Add inline comments for complex logic
+**** TODO Cross-Environment Testing [28%]
+     - [ ] Test with Colima
+     - [X] Test with Docker Desktop
+     - [X] Test with Rancher Desktop
+     - [ ] Verify on both arm64 and x86_64 architectures
+     - [ ] Test with variety of containers
+     - [ ] Test with large numbers of containers/images
+     - [ ] Monitor memory usage during extended use
      - INCLUDES: Bug Fixes > Known Issues > Address memory leak in log viewer
 
 *** TODO Final Release Preparation [0%]
-**** TODO Version and Distribution
-     - Update version number in project settings
-     - Create GitHub release with notes
-     - Generate DMG or installer package
-     - Verify code signing and notarization
+**** TODO Version and Distribution [0%]
+     - [ ] Update version number in project settings
+     - [ ] Create GitHub release with notes
+     - [ ] Generate DMG or installer package
+     - [ ] Verify code signing and notarization
      - DEPENDS ON: All other Release Polish tasks
 
 ** TODO Container Management [0%]
 *** TODO Implement container creation UI
-**** Basic container configuration
-     - Image selection
-     - Container name
-     - Command override
-**** Environment variable editor
-     - Key-value pair editor
-     - Import from file
-     - Variable validation
-**** Port mapping interface
-     - Host port binding
-     - Protocol selection
-     - Multiple port mapping
-**** Volume mount configuration
-     - Host path selection
-     - Mount point specification
-     - Mount options
+**** Basic container configuration [0%]
+     - [ ] Image selection
+     - [ ] Container name
+     - [ ] Command override
+**** Environment variable editor [0%]
+     - [ ] Key-value pair editor
+     - [ ] Import from file
+     - [ ] Variable validation
+**** Port mapping interface [0%]
+     - [ ] Host port binding
+     - [ ] Protocol selection
+     - [ ] Multiple port mapping
+**** Volume mount configuration [0%]
+     - [ ] Host path selection
+     - [ ] Mount point specification
+     - [ ] Mount options
 
-*** TODO Add container deletion with confirmation
-    - Safety confirmation dialog
-    - Option to remove volumes
-    - Keyboard shortcut support
+*** TODO Add container deletion with confirmation [0%]
+    - [ ] Safety confirmation dialog
+    - [ ] Option to remove volumes
+    - [ ] Keyboard shortcut support
 
-*** TODO Add container restart functionality
-    - Quick restart option
-    - Graceful shutdown option
-    - Restart policy configuration
+*** TODO Add container restart functionality [0%]
+    - [ ] Quick restart option
+    - [ ] Graceful shutdown option
+    - [ ] Restart policy configuration
 
-*** TODO Implement container rename feature
-    - Inline rename
-    - Validation
-    - Update all references
+*** TODO Implement container rename feature [0%]
+    - [ ] Inline rename
+    - [ ] Validation
+    - [ ] Update all references
 
 ** TODO Search/Filter Enhancement [0%]
-*** TODO Add advanced search options
-    - Status filter
-    - Image filter
-    - Creation date filter
-    - Combined filters
-*** TODO Add search history
-    - Recent searches
-    - Save frequently used searches
-    - Clear history option
-*** TODO Implement saved searches/filters
-    - Named filters
-    - Quick access to saved filters
-    - Filter management
+*** TODO Add advanced search options [0%]
+    - [ ] Status filter
+    - [ ] Image filter
+    - [ ] Creation date filter
+    - [ ] Combined filters
+*** TODO Add search history [0%]
+    - [ ] Recent searches
+    - [ ] Save frequently used searches
+    - [ ] Clear history option
+*** TODO Implement saved searches/filters [0%]
+    - [ ] Named filters
+    - [ ] Quick access to saved filters
+    - [ ] Filter management
 
 ** DONE UI/UX Improvements [100%]
-*** DONE Fix keyboard navigation in ListView
-    - Arrow key support in lists
-    - Proper handling of edge cases (list ends, search field interaction)
-    - Focus management between search and list
-*** DONE Implement proper focus management
-    - Focus transitions between search and list items
-    - Visual feedback for focused items (selection background + focus ring)
-    - Consistent keyboard behavior (Escape, Enter, Arrows)
-    - Focus persistence across tab switches
-*** DONE Add escape key handling
-    - Clear search text
-    - Return focus to list
-    - Handle edge cases
-*** DONE Fix search field focus
-    - Command-F shortcut (needs re-wiring in App)
-    - Focus transitions
-    - Search field behavior
-*** DONE Add visual feedback for keyboard navigation
-    - Scroll animation when navigating (Implemented via withAnimation + ScrollViewReader)
-    - Highlight transitions (Implemented via selection background change)
-    - Focus ring appearance (Using system default)
-*** DONE Implement smooth scrolling animations
-    - Center selected item (Implemented via ScrollViewReader anchor: .center)
-    - Smooth transitions between items (Implemented via withAnimation)
-    - Handle edge cases (top/bottom of list) (Implemented in key handlers)
+*** DONE Fix keyboard navigation in ListView [100%]
+    - [X] Arrow key support in lists
+    - [X] Proper handling of edge cases (list ends, search field interaction)
+    - [X] Focus management between search and list
+*** DONE Implement proper focus management [100%]
+    - [X] Focus transitions between search and list items
+    - [X] Visual feedback for focused items (selection background + focus ring)
+    - [X] Consistent keyboard behavior (Escape, Enter, Arrows)
+    - [X] Focus persistence across tab switches
+*** DONE Add escape key handling [100%]
+    - [X] Clear search text
+    - [X] Return focus to list
+    - [X] Handle edge cases
+*** DONE Fix search field focus [100%]
+    - [X] Command-F shortcut (needs re-wiring in App)
+    - [X] Focus transitions
+    - [X] Search field behavior
+*** DONE Add visual feedback for keyboard navigation [100%]
+    - [X] Scroll animation when navigating (Implemented via withAnimation + ScrollViewReader)
+    - [X] Highlight transitions (Implemented via selection background change)
+    - [X] Focus ring appearance (Using system default)
+*** DONE Implement smooth scrolling animations [100%]
+    - [X] Center selected item (Implemented via ScrollViewReader anchor: .center)
+    - [X] Smooth transitions between items (Implemented via withAnimation)
+    - [X] Handle edge cases (top/bottom of list) (Implemented in key handlers)
 * Medium Priority Tasks [0%]
 ** TODO Log Viewing Improvements [0%]
-*** TODO Implement real-time log streaming
-    - Auto-scroll option
-    - Pause/resume functionality
-    - Buffer management
-*** TODO Add log search/filter
-    - Text search
-    - Regex support
-    - Highlight matches
-*** TODO Add log export functionality
-    - Save to file
-    - Copy to clipboard
-    - Format options
-*** TODO Add timestamp filtering
-    - Time range selection
-    - Relative time filters
-    - Custom time formats
+*** TODO Implement real-time log streaming [0%]
+    - [ ] Auto-scroll option
+    - [ ] Pause/resume functionality
+    - [ ] Buffer management
+*** TODO Add log search/filter [0%]
+    - [ ] Text search
+    - [ ] Regex support
+    - [ ] Highlight matches
+*** TODO Add log export functionality [0%]
+    - [ ] Save to file
+    - [ ] Copy to clipboard
+    - [ ] Format options
+*** TODO Add timestamp filtering [0%]
+    - [ ] Time range selection
+    - [ ] Relative time filters
+    - [ ] Custom time formats
 
 ** TODO Image Management [0%]
-*** TODO Add image pull interface
-    - Registry selection
-    - Tag selection
-    - Pull progress
-*** TODO Implement image deletion
-    - Unused image cleanup
-    - Tag removal
-    - Force removal option
-*** TODO Add image tag management
-    - Create new tags
-    - Remove tags
-    - Tag search
+*** TODO Add image pull interface [0%]
+    - [ ] Registry selection
+    - [ ] Tag selection
+    - [ ] Pull progress
+*** TODO Implement image deletion [0%]
+    - [ ] Unused image cleanup
+    - [ ] Tag removal
+    - [ ] Force removal option
+*** TODO Add image tag management [0%]
+    - [ ] Create new tags
+    - [ ] Remove tags
+    - [ ] Tag search
 
 ** TODO Filesystem Browser Enhancements [0%]
-*** TODO Add file upload capability
-    - Drag and drop support
-    - Progress indication
-    - Overwrite confirmation
-*** TODO Implement file download
-    - Save to local system
-    - Directory download
-    - Progress tracking
-*** TODO Add file permission management
-    - Change mode
-    - Change owner
-    - Recursive options
+*** TODO Add file upload capability [0%]
+    - [ ] Drag and drop support
+    - [ ] Progress indication
+    - [ ] Overwrite confirmation
+*** TODO Implement file download [0%]
+    - [ ] Save to local system
+    - [ ] Directory download
+    - [ ] Progress tracking
+
 * Low Priority Tasks [0%]
 ** TODO Docker Compose Integration [0%]
-*** TODO Add compose file parser
-    - YAML validation
-    - Service detection
-    - Environment variable expansion
-*** TODO Implement compose service management
-    - Start/stop services
-    - Service logs
-    - Service configuration
-*** TODO Add compose file editor
-    - Syntax highlighting
-    - Validation
-    - Auto-completion
+*** TODO Add compose file parser [0%]
+    - [ ] YAML validation
+    - [ ] Service detection
+    - [ ] Environment variable expansion
+*** TODO Implement compose service management [0%]
+    - [ ] Start/stop services
+    - [ ] Service logs
+    - [ ] Service configuration
+*** TODO Add compose file editor [0%]
+    - [ ] Syntax highlighting
+    - [ ] Validation
+    - [ ] Auto-completion
 ** TODO Performance Optimization [0%]
-*** TODO Implement container list caching
-    - Memory cache
-    - Disk persistence
-    - Cache invalidation
-*** TODO Optimize image list loading
-    - Lazy loading
-    - Background updates
-    - Progress indication
-*** TODO Add background refresh management
-    - Configurable intervals
-    - Conditional updates
-    - Network optimization
+*** TODO Implement container list caching [0%]
+    - [ ] Memory cache
+    - [ ] Disk persistence
+    - [ ] Cache invalidation
+*** TODO Optimize image list loading [0%]
+    - [ ] Lazy loading
+    - [ ] Background updates
+    - [ ] Progress indication
+*** TODO Add background refresh management [0%]
+    - [ ] Configurable intervals
+    - [ ] Conditional updates
+    - [ ] Network optimization
 * Bug Fixes [100%]
-** DONE Known Issues [100%]
-*** DONE Fix focus loss after container selection
-    - Investigated focus chain
-    - Implemented focus persistence via @StateObject
-    - Added focus debugging (and removed)
-*** TODO Fix UI Hang during Filesystem Browse
-    - Investigate `__recvfrom` block in `SocketConnection.readResponse` during `DockerExecutor.exec`.
-    - Ensure `DockerExecutor.exec` and `SocketConnection` calls are fully non-blocking.
-    - Implement timeout mechanism for socket read operations, especially for `exec`.
-    - Propagate timeout/errors back to `FilesystemBrowserView` for user feedback.
-    - Ensure `FilesystemBrowserView.fetch` runs off the main thread.
-*** TODO Address memory leak in log viewer
-    - Profile memory usage
-    - Implement proper cleanup
-    - Add memory monitoring
+** DONE Known Issues [66%]
+*** DONE Fix focus loss after container selection [100%]
+    - [X] Investigated focus chain
+    - [X] Implemented focus persistence via @StateObject
+    - [X] Added focus debugging (and removed)
+*** TODO Fix UI Hang during Filesystem Browse [0%]
+    - [ ] Investigate `__recvfrom` block in `SocketConnection.readResponse` during `DockerExecutor.exec`.
+    - [ ] Ensure `DockerExecutor.exec` and `SocketConnection` calls are fully non-blocking.
+    - [ ] Implement timeout mechanism for socket read operations, especially for `exec`.
+    - [ ] Propagate timeout/errors back to `FilesystemBrowserView` for user feedback.
+    - [ ] Ensure `FilesystemBrowserView.fetch` runs off the main thread.
+*** DONE Address memory leak in log viewer [100%]
+CLOSED: [2025-04-01 Tue 01:32]
+    - [X] Profile memory usage
+    - [X] Implement proper cleanup
+    - [X] Add memory monitoring
     - MERGED INTO: Release Polish > Documentation and Testing > Cross-Environment Testing
-** Technical Debt [33%]
-*** TODO Refine ListView state management
-    - Evaluate @StateObject approach for potential issues.
-    - Monitor performance, consider alternatives if needed.
-*** TODO Review AnyView usage
-    - Check if AnyView type erasures in list view callers can be avoided.
-    - Prioritize performance and clarity.
-*** DONE Clean up view hierarchy
-    - Reduced view nesting via generic ListView
-    - Extracted common components (StatusBadgeView, ContainerActionsView)
-    - Improved state management (moved state to ListViewState)
-*** TODO Refactor List Fetch Error Handling
-    - Currently, DockerManager holds list-specific errors (containerListError, imageListError), violating SoC.
-    - Move list fetching logic (calling manager.fetchX) and error handling into ContainerListView/ImageListView, likely using local @StateObject ViewModels.
-    - DockerManager should only provide fetch methods and potentially a general status, not UI-specific list error states.
+** Technical Debt [25%]
+*** TODO Refine ListView state management [0%]
+    - [ ] Evaluate @StateObject approach for potential issues.
+    - [ ] Monitor performance, consider alternatives if needed.
+*** TODO Review AnyView usage [0%]
+    - [ ] Check if AnyView type erasures in list view callers can be avoided.
+    - [ ] Prioritize performance and clarity.
+*** DONE Clean up view hierarchy [100%]
+    - [X] Reduced view nesting via generic ListView
+    - [X] Extracted common components (StatusBadgeView, ContainerActionsView)
+    - [X] Improved state management (moved state to ListViewState)
+*** TODO Refactor List Fetch Error Handling [0%]
+    - [ ] Currently, DockerManager holds list-specific errors (containerListError, imageListError), violating SoC.
+    - [ ] Move list fetching logic (calling manager.fetchX) and error handling into ContainerListView/ImageListView, likely using local @StateObject ViewModels.
+    - [ ] DockerManager should only provide fetch methods and potentially a general status, not UI-specific list error states.

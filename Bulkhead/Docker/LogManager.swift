@@ -53,10 +53,8 @@ class LogManager: ObservableObject {
         os_log("%@", log: logger, type: .info, logEntry.description)
       }
     }
-    NSLog("%@", logEntry.description)
 
     var logs = self.logs
-
     if !Thread.isMainThread {
       logs.append(logEntry)
     } else {

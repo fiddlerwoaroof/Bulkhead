@@ -1,7 +1,7 @@
 import SwiftUI
 
 class ApplicationEnvironment: ObservableObject {
-  @Published var logManager: LogManager = LogManager()
+  @Published var logManager = LogManager()
   @Published var manager: DockerManager
 
   init() {
@@ -13,7 +13,6 @@ class ApplicationEnvironment: ObservableObject {
 
 @main
 struct DockerUIApp: App {
-
   @StateObject private var appEnv = ApplicationEnvironment()
   private var manager: DockerManager { appEnv.manager }
   @Environment(\.openWindow) private var openWindow
