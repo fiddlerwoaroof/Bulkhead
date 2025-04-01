@@ -36,12 +36,6 @@ struct DockerUIApp: App {
       )
       .environmentObject(appEnv.logManager)
       .environmentObject(appEnv.publication)
-      .onAppear {
-        Task {
-          await appEnv.manager.fetchContainers()
-          await appEnv.manager.fetchImages()
-        }
-      }
     }
 
     SettingsWindow(

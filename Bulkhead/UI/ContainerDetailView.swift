@@ -171,7 +171,7 @@ struct ContainerDetailViewInner: View {
 
           if let ports = enriched?.ports, !ports.isEmpty {
             sectionHeader("Ports")
-            ForEach(ports, id: \.privatePort) { port in
+            ForEach(ports, id: \.self) { port in
               detailRow(
                 "\(port.privatePort)/\(port.type)",
                 "\(port.ip ?? "0.0.0.0"):\(port.publicPort ?? 0)"
@@ -280,7 +280,9 @@ struct ContainerDetailViewInner: View {
         if key.hasSuffix("PATH") {
           envRow(key) {
             VStack(alignment: .leading) {
-              ForEach(value.split(separator: ":").map(String.init), id: \.self) { path in
+              let pathComponents = value.split(separator: ":").map(String.init)
+              ForEach(pathComponents.indices, id: \.self) { index in
+                let path = pathComponents[index]
                 Button(action: {
                   selectedPath = path
                 }) {

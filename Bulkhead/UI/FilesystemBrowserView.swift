@@ -181,7 +181,7 @@ struct FilesystemBrowserView: View {
           } else {
             ScrollView {
               LazyVStack(alignment: .leading, spacing: 4) {
-                ForEach(displayedEntries) { entry in
+                ForEach(displayedEntries, id: \.name) { entry in
                   FilesystemRow(
                     entry: entry,
                     isSelected: false,
