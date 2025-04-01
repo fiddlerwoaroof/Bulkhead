@@ -90,7 +90,6 @@ struct SettingsView: View {
   }
 
   private func handleRefreshIntervalChange(newValue _: Double) {
-    manager.saveRefreshInterval()
     showSaved()
   }
 

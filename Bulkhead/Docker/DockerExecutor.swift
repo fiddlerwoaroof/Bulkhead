@@ -292,7 +292,7 @@ class DockerExecutor {
     _ = try makeRequest(path: "/v1.41/containers/\(id)/stop", method: "POST")
   }
 
-  func exec(containerId: String, command: [String], addCarriageReturn: Bool = true) throws -> Data {
+  func exec(containerId: String, command: [String], addCarriageReturn: Bool = true) async throws -> Data {
     // Check container state first
     let containerData = try makeRequest(path: "/v1.41/containers/\(containerId)/json")
     let json = try JSONSerialization.jsonObject(with: containerData, options: []) as? [String: Any]
@@ -437,8 +437,8 @@ enum DockerError: Error, LocalizedError, Equatable {
     switch self {
     case .noExecutor, .connectionFailed:
       return
-        "Please check the Docker socket path in Settings and ensure Docker" +
-        " (or your Docker provider like Colima/Rancher Desktop) is running."
+        "Please check the Docker socket path in Settings and ensure Docker"
+        + " (or your Docker provider like Colima/Rancher Desktop) is running."
     case .containerNotRunning:
       return "Please start the container before attempting this operation."
     case .socketReadError, .socketWriteError, .timeoutOccurred, .apiError:
