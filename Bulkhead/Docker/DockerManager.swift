@@ -64,6 +64,7 @@ class DockerManager: ObservableObject {
   private var timer: Timer?
   private var enrichmentCache: [String: (container: DockerContainer, timestamp: Date)] = [:]
   private let enrichmentTTL: TimeInterval = 10
+  private let cacheQueue = DispatchQueue(label: "com.bulkhead.cacheQueue", attributes: .concurrent)
 
   var containerListError: DockerError? {
     publication.containerListError
@@ -71,40 +72,58 @@ class DockerManager: ObservableObject {
   var containers: [DockerContainer] {
     get { publication.containers }
     set {
-      DispatchQueue.main.sync {
+      if Thread.isMainThread {
         publication.containers = newValue
+      } else {
+        DispatchQueue.main.sync {
+          publication.containers = newValue
+        }
       }
     }
   }
   var imageListError: DockerError? {
     publication.imageListError
   }
-    var images: [DockerImage] {
-        get { publication.images }
-      set {
+  var images: [DockerImage] {
+    get { publication.images }
+    set {
+      if Thread.isMainThread {
+        publication.images = newValue
+      } else {
         DispatchQueue.main.sync {
           publication.images = newValue
         }
       }
     }
+  }
 
-    var socketPath: String {
-        get { publication.socketPath }
-      set {
+  var socketPath: String {
+    get { publication.socketPath }
+    set {
+      if Thread.isMainThread {
+        publication.socketPath = newValue
+      } else {
         DispatchQueue.main.sync {
           publication.socketPath = newValue
         }
       }
     }
-    var refreshInterval: Double {
-        get { publication.refreshInterval }
-      set {
+  }
+  var refreshInterval: Double {
+    get { publication.refreshInterval }
+    set {
+      if Thread.isMainThread {
+        publication.refreshInterval = newValue
+      } else {
         DispatchQueue.main.sync {
           publication.refreshInterval = newValue
         }
-          publication.saveRefreshInterval()
       }
+
+      publication.saveRefreshInterval()
+      startAutoRefresh()
     }
+  }
 
   var executor: DockerExecutor? {
     publication.socketPath.isEmpty ? nil : DockerExecutor(socketPath: publication.socketPath)
@@ -114,10 +133,10 @@ class DockerManager: ObservableObject {
     if publication.socketPath.isEmpty,
       let detected = DockerEnvironmentDetector.detectDockerHostPath()
     {
-      DispatchQueue.main.async { [self] in
-        publication.updateSocketPath(detected)
+      DispatchQueue.main.async {
+        self.publication.updateSocketPath(detected)
+        self.publication.saveDockerHostPath()
       }
-      publication.saveDockerHostPath()
     }
     startAutoRefresh()
   }
@@ -156,9 +175,9 @@ class DockerManager: ObservableObject {
     guard let executor else { throw DockerError.noExecutor }
 
     let now = Date()
-    if let cached = enrichmentCache[container.id],
-      now.timeIntervalSince(cached.timestamp) < enrichmentTTL
-    {
+    // Read operation - can happen concurrently with other reads
+    let cached = cacheQueue.sync { enrichmentCache[container.id] }
+    if let cached = cached, now.timeIntervalSince(cached.timestamp) < enrichmentTTL {
       return cached.container
     }
 
@@ -166,12 +185,19 @@ class DockerManager: ObservableObject {
     var enriched = container
     try DockerContainer.enrich(from: detailData, into: &enriched)
 
-    enrichmentCache[container.id] = (container: enriched, timestamp: now)
+    // Write operation - uses barrier to ensure exclusive access
+    cacheQueue.async(flags: .barrier) { @Sendable in
+      self.enrichmentCache[container.id] = (container: enriched, timestamp: now)
+    }
+
     return enriched
   }
 
   func clearEnrichmentCache() {
-    enrichmentCache.removeAll()
+    // Write operation with barrier
+    cacheQueue.async(flags: .barrier) {
+      self.enrichmentCache.removeAll()
+    }
   }
 
   // Now async again to await the Task from tryCommand

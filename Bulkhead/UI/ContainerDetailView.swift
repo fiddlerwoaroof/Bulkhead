@@ -307,7 +307,6 @@ struct ContainerDetailView: View {
       .font(.headline)
       .padding(.top, 12)
   }
-
 }
 
 @MainActor
@@ -315,6 +314,7 @@ final class ContainerDetailModel: ObservableObject {
   @Published var enriched: DockerContainer?
   @Published var isLoading = false
   @Published var error: DockerError?
+  @Published var sortedEnvironmentVariables: [(key: String, value: String)] = []
 
   var base: DockerContainer?
 
@@ -328,6 +328,7 @@ final class ContainerDetailModel: ObservableObject {
       let result = try await manager.enrichContainer(container)
       self.enriched = result
       self.error = nil
+      self.processEnvironmentVariables(result.env)
     } catch let dockerError as DockerError {
       self.error = dockerError
       LogManager.shared.addLog(
@@ -340,5 +341,14 @@ final class ContainerDetailModel: ObservableObject {
     }
 
     isLoading = false
+  }
+
+  private func processEnvironmentVariables(_ env: [String]) {
+    sortedEnvironmentVariables = env.compactMap { envVar in
+      guard let separatorIndex = envVar.firstIndex(of: "=") else { return nil }
+      let key = String(envVar[..<separatorIndex])
+      let value = String(envVar[envVar.index(after: separatorIndex)...])
+      return (key, value)
+    }.sorted(by: { $0.key < $1.key })
   }
 }
