@@ -130,8 +130,10 @@ struct ContainerDetailViewInner: View {
           .frame(maxWidth: .infinity, alignment: .topLeading)
         }
 
-        FilesystemBrowserView(container: container, appEnv: appEnv, initialPath: selectedPath ?? "/")
-          .frame(minHeight: 200)
+        FilesystemBrowserView(
+          container: container, appEnv: appEnv, initialPath: selectedPath ?? "/"
+        )
+        .frame(minHeight: 200)
       }
       .padding()
       .task(id: container.id) {

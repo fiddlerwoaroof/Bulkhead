@@ -50,7 +50,7 @@ struct TerminalWrapper: NSViewRepresentable {
 
 struct ContainerLogsView: View {
   let container: DockerContainer
-//  let manager: DockerManager
+  //  let manager: DockerManager
   @EnvironmentObject var publication: DockerPublication
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
 

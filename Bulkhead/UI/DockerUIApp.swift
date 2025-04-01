@@ -31,28 +31,28 @@ struct DockerUIApp: App {
 
   var body: some Scene {
     WindowGroup {
-      ContentView(selectedTab: $selectedTab, searchFocused: $isSearchFocused, manager: manager, appEnv: appEnv)
-        .environmentObject(appEnv.logManager)
-        .environmentObject(appEnv.publication)
-        .onAppear {
-          Task {
-            await appEnv.manager.fetchContainers()
-            await appEnv.manager.fetchImages()
-          }
-        }
-    }
-
-    SettingsWindow(manager: appEnv.manager, publication: appEnv.publication, logManager: appEnv.logManager)
+      ContentView(
+        selectedTab: $selectedTab, searchFocused: $isSearchFocused, manager: manager, appEnv: appEnv
+      )
       .environmentObject(appEnv.logManager)
       .environmentObject(appEnv.publication)
+      .onAppear {
+        Task {
+          await appEnv.manager.fetchContainers()
+          await appEnv.manager.fetchImages()
+        }
+      }
+    }
 
-
+    SettingsWindow(
+      manager: appEnv.manager, publication: appEnv.publication, logManager: appEnv.logManager
+    )
+    .environmentObject(appEnv.logManager)
+    .environmentObject(appEnv.publication)
 
     LogWindowScene()
       .environmentObject(appEnv.logManager)
       .environmentObject(appEnv.publication)
-
-
 
     // swiftlint:disable:next unused_parameter
     WindowGroup(for: DockerContainer.self) { $container in
@@ -62,7 +62,6 @@ struct DockerUIApp: App {
     }
     .environmentObject(appEnv.logManager)
     .environmentObject(appEnv.publication)
-
 
     .commands {
       CommandGroup(replacing: .appInfo) {

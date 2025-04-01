@@ -26,7 +26,10 @@ struct ContentView: View {
   @Binding private var searchFocused: Bool
 
   // Updated init
-  init(selectedTab: Binding<Int>, searchFocused: Binding<Bool>, manager: DockerManager, appEnv: ApplicationEnvironment) {
+  init(
+    selectedTab: Binding<Int>, searchFocused: Binding<Bool>, manager: DockerManager,
+    appEnv: ApplicationEnvironment
+  ) {
     self.manager = manager
     self.appEnv = appEnv
     _selectedTab = selectedTab

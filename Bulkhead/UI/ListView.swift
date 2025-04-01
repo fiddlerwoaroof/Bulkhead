@@ -225,10 +225,10 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
           }
         }
         .onChange(of: items) { oldItems, newItems in
-             if oldItems.isEmpty && !newItems.isEmpty && focusedField == nil {
-                 setupInitialFocus()
-             }
-         }
+          if oldItems.isEmpty && !newItems.isEmpty && focusedField == nil {
+            setupInitialFocus()
+          }
+        }
         .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
     } detail: {
       if let selected = selectedItem {
@@ -294,10 +294,10 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
 
   private func setupInitialFocus() {
     if focusedField == nil && !items.isEmpty {
-        focusedField = .item(AnyHashable(items[0].id))
-        selectedItem = items[0]
+      focusedField = .item(AnyHashable(items[0].id))
+      selectedItem = items[0]
     } else if focusedField == nil && searchConfig != nil {
-        focusedField = .search
+      focusedField = .search
     }
     viewState.lastKnownFocus = focusedField
   }

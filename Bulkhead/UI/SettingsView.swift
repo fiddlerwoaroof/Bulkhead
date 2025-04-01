@@ -13,14 +13,22 @@ struct SettingsView: View {
   private var socketPathBinding: Binding<String> {
     Binding(
       get: { publication.socketPath },
-      set: { publication.socketPath = $0; manager.saveSocketPath(); showSaved() }
+      set: {
+        publication.socketPath = $0
+        manager.saveSocketPath()
+        showSaved()
+      }
     )
   }
-  
+
   private var refreshIntervalBinding: Binding<Double> {
     Binding(
       get: { publication.refreshInterval },
-      set: { publication.refreshInterval = $0; manager.saveRefreshInterval(); showSaved() }
+      set: {
+        publication.refreshInterval = $0
+        manager.saveRefreshInterval()
+        showSaved()
+      }
     )
   }
 
@@ -81,7 +89,7 @@ struct SettingsView: View {
               .foregroundStyle(.secondary)
           }
           .padding(.top, 10)
-          
+
           if showSavedConfirmation {
             Text("Settings Saved")
               .foregroundStyle(.green)
@@ -99,11 +107,11 @@ struct SettingsView: View {
     withAnimation {
       showSavedConfirmation = true
     }
-     Task { @MainActor in
-       try? await Task.sleep(for: .seconds(2))
-       withAnimation {
-         showSavedConfirmation = false
-       }
-     }
+    Task { @MainActor in
+      try? await Task.sleep(for: .seconds(2))
+      withAnimation {
+        showSavedConfirmation = false
+      }
+    }
   }
 }

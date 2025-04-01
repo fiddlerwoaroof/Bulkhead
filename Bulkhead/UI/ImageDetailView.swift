@@ -9,11 +9,12 @@ struct ImageDetailViewInner: View {
 
   let appEnv: ApplicationEnvironment
   var manager: DockerManager { appEnv.manager }
-  
+
   init(image: DockerImage, publication: DockerPublication, appEnv: ApplicationEnvironment) {
     _publication = ObservedObject(wrappedValue: publication)
     self.image = image
-    _model = StateObject(wrappedValue: ImageDetailModel(publication:publication, logManager: appEnv.logManager))
+    _model = StateObject(
+      wrappedValue: ImageDetailModel(publication: publication, logManager: appEnv.logManager))
     self.appEnv = appEnv
   }
 
@@ -155,10 +156,10 @@ struct ImageDetailView: View {
   @EnvironmentObject var publication: DockerPublication
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
-  
+
   let image: DockerImage
   let appEnv: ApplicationEnvironment
-  
+
   var body: some View {
     ImageDetailViewInner(image: image, publication: publication, appEnv: appEnv)
   }
@@ -178,12 +179,12 @@ class ImageDetailModel: ObservableObject {
 
   let publication: DockerPublication
   let logManager: LogManager
-  
+
   init(publication: DockerPublication, logManager: LogManager) {
     self.publication = publication
     self.logManager = logManager
   }
-  
+
   func formatSize(_ size: Int64) -> String {
     let formatter = ByteCountFormatter()
     formatter.allowedUnits = [.useBytes, .useKB, .useMB, .useGB]

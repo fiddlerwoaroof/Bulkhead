@@ -177,7 +177,7 @@ class DockerManager {
   // Make async to await task and handle errors
   func startContainer(id: String) async {
     let task: Task<Void, Error> = tryCommand { [weak self] in  // Task returns Void
-      guard let self, let executor = self.publication.executor else { throw DockerError.noExecutor }
+      guard let self, let executor = publication.executor else { throw DockerError.noExecutor }
       try executor.startContainer(id: id)
     }
 

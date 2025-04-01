@@ -2,13 +2,7 @@ import AppKit
 import SwiftUI
 
 class LogTableViewCoordinator: NSObject, NSTableViewDataSource, NSTableViewDelegate {
-  var entries: [LogEntry] = [] {
-    didSet {
-      DispatchQueue.main.async {
-        self.tableView?.reloadData()
-      }
-    }
-  }
+  var entries: [LogEntry] = []
   weak var tableView: NSTableView?
 
   func numberOfRows(in _: NSTableView) -> Int { entries.count }
@@ -59,9 +53,7 @@ struct LogTableView: NSViewRepresentable {
   @EnvironmentObject private var logManager: LogManager
 
   func makeCoordinator() -> LogTableViewCoordinator {
-    let coordinator = LogTableViewCoordinator()
-    coordinator.entries = logManager.logs
-    return coordinator
+    LogTableViewCoordinator()
   }
 
   func makeNSView(context: Context) -> NSScrollView {
@@ -106,11 +98,6 @@ struct LogTableView: NSViewRepresentable {
     tableView.dataSource = context.coordinator
 
     scrollView.documentView = tableView
-
-    // Observe log changes
-    _ = logManager.$logs.sink { logs in
-      context.coordinator.entries = logs
-    }
 
     return scrollView
   }

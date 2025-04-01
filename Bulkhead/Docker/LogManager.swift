@@ -44,7 +44,9 @@ class LogManager: ObservableObject {
 
   func addLog(_ message: String, level: String = "INFO", source: String = "main") {
     let logEntry = LogEntry(timestamp: Date(), message: message, level: level, source: source)
-    loggersAccessQueue.sync {  // Use sync for immediate access/update
+
+    // System Logging (remains the same)
+    loggersAccessQueue.sync {
       if let logger = self.loggers[source] {
         os_log("%@", log: logger, type: .info, logEntry.description)
       } else {
@@ -54,12 +56,12 @@ class LogManager: ObservableObject {
       }
     }
 
-    var logs = self.logs
-    if !Thread.isMainThread {
-      logs.append(logEntry)
-    } else {
-      DispatchQueue.main.async {
-        logs.append(logEntry)
+    // Update the @Published logs array ON THE MAIN THREAD
+    DispatchQueue.main.async {
+      self.logs.append(logEntry)
+      // Enforce max entries limit
+      if self.logs.count > self.maxEntries {
+        self.logs.removeFirst(self.logs.count - self.maxEntries)
       }
     }
   }
