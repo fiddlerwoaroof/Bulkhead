@@ -64,9 +64,6 @@ struct ContainerListView: View {
         ContainerActionsView(container: container, manager: manager)
       }
 
-    } detail: { container in
-      // Type erase the detail view
-      ContainerDetailView(container: container, appEnv: appEnv)
     }
   }
 }

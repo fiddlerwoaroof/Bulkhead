@@ -51,77 +51,64 @@ struct ContentView: View {
     return nil
   }
 
-  private var containerListView: some View {
-    ContainerListView(
-      // Pass data array from publication
-      containers: publication.containers,
-      selectedContainer: $selectedContainer,
-      searchFocused: $searchFocused,
-      backgroundColor: backgroundColor,
-      shadowColor: shadowColor,
-      // Pass manager instance
-      manager: manager,
-      appEnv: appEnv
-    )
-  }
-
-  private var imageListView: some View {
-    ImageListView(
-      backgroundColor: backgroundColor,
-      shadowColor: shadowColor,
-      // Pass data array from publication
-      images: publication.images,
-      searchFocused: $searchFocused,
-      selectedImage: $selectedImage,
-      // Pass manager instance
-      manager: manager,
-      appEnv: appEnv
-    )
-  }
-
   var body: some View {
     // Main content with potential error overlay
-    ZStack {
+    NavigationSplitView {
       TabView(selection: $selectedTab) {
         // Container List View
-        containerListView
-          .tabItem {
-            Label("Containers", systemImage: "shippingbox.fill")
-          }
-          .tag(0)
-        // Image List View
-        imageListView
-          .tabItem {
-            Label("Images", systemImage: "photo.stack.fill")
-          }
-          .tag(1)
-      }
-      .frame(minWidth: 800, minHeight: 600)
-      // Pass down environment value based on global error state
-      .environment(\.isGlobalErrorShowing, globalConnectionError != nil)
+        ContainerListView(
+          // Pass data array from publication
+          containers: publication.containers,
+          selectedContainer: $selectedContainer,
+          searchFocused: $searchFocused,
+          backgroundColor: backgroundColor,
+          shadowColor: shadowColor,
+          // Pass manager instance
+          manager: manager,
+          appEnv: appEnv
+        )
+        .tabItem {
+          Label("Containers", systemImage: "shippingbox.fill")
+        }
+        .tag(0)
 
-      // Overlay Error View if a global connection error exists
+        // Image List View
+        ImageListView(
+          backgroundColor: backgroundColor,
+          shadowColor: shadowColor,
+          // Pass data array from publication
+          images: publication.images,
+          searchFocused: $searchFocused,
+          selectedImage: $selectedImage,
+          // Pass manager instance
+          manager: manager,
+          appEnv: appEnv
+        )
+        .tabItem {
+          Label("Images", systemImage: "photo.stack.fill")
+        }
+        .tag(1)
+      }
+    } detail: {
       if let error = globalConnectionError {
-        // Background layer that fills the space
         Rectangle()
           .fill(.ultraThinMaterial.opacity(0.9))  // Apply material to the background
           .ignoresSafeArea()  // Ensure it covers the whole window area if needed
           .overlay(  // Place the ErrorView content on top, centered by default
-            ErrorView(error: error, title: "Connection Error", style: .prominent)
-              .padding()  // Add padding around the ErrorView content
+            ErrorView(
+              error: error, title: "Connection Error", style: .prominent,
+              actions: [
+                ErrorAction(label: "Refresh") {}
+              ]
+            )
+            .padding()  // Add padding around the ErrorView content
           )
-      }
-    }
-    .onAppear {
-      Task {
-        await manager.fetchContainers()
-        await manager.fetchImages()
-      }
-    }
-    // .onChange can monitor publication.containers directly
-    .onChange(of: publication.containers) { _, newContainers in
-      if selectedContainer == nil && !newContainers.isEmpty {
-        selectedContainer = newContainers[0]
+      } else if selectedTab == 0, let selectedContainer {
+        ContainerDetailView(container: selectedContainer, appEnv: appEnv)
+      } else if let selectedImage {
+        ImageDetailView(image: selectedImage, appEnv: appEnv)
+      } else {
+        Text("Nothing Selected!")
       }
     }
   }

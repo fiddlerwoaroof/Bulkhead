@@ -26,7 +26,7 @@ struct SearchConfiguration<T> {
   var options = SearchOptions()
 }
 
-struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
+struct ListView<T: Identifiable & Equatable, Master: View>: View {
   let items: [T]
   @Binding var selectedItem: T?
   var backgroundColor: Color
@@ -40,7 +40,6 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   @Binding var searchFocused: Bool
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
   @ViewBuilder var content: (T) -> Master
-  @ViewBuilder var detail: (T) -> Detail
 
   // Computed property for filtered items
   private var filteredItems: [T] {
@@ -146,45 +145,6 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
     }
   }
 
-  private var listColumnContent: some View {
-    VStack(spacing: 0) {
-      // Show local list error ONLY if a global error isn't already showing
-      if !isGlobalErrorShowing, let error = listError {
-        ErrorView(error: error, title: listErrorTitle, style: .compact)
-          .padding()
-          .frame(maxHeight: .infinity)
-      } else {
-        if let config = searchConfig {
-          SearchField<T, Master, Detail>(
-            placeholder: config.placeholder,
-            text: $viewState.searchText,
-            focusBinding: $focusedField,
-            focusCase: ListViewFocusTarget.search
-          )
-          Divider()
-        }
-        ScrollViewReader { proxy in
-          ScrollView {
-            LazyVStack(spacing: 8) {
-              ForEach(filteredItems) { item in
-                itemView(for: item)
-              }
-            }
-            .padding(.vertical)
-          }
-          .onChange(of: searchFocused) { oldValue, newValue in
-            if oldValue != newValue && newValue == true {
-              focusedField = .search
-            }
-          }
-          .onChange(of: selectedItem) { _, newItem in
-            handleSelectionChange(newItem: newItem, proxy: proxy)
-          }
-        }
-      }
-    }
-  }
-
   private func handleSelectionChange(newItem: T?, proxy: ScrollViewProxy) {
     selectionTask?.cancel()
     selectionTask = Task {
@@ -216,45 +176,68 @@ struct ListView<T: Identifiable & Equatable, Master: View, Detail: View>: View {
   }
 
   var body: some View {
-    NavigationSplitView {
-      listColumnContent
-        .onChange(of: focusedField) { _, newValue in
-          viewState.lastKnownFocus = newValue
-          if newValue != .search {
-            searchFocused = false
-          }
-        }
-        .onChange(of: items) { oldItems, newItems in
-          if oldItems.isEmpty && !newItems.isEmpty && focusedField == nil {
-            setupInitialFocus()
-          }
-        }
-        .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
-    } detail: {
-      if let selected = selectedItem {
-        detail(selected)
+    //    NavigationSplitView {
+    VStack(spacing: 0) {
+      // Show local list error ONLY if a global error isn't already showing
+      if !isGlobalErrorShowing, let error = listError {
+        ErrorView(error: error, title: listErrorTitle, style: .compact)
+          .padding()
+          .frame(maxHeight: .infinity)
       } else {
-        Text("Select an item to view details")
-          .foregroundColor(.secondary)
+        if let config = searchConfig {
+          SearchField<T, Master>(
+            placeholder: config.placeholder,
+            text: $viewState.searchText,
+            focusBinding: $focusedField,
+            focusCase: ListViewFocusTarget.search
+          )
+
+          Divider()
+        }
+        ScrollViewReader { proxy in
+          ScrollView {
+            LazyVStack(spacing: 8) {
+              ForEach(filteredItems) { item in
+                itemView(for: item)
+              }
+            }
+            .padding(.vertical)
+          }
+          .onChange(of: searchFocused) { oldValue, newValue in
+            if oldValue != newValue && newValue == true {
+              focusedField = .search
+            }
+          }
+          .onChange(of: selectedItem) { _, newItem in
+            handleSelectionChange(newItem: newItem, proxy: proxy)
+          }
+        }
+      }
+    }.onChange(of: focusedField) { _, newValue in
+      viewState.lastKnownFocus = newValue
+      if newValue != .search {
+        searchFocused = false
       }
     }
-    .onKeyPress(.downArrow) {
-      if focusedField == .search {
-        if let firstItem = filteredItems.first {
-          let newFocus: ListViewFocusTarget = .item(AnyHashable(firstItem.id))
-          focusedField = newFocus
-          selectedItem = firstItem
-          return .handled
-        }
-        return .handled
+    .onChange(of: items) { oldItems, newItems in
+      if oldItems.isEmpty && !newItems.isEmpty && focusedField == nil {
+        setupInitialFocus()
       }
+    }
+    .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
+    //    } detail: {
+    //      if let selected = selectedItem {
+    //        detail(selected)
+    //      } else {
+    //        Text("Select an item to view details")
+    //          .foregroundColor(.secondary)
+    //      }
+    //    }
+    .onKeyPress(.downArrow) {
       selectNextItem()
       return .handled
     }
     .onKeyPress(.upArrow) {
-      if focusedField == .search {
-        return .handled
-      }
       selectPreviousItem()
       return .handled
     }

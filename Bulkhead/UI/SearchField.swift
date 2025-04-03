@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct SearchField<T: Identifiable & Equatable, Master: View, Detail: View>: View {
+struct SearchField<T: Identifiable & Equatable, Master: View>: View {
   let placeholder: String
   @Binding var text: String
   var focusBinding: FocusState<ListViewFocusTarget?>.Binding

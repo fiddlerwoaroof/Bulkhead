@@ -90,9 +90,6 @@ struct ImageListView: View {
           .foregroundStyle(.secondary)
         }
       )
-    } detail: { image in
-      // Type erase the detail view
-      ImageDetailView(image: image, appEnv: appEnv)
     }
 
     .onChange(of: images) { _, newImages in
