@@ -64,65 +64,36 @@ struct ContentView: View {
     // Main content with potential error overlay
     NavigationSplitView {
       TabView(selection: $selectedTab) {
-        // Container List View
-        ContainerListView(
-          backgroundColor: backgroundColor,
-          shadowColor: shadowColor,
-
-          selectedContainer: $selectedContainer,
-
-          searchText: $searchText,
-          searchFocused: $searchFocused,
-
-          manager: manager,
-          appEnv: appEnv
-        )
+        List(publication.containers, selection: $selectedContainer) { container in
+          NavigationLink {
+            ContainerDetailView(container: container, appEnv: appEnv)
+          } label: {
+            ContainerSummaryView(container: container, manager: appEnv.manager, appEnv: appEnv)
+          }
+          .padding(4)
+        }
         .tabItem {
           Label("Containers", systemImage: "shippingbox.fill")
         }
         .tag(MainTabs.containers)
 
-        // Image List View
-        ImageListView(
-          backgroundColor: backgroundColor,
-          shadowColor: shadowColor,
-
-          selectedImage: $selectedImage,
-
-          searchFocused: $searchFocused,
-
-          manager: manager,
-          appEnv: appEnv
-        )
+        List(publication.images, selection: $selectedImage) { image in
+          NavigationLink {
+            ImageDetailView(image: image, appEnv: appEnv)
+          } label: {
+            ImageSummaryView(image: image)
+          }
+        }
         .tabItem {
           Label("Images", systemImage: "photo.stack.fill")
         }
         .tag(MainTabs.images)
+
       }
-      //
     } detail: {
-      //      if let error = globalConnectionError {
-      //        Rectangle()
-      //          .fill(.ultraThinMaterial.opacity(0.9))  // Apply material to the background
-      //          .ignoresSafeArea()  // Ensure it covers the whole window area if needed
-      //          .overlay(  // Place the ErrorView content on top, centered by default
-      //            ErrorView(
-      //              error: error, title: "Connection Error", style: .prominent,
-      //              actions: [
-      //                ErrorAction(label: "Refresh") {}
-      //              ]
-      //            )
-      //            .padding()  // Add padding around the ErrorView content
-      //          )
-      //      } else if selectedTab == .containers, let selectedContainer {
-      //        ContainerDetailView(container: selectedContainer, appEnv: appEnv)
-      //      } else if let selectedImage {
-      //        ImageDetailView(image: selectedImage, appEnv: appEnv)
-      //      } else {
-      //        Text("Nothing Selected!")
-      //      }
+      Text("Select an object")
     }
-    //    .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
+    .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
     .onKeyPress(
       .escape,
       action: {

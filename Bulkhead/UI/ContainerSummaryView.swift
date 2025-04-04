@@ -1,75 +1,31 @@
 import Foundation
 import SwiftUI
 
-struct ContainerListView: View {
-  var backgroundColor: Color
-  var shadowColor: Color
-
-  @Binding var selectedContainer: DockerContainer?
-
-  @Binding var searchText: String
-  @Binding var searchFocused: Bool
+struct ContainerSummaryView: View {
+  var container: DockerContainer
 
   let manager: DockerManager
   let appEnv: ApplicationEnvironment
 
-  @Environment(\.openWindow) private var openWindow
-  @EnvironmentObject var publication: DockerPublication
-
-  private var containerSearchConfig: SearchConfiguration<DockerContainer> {
-    SearchConfiguration(
-      placeholder: "Search containers...",
-      filter: { container, query in
-        let searchQuery = query.lowercased()
-        // Search in container name
-        if let name = container.names.first?.lowercased(), name.contains(searchQuery) {
-          return true
-        }
-        // Search in image name
-        if container.image.lowercased().contains(searchQuery) {
-          return true
-        }
-        // Search in status
-        return container.status.lowercased().contains(searchQuery)
-      }
-    )
-  }
-
   var body: some View {
-    ListView(
-      items: publication.containers,
-      selectedItem: $selectedContainer,
-      backgroundColor: backgroundColor,
-      shadowColor: shadowColor,
-      searchConfig: containerSearchConfig,
-      listError: publication.containerListError,
-      listErrorTitle: "Failed to Load Containers",
-      searchFocused: $searchFocused,
-      searchText: $searchText
-    ) { container in
-      // Type erase the content view
-
-      HStack {
-        VStack(alignment: .leading, spacing: 2) {
-          HStack(spacing: 8) {
-            Text(container.names.first ?? "Unnamed")
-              .font(.headline)
-          }
-          if container.status.lowercased().contains("up") {
-            StatusBadgeView(text: container.status, color: .green)
-          } else {
-            StatusBadgeView(text: container.status, color: .secondary)
-          }
-          Text(container.image)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+    HStack {
+      VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: 8) {
+          Text(container.names.first ?? "Unnamed")
+            .font(.headline)
         }
-        Spacer()
-        ContainerActionsView(container: container, manager: manager)
+        if container.status.lowercased().contains("up") {
+          StatusBadgeView(text: container.status, color: .green)
+        } else {
+          StatusBadgeView(text: container.status, color: .secondary)
+        }
+        Text(container.image)
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
       }
-
+      Spacer()
+      ContainerActionsView(container: container, manager: manager)
     }
-
   }
 }
 
