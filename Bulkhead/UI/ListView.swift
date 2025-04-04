@@ -21,6 +21,7 @@ struct ListView<T: Identifiable & Equatable, Master: View>: View {
   var listError: DockerError?
   var listErrorTitle = "Error Loading List"
   @Binding var searchFocused: Bool
+  @Binding var searchText: String
   @ViewBuilder var content: (T) -> Master
 
   @FocusState private var focusedField: ListViewFocusTarget?
@@ -49,9 +50,9 @@ struct ListView<T: Identifiable & Equatable, Master: View>: View {
           .padding()
           .frame(maxHeight: .infinity)
       } else {
-        SearchField<T, Master>(
+        SearchField(
           config: searchConfig,
-          text: $viewState.searchText,
+          text: $searchText,
           focusBinding: $focusedField,
           focusCase: ListViewFocusTarget.search
         )
@@ -67,76 +68,49 @@ struct ListView<T: Identifiable & Equatable, Master: View>: View {
             }
             .padding(.vertical)
           }
-          .onChange(of: searchFocused) { oldValue, newValue in
-            if oldValue != newValue && newValue == true {
-              focusedField = .search
-            }
-          }
           .onChange(of: selectedItem) { _, newItem in
             handleSelectionChange(newItem: newItem, proxy: proxy)
           }
         }
       }
     }.onChange(of: focusedField) { _, newValue in
+      guard let newValue else { return }
       viewState.lastKnownFocus = newValue
-      if newValue != .search {
-        searchFocused = false
-      }
+      print("NOTICE ME: change of focused field \(newValue == .search) \(newValue)")
+      searchFocused = newValue == .search
     }
     .onChange(of: items) { oldItems, newItems in
       if oldItems.isEmpty && !newItems.isEmpty && focusedField == nil {
         setupInitialFocus()
       }
     }
-    .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
-    //    } detail: {
-    //      if let selected = selectedItem {
-    //        detail(selected)
-    //      } else {
-    //        Text("Select an item to view details")
-    //          .foregroundColor(.secondary)
-    //      }
+    //    .onKeyPress(.downArrow) {
+    //      selectNextItem()
+    //      return .handled
     //    }
-    .onKeyPress(.downArrow) {
-      selectNextItem()
-      return .handled
-    }
-    .onKeyPress(.upArrow) {
-      selectPreviousItem()
-      return .handled
-    }
-    .onKeyPress(.escape) {
-      if focusedField == ListViewFocusTarget.search && !viewState.searchText.isEmpty {
-        DispatchQueue.main.async {
-          viewState.searchText = ""
-        }
-        return .handled
-      }
-      if focusedField != ListViewFocusTarget.search {
-        focusedField = ListViewFocusTarget.search
-        return .handled
-      }
-      return .ignored
-    }
-    .onKeyPress(.return) {
-      if case .item(let itemIdHashable) = focusedField,
-        let itemId = itemIdHashable.base as? T.ID,
-        let currentItem = filteredItems.first(where: { $0.id == itemId })
-      {
-        selectedItem = currentItem
-        focusedField = .item(itemIdHashable)
-        return .handled
-      }
-      if focusedField == .search {
-        if let firstItem = filteredItems.first {
-          let newFocus: ListViewFocusTarget = .item(AnyHashable(firstItem.id))
-          focusedField = newFocus
-          selectedItem = firstItem
-          return .handled
-        }
-      }
-      return .ignored
-    }
+    //    .onKeyPress(.upArrow) {
+    //      selectPreviousItem()
+    //      return .handled
+    //    }
+    //    .onKeyPress(.return) {
+    //      if case .item(let itemIdHashable) = focusedField,
+    //        let itemId = itemIdHashable.base as? T.ID,
+    //        let currentItem = filteredItems.first(where: { $0.id == itemId })
+    //      {
+    //        selectedItem = currentItem
+    //        focusedField = .item(itemIdHashable)
+    //        return .handled
+    //      }
+    //      if focusedField == .search {
+    //        if let firstItem = filteredItems.first {
+    //          let newFocus: ListViewFocusTarget = .item(AnyHashable(firstItem.id))
+    //          focusedField = newFocus
+    //          selectedItem = firstItem
+    //          return .handled
+    //        }
+    //      }
+    //      return .ignored
+    //    }
   }
 
   private func selectNextItem() {

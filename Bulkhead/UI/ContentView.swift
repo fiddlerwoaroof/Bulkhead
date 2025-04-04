@@ -29,6 +29,7 @@ struct ContentView: View {
   @State private var selectedContainer: DockerContainer?
   @State private var selectedImage: DockerImage?
 
+  @State private var searchText = ""
   @Binding private var searchFocused: Bool
 
   // Updated init
@@ -70,6 +71,7 @@ struct ContentView: View {
 
           selectedContainer: $selectedContainer,
 
+          searchText: $searchText,
           searchFocused: $searchFocused,
 
           manager: manager,
@@ -97,27 +99,36 @@ struct ContentView: View {
         }
         .tag(MainTabs.images)
       }
+      //
     } detail: {
-      if let error = globalConnectionError {
-        Rectangle()
-          .fill(.ultraThinMaterial.opacity(0.9))  // Apply material to the background
-          .ignoresSafeArea()  // Ensure it covers the whole window area if needed
-          .overlay(  // Place the ErrorView content on top, centered by default
-            ErrorView(
-              error: error, title: "Connection Error", style: .prominent,
-              actions: [
-                ErrorAction(label: "Refresh") {}
-              ]
-            )
-            .padding()  // Add padding around the ErrorView content
-          )
-      } else if selectedTab == .containers, let selectedContainer {
-        ContainerDetailView(container: selectedContainer, appEnv: appEnv)
-      } else if let selectedImage {
-        ImageDetailView(image: selectedImage, appEnv: appEnv)
-      } else {
-        Text("Nothing Selected!")
-      }
+      //      if let error = globalConnectionError {
+      //        Rectangle()
+      //          .fill(.ultraThinMaterial.opacity(0.9))  // Apply material to the background
+      //          .ignoresSafeArea()  // Ensure it covers the whole window area if needed
+      //          .overlay(  // Place the ErrorView content on top, centered by default
+      //            ErrorView(
+      //              error: error, title: "Connection Error", style: .prominent,
+      //              actions: [
+      //                ErrorAction(label: "Refresh") {}
+      //              ]
+      //            )
+      //            .padding()  // Add padding around the ErrorView content
+      //          )
+      //      } else if selectedTab == .containers, let selectedContainer {
+      //        ContainerDetailView(container: selectedContainer, appEnv: appEnv)
+      //      } else if let selectedImage {
+      //        ImageDetailView(image: selectedImage, appEnv: appEnv)
+      //      } else {
+      //        Text("Nothing Selected!")
+      //      }
     }
+    //    .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
+    .onKeyPress(
+      .escape,
+      action: {
+        print("NOTICE ME: content view received escape \(searchFocused)")
+        searchText = ""
+        return searchFocused ? .handled : .ignored
+      })
   }
 }

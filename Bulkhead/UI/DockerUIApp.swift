@@ -84,10 +84,10 @@ struct DockerUIApp: App {
 
         Divider()
 
-        Button("Search") {
-          isSearchFocused = true
-        }
-        .keyboardShortcut("f")
+        //        Button("Search") {
+        //          isSearchFocused = true
+        //        }
+        //        .keyboardShortcut("f")
 
         Button("Next Item") {
           // Navigation handled by ListView

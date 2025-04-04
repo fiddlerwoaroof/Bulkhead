@@ -14,10 +14,10 @@ struct SearchConfiguration<T: Identifiable & Equatable> {
   var options = SearchOptions()
 }
 
-struct SearchField<T: Identifiable & Equatable, Master: View>: View {
+struct SearchField<T: Identifiable & Equatable>: View {
   let config: SearchConfiguration<T>
   @Binding var text: String
-  var focusBinding: FocusState<ListViewFocusTarget?>.Binding
+  @FocusState.Binding var focusBinding: ListViewFocusTarget?
   let focusCase: ListViewFocusTarget
 
   var body: some View {
@@ -26,7 +26,16 @@ struct SearchField<T: Identifiable & Equatable, Master: View>: View {
         .foregroundStyle(.secondary)
       TextField(config.placeholder, text: $text)
         .textFieldStyle(.plain)
-        .focused(focusBinding, equals: focusCase)
+        .onKeyPress(.escape) {
+          print("NOTICE ME: search received escape")
+
+          DispatchQueue.main.async {
+            text = ""
+          }
+          return .handled
+        }
+        .focused($focusBinding, equals: focusCase)
+
       if !text.isEmpty {
         Button(action: { text = "" }) {
           Image(systemName: "xmark.circle.fill")

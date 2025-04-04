@@ -53,7 +53,8 @@ struct ImageListView: View {
       searchConfig: imageSearchConfig,
       listError: publication.imageListError,
       listErrorTitle: "Failed to Load Images",
-      searchFocused: $searchFocused
+      searchFocused: $searchFocused,
+      searchText: .constant("")
     ) { image in
       // Type erase the content view
       AnyView(

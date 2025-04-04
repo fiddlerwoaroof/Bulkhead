@@ -7,6 +7,7 @@ struct ContainerListView: View {
 
   @Binding var selectedContainer: DockerContainer?
 
+  @Binding var searchText: String
   @Binding var searchFocused: Bool
 
   let manager: DockerManager
@@ -43,7 +44,8 @@ struct ContainerListView: View {
       searchConfig: containerSearchConfig,
       listError: publication.containerListError,
       listErrorTitle: "Failed to Load Containers",
-      searchFocused: $searchFocused
+      searchFocused: $searchFocused,
+      searchText: $searchText
     ) { container in
       // Type erase the content view
 
@@ -67,6 +69,7 @@ struct ContainerListView: View {
       }
 
     }
+
   }
 }
 
