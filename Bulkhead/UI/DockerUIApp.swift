@@ -22,7 +22,7 @@ struct DockerUIApp: App {
   private let appEnv = ApplicationEnvironment()
   private var manager: DockerManager { appEnv.manager }
   @Environment(\.openWindow) private var openWindow
-  @State private var selectedTab = 0
+  @State private var selectedTab = MainTabs.containers
   @State private var isSearchFocused = false
 
   init() {
@@ -32,7 +32,10 @@ struct DockerUIApp: App {
   var body: some Scene {
     WindowGroup {
       ContentView(
-        selectedTab: $selectedTab, searchFocused: $isSearchFocused, manager: manager, appEnv: appEnv
+        selectedTab: $selectedTab,
+        searchFocused: $isSearchFocused,
+        manager: manager,
+        appEnv: appEnv
       )
       .environmentObject(appEnv.logManager)
       .environmentObject(appEnv.publication)

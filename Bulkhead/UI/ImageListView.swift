@@ -4,9 +4,11 @@ struct ImageListView: View {
   @EnvironmentObject var publication: DockerPublication
   var backgroundColor: Color
   var shadowColor: Color
-  let images: [DockerImage]
-  @Binding var searchFocused: Bool
+
   @Binding var selectedImage: DockerImage?
+
+  @Binding var searchFocused: Bool
+
   let manager: DockerManager
   let appEnv: ApplicationEnvironment
 
@@ -44,7 +46,7 @@ struct ImageListView: View {
 
   var body: some View {
     ListView(
-      items: images,
+      items: publication.images,
       selectedItem: $selectedImage,
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,
@@ -90,12 +92,6 @@ struct ImageListView: View {
           .foregroundStyle(.secondary)
         }
       )
-    }
-
-    .onChange(of: images) { _, newImages in
-      if selectedImage == nil && !newImages.isEmpty {
-        selectedImage = newImages.first
-      }
     }
   }
 }

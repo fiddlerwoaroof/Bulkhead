@@ -2,16 +2,18 @@ import Foundation
 import SwiftUI
 
 struct ContainerListView: View {
-  @Environment(\.openWindow) private var openWindow
-  @EnvironmentObject var publication: DockerPublication
-  let containers: [DockerContainer]
-  @Binding var selectedContainer: DockerContainer?
-  @Binding var searchFocused: Bool
-
   var backgroundColor: Color
   var shadowColor: Color
+
+  @Binding var selectedContainer: DockerContainer?
+
+  @Binding var searchFocused: Bool
+
   let manager: DockerManager
   let appEnv: ApplicationEnvironment
+
+  @Environment(\.openWindow) private var openWindow
+  @EnvironmentObject var publication: DockerPublication
 
   private var containerSearchConfig: SearchConfiguration<DockerContainer> {
     SearchConfiguration(
@@ -34,7 +36,7 @@ struct ContainerListView: View {
 
   var body: some View {
     ListView(
-      items: containers,
+      items: publication.containers,
       selectedItem: $selectedContainer,
       backgroundColor: backgroundColor,
       shadowColor: shadowColor,

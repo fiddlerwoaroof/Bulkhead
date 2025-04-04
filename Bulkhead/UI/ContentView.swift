@@ -13,21 +13,29 @@ extension EnvironmentValues {
   }
 }
 
+enum MainTabs {
+  case containers
+  case images
+}
+
 struct ContentView: View {
   // Observe publication directly
   @EnvironmentObject var publication: DockerPublication
   // Receive manager via init
   let manager: DockerManager
   let appEnv: ApplicationEnvironment
-  @Binding var selectedTab: Int
+  @Binding var selectedTab: MainTabs
   @Environment(\.colorScheme) private var colorScheme
   @State private var selectedContainer: DockerContainer?
   @State private var selectedImage: DockerImage?
+
   @Binding private var searchFocused: Bool
 
   // Updated init
   init(
-    selectedTab: Binding<Int>, searchFocused: Binding<Bool>, manager: DockerManager,
+    selectedTab: Binding<MainTabs>,
+    searchFocused: Binding<Bool>,
+    manager: DockerManager,
     appEnv: ApplicationEnvironment
   ) {
     self.manager = manager
@@ -57,37 +65,37 @@ struct ContentView: View {
       TabView(selection: $selectedTab) {
         // Container List View
         ContainerListView(
-          // Pass data array from publication
-          containers: publication.containers,
-          selectedContainer: $selectedContainer,
-          searchFocused: $searchFocused,
           backgroundColor: backgroundColor,
           shadowColor: shadowColor,
-          // Pass manager instance
+
+          selectedContainer: $selectedContainer,
+
+          searchFocused: $searchFocused,
+
           manager: manager,
           appEnv: appEnv
         )
         .tabItem {
           Label("Containers", systemImage: "shippingbox.fill")
         }
-        .tag(0)
+        .tag(MainTabs.containers)
 
         // Image List View
         ImageListView(
           backgroundColor: backgroundColor,
           shadowColor: shadowColor,
-          // Pass data array from publication
-          images: publication.images,
-          searchFocused: $searchFocused,
+
           selectedImage: $selectedImage,
-          // Pass manager instance
+
+          searchFocused: $searchFocused,
+
           manager: manager,
           appEnv: appEnv
         )
         .tabItem {
           Label("Images", systemImage: "photo.stack.fill")
         }
-        .tag(1)
+        .tag(MainTabs.images)
       }
     } detail: {
       if let error = globalConnectionError {
@@ -103,7 +111,7 @@ struct ContentView: View {
             )
             .padding()  // Add padding around the ErrorView content
           )
-      } else if selectedTab == 0, let selectedContainer {
+      } else if selectedTab == .containers, let selectedContainer {
         ContainerDetailView(container: selectedContainer, appEnv: appEnv)
       } else if let selectedImage {
         ImageDetailView(image: selectedImage, appEnv: appEnv)
