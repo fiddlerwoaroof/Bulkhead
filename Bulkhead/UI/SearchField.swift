@@ -1,7 +1,21 @@
 import SwiftUI
 
-struct SearchField<T: Identifiable & Equatable, Master: View>: View {
+struct SearchOptions {
+  var caseSensitive = false
+  var matchWholeWords = false
+  // Command-F shortcut
+  var keyboardShortcut: KeyEquivalent = "f"
+  var modifiers: EventModifiers = .command
+}
+
+struct SearchConfiguration<T: Identifiable & Equatable> {
   let placeholder: String
+  let filter: (T, String) -> Bool
+  var options = SearchOptions()
+}
+
+struct SearchField<T: Identifiable & Equatable, Master: View>: View {
+  let config: SearchConfiguration<T>
   @Binding var text: String
   var focusBinding: FocusState<ListViewFocusTarget?>.Binding
   let focusCase: ListViewFocusTarget
@@ -10,7 +24,7 @@ struct SearchField<T: Identifiable & Equatable, Master: View>: View {
     HStack {
       Image(systemName: "magnifyingglass")
         .foregroundStyle(.secondary)
-      TextField(placeholder, text: $text)
+      TextField(config.placeholder, text: $text)
         .textFieldStyle(.plain)
         .focused(focusBinding, equals: focusCase)
       if !text.isEmpty {

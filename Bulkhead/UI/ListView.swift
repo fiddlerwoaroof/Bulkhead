@@ -12,43 +12,32 @@ class ListViewState: ObservableObject {
   @Published var searchText = ""
 }
 
-struct SearchOptions {
-  var caseSensitive = false
-  var matchWholeWords = false
-  // Command-F shortcut
-  var keyboardShortcut: KeyEquivalent = "f"
-  var modifiers: EventModifiers = .command
-}
-
-struct SearchConfiguration<T> {
-  let placeholder: String
-  let filter: (T, String) -> Bool
-  var options = SearchOptions()
-}
-
 struct ListView<T: Identifiable & Equatable, Master: View>: View {
   let items: [T]
   @Binding var selectedItem: T?
   var backgroundColor: Color
   var shadowColor: Color
-  var searchConfig: SearchConfiguration<T>?
+  var searchConfig: SearchConfiguration<T>
   var listError: DockerError?
   var listErrorTitle = "Error Loading List"
+  @Binding var searchFocused: Bool
+  @ViewBuilder var content: (T) -> Master
+
   @FocusState private var focusedField: ListViewFocusTarget?
   @StateObject private var viewState = ListViewState()
   @State private var selectionTask: Task<Void, Never>?
-  @Binding var searchFocused: Bool
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
-  @ViewBuilder var content: (T) -> Master
 
   // Computed property for filtered items
   private var filteredItems: [T] {
     // Read searchText from viewState
-    guard let config = searchConfig, !viewState.searchText.isEmpty else {
+    guard !viewState.searchText.isEmpty else {
       return items
     }
     // Use viewState.searchText for filtering
-    return items.filter { config.filter($0, viewState.searchText) }
+    return items.filter {
+      searchConfig.filter($0, viewState.searchText)
+    }
   }
 
   var body: some View {
@@ -60,16 +49,15 @@ struct ListView<T: Identifiable & Equatable, Master: View>: View {
           .padding()
           .frame(maxHeight: .infinity)
       } else {
-        if let config = searchConfig {
-          SearchField<T, Master>(
-            placeholder: config.placeholder,
-            text: $viewState.searchText,
-            focusBinding: $focusedField,
-            focusCase: ListViewFocusTarget.search
-          )
+        SearchField<T, Master>(
+          config: searchConfig,
+          text: $viewState.searchText,
+          focusBinding: $focusedField,
+          focusCase: ListViewFocusTarget.search
+        )
 
-          Divider()
-        }
+        Divider()
+
         ScrollViewReader { proxy in
           ScrollView {
             LazyVStack(spacing: 8) {
@@ -261,10 +249,8 @@ struct ListView<T: Identifiable & Equatable, Master: View>: View {
             }
           }
         } else {
-          if searchConfig != nil {
-            await MainActor.run {
-              focusedField = .search
-            }
+          await MainActor.run {
+            focusedField = .search
           }
         }
       } catch is CancellationError {
@@ -279,7 +265,7 @@ struct ListView<T: Identifiable & Equatable, Master: View>: View {
     if focusedField == nil && !items.isEmpty {
       focusedField = .item(AnyHashable(items[0].id))
       selectedItem = items[0]
-    } else if focusedField == nil && searchConfig != nil {
+    } else if focusedField == nil {
       focusedField = .search
     }
     viewState.lastKnownFocus = focusedField
