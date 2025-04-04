@@ -1,6 +1,19 @@
 import Foundation
 import SwiftUI
 
+
+// Define focus states outside the view struct
+enum ListViewFocusTarget: Hashable {
+  case search
+  case item(AnyHashable)
+}
+
+// ObservableObject to hold state that needs to persist
+class ListViewState: ObservableObject {
+  @Published var lastKnownFocus: ListViewFocusTarget?
+  @Published var searchText = ""
+}
+
 // Define Environment Key for Global Error State
 struct IsGlobalErrorShowingKey: EnvironmentKey {
   static let defaultValue = false
