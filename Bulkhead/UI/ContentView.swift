@@ -1,17 +1,10 @@
 import Foundation
 import SwiftUI
 
-
 // Define focus states outside the view struct
 enum ListViewFocusTarget: Hashable {
   case search
   case item(AnyHashable)
-}
-
-// ObservableObject to hold state that needs to persist
-class ListViewState: ObservableObject {
-  @Published var lastKnownFocus: ListViewFocusTarget?
-  @Published var searchText = ""
 }
 
 // Define Environment Key for Global Error State
@@ -41,78 +34,115 @@ struct ContentView: View {
   @Environment(\.colorScheme) private var colorScheme
   @State private var selectedContainer: DockerContainer?
   @State private var selectedImage: DockerImage?
+  @FocusState<ListViewFocusTarget?>.Binding var focusState: ListViewFocusTarget?
 
-  @State private var searchText = ""
-  @Binding private var searchFocused: Bool
+  @State private var imageSearchText = ""
+  @State private var containerSearchText = ""
+
+  var filteredContainers: [DockerContainer] {
+    publication.containers.filter { it in
+      guard containerSearchText != "" else { return true }
+      guard let firstName = it.names.first else { return false }
+      return firstName.contains(containerSearchText)
+    }
+  }
+
+  var filteredImages: [DockerImage] {
+    publication.images.filter { it in
+      guard imageSearchText != "" else { return true }
+      guard let firstTag = it.RepoTags?.first else { return false }
+      return firstTag.contains(containerSearchText)
+    }
+  }
 
   // Updated init
   init(
     selectedTab: Binding<MainTabs>,
-    searchFocused: Binding<Bool>,
     manager: DockerManager,
-    appEnv: ApplicationEnvironment
+    appEnv: ApplicationEnvironment,
+    focusState: FocusState<ListViewFocusTarget?>.Binding
   ) {
     self.manager = manager
     self.appEnv = appEnv
     _selectedTab = selectedTab
-    _searchFocused = searchFocused
-  }
-
-  private var backgroundColor: Color {
-    colorScheme == .dark ? Color(NSColor.controlBackgroundColor) : Color.white
-  }
-
-  private var shadowColor: Color {
-    colorScheme == .dark ? Color.black.opacity(0.2) : Color.black.opacity(0.05)
+    _focusState = focusState
   }
 
   // Get errors from observed publication
-  private var globalConnectionError: DockerError? {
-    if let err = publication.containerListError, err.isConnectionError { return err }
-    if let err = publication.imageListError, err.isConnectionError { return err }
-    return nil
-  }
+  // private var globalConnectionError: DockerError? {
+  //   if let err = publication.containerListError, err.isConnectionError { return err }
+  //   if let err = publication.imageListError, err.isConnectionError { return err }
+  //   return nil
+  // }
 
   var body: some View {
     // Main content with potential error overlay
     NavigationSplitView {
       TabView(selection: $selectedTab) {
-        List(publication.containers, selection: $selectedContainer) { container in
-          NavigationLink {
-            ContainerDetailView(container: container, appEnv: appEnv)
-          } label: {
-            ContainerSummaryView(container: container, manager: appEnv.manager, appEnv: appEnv)
+        VStack {
+          SearchField(
+            placeholder: "Search Containers . . .",
+            text: $containerSearchText,
+            focusBinding: $focusState,
+            focusCase: .search,
+            options: nil
+          )
+
+          List(filteredContainers, selection: $selectedContainer) { container in
+            NavigationLink {
+              ContainerDetailView(container: container, appEnv: appEnv)
+            } label: {
+              ContainerSummaryView(container: container, manager: appEnv.manager, appEnv: appEnv)
+                .focused($focusState, equals: .item(container))
+            }
           }
-          .padding(4)
         }
+        .padding(4)
         .tabItem {
           Label("Containers", systemImage: "shippingbox.fill")
         }
         .tag(MainTabs.containers)
 
-        List(publication.images, selection: $selectedImage) { image in
-          NavigationLink {
-            ImageDetailView(image: image, appEnv: appEnv)
-          } label: {
-            ImageSummaryView(image: image)
+        VStack {
+          SearchField(
+            placeholder: "Search Images . . .",
+            text: $imageSearchText,
+            focusBinding: $focusState,
+            focusCase: .search,
+            options: nil
+          )
+
+          List(filteredImages, selection: $selectedImage) { image in
+            NavigationLink {
+              ImageDetailView(image: image, appEnv: appEnv)
+                .focused($focusState, equals: .item(image))
+            } label: {
+              ImageSummaryView(image: image)
+            }
           }
         }
         .tabItem {
           Label("Images", systemImage: "photo.stack.fill")
         }
         .tag(MainTabs.images)
-
       }
     } detail: {
       Text("Select an object")
     }
+
     .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
     .onKeyPress(
       .escape,
       action: {
-        print("NOTICE ME: content view received escape \(searchFocused)")
-        searchText = ""
-        return searchFocused ? .handled : .ignored
+        if focusState == .search {
+          if selectedTab == .containers {
+            containerSearchText = ""
+          } else {
+            imageSearchText = ""
+          }
+          return .handled
+        }
+        return .ignored
       })
   }
 }

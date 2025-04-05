@@ -54,7 +54,7 @@ struct ContainerActionsView: View {
   @Environment(\.openWindow) private var openWindow
   let container: DockerContainer
   let manager: DockerManager
-  @EnvironmentObject var publication: DockerPublication  // Use ObservedObject if manager might change
+
   @State private var isActionPending = false  // State for loading indicator
 
   var body: some View {

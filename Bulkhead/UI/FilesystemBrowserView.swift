@@ -110,7 +110,6 @@ struct FilesystemBrowserView: View {
   @State private var isExecuting = false
   @State private var fetchError: DockerError?
 
-  private var manager: DockerManager { appEnv.manager }
   var hoveredId: String? { hoveredEntry?.id }
 
   init(container: DockerContainer, appEnv: ApplicationEnvironment, initialPath: String? = nil) {

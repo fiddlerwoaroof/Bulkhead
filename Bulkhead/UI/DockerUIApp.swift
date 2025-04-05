@@ -10,6 +10,7 @@ class ApplicationEnvironment {
     self.manager = DockerManager(logManager: logManager, publication: publication)
 
     // Start initial data fetch
+    let manager = manager
     Task {
       await manager.fetchContainers()
       await manager.fetchImages()
@@ -23,7 +24,8 @@ struct DockerUIApp: App {
   private var manager: DockerManager { appEnv.manager }
   @Environment(\.openWindow) private var openWindow
   @State private var selectedTab = MainTabs.containers
-  @State private var isSearchFocused = false
+
+  @FocusState private var focusState: ListViewFocusTarget?
 
   init() {
     // needed for the protocol
@@ -33,9 +35,9 @@ struct DockerUIApp: App {
     WindowGroup {
       ContentView(
         selectedTab: $selectedTab,
-        searchFocused: $isSearchFocused,
         manager: manager,
-        appEnv: appEnv
+        appEnv: appEnv,
+        focusState: $focusState
       )
       .environmentObject(appEnv.logManager)
       .environmentObject(appEnv.publication)
@@ -71,6 +73,10 @@ struct DockerUIApp: App {
           openWindow(id: "Log")
         }
         .keyboardShortcut("l", modifiers: [.command, .shift])
+        Button("Search") {
+          focusState = .search
+        }
+        .keyboardShortcut("f")
 
         Divider()
 
@@ -83,11 +89,6 @@ struct DockerUIApp: App {
         .keyboardShortcut("r")
 
         Divider()
-
-        //        Button("Search") {
-        //          isSearchFocused = true
-        //        }
-        //        .keyboardShortcut("f")
 
         Button("Next Item") {
           // Navigation handled by ListView

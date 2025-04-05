@@ -154,8 +154,6 @@ struct ImageDetailViewInner: View {
 
 struct ImageDetailView: View {
   @EnvironmentObject var publication: DockerPublication
-  @Environment(\.colorScheme) var colorScheme
-  @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
 
   let image: DockerImage
   let appEnv: ApplicationEnvironment
@@ -308,29 +306,5 @@ struct DetailRow: View {
       Text(value)
         .font(.body)
     }
-  }
-}
-
-extension ImageInspection {
-  func asDictionary() -> [String: Any] {
-    // Simplified example - needs actual implementation based on ImageInspection properties
-    [
-      "Id": Id,
-      "Parent": Parent as Any,
-      "RepoTags": RepoTags as Any,
-      // ... include all other relevant properties ...
-      "Config": Config.asDictionary(),
-    ]
-  }
-}
-
-extension ImageConfig {
-  func asDictionary() -> [String: Any] {
-    // Simplified example - needs actual implementation
-    [
-      "Entrypoint": entrypoint as Any,
-      "Cmd": cmd as Any,
-        // ... include all other relevant properties ...
-    ]
   }
 }

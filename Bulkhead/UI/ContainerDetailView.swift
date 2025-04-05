@@ -1,10 +1,5 @@
 import SwiftUI
 
-struct FilesystemLocation: Hashable {
-  let container: DockerContainer
-  let path: String
-}
-
 extension ContainerState {
   fileprivate var color: Color {
     switch self {
@@ -35,38 +30,6 @@ extension ContainerState {
   }
 }
 
-extension HealthStatus {
-  fileprivate var color: Color {
-    switch self {
-    case .healthy: return .green
-    case .unhealthy: return .red
-    case .starting: return .orange
-    case .none: return .secondary
-    case .unknown: return .secondary
-    }
-  }
-
-  fileprivate var icon: String {
-    switch self {
-    case .healthy: return "checkmark.circle.fill"
-    case .unhealthy: return "xmark.circle.fill"
-    case .starting: return "arrow.triangle.2.circlepath.circle.fill"
-    case .none: return "minus.circle.fill"
-    case .unknown: return "questionmark.circle.fill"
-    }
-  }
-
-  fileprivate var label: String {
-    switch self {
-    case .healthy: return "Healthy"
-    case .unhealthy: return "Unhealthy"
-    case .starting: return "Starting"
-    case .none: return "No Health Check"
-    case .unknown: return "Unknown"
-    }
-  }
-}
-
 struct ContainerDetailViewInner: View {
   @EnvironmentObject var publication: DockerPublication
   private let appEnv: ApplicationEnvironment
@@ -74,7 +37,7 @@ struct ContainerDetailViewInner: View {
   @StateObject private var model: ContainerDetailModel
   let container: DockerContainer
   @State private var selectedPath: String?
-  @Environment(\.colorScheme) var colorScheme
+
   @Environment(\.isGlobalErrorShowing) private var isGlobalErrorShowing
 
   private var manager: DockerManager { appEnv.manager }
@@ -256,21 +219,6 @@ struct ContainerDetailViewInner: View {
   }
 
   @ViewBuilder
-  private func pathDetailRow(_ label: String, _ paths: [String]) -> some View {
-    HStack(alignment: .firstTextBaseline) {
-      Text("\(label):")
-        .fontWeight(.semibold)
-        .frame(width: 200, alignment: .leading)
-      VStack(alignment: .leading) {
-        ForEach(paths, id: \.self) { path in
-          Text(path)
-            .font(.system(.body, design: .monospaced))
-        }
-      }
-    }
-  }
-
-  @ViewBuilder
   private func environmentSection(_ env: [String]) -> some View {
     sectionHeader("Environment")
     ForEach(env.sorted(), id: \.self) { envVar in
@@ -299,6 +247,7 @@ struct ContainerDetailViewInner: View {
           }
         } else {
           envDetailRow(key, value)
+
         }
       } else {
         envDetailRow("", envVar)
@@ -328,7 +277,6 @@ struct ContainerDetailView: View {
   let container: DockerContainer
   let appEnv: ApplicationEnvironment
   @EnvironmentObject var logManager: LogManager
-  private var manager: DockerManager { appEnv.manager }
 
   var body: some View {
     ContainerDetailViewInner(appEnv: appEnv, container: container, logManager: logManager)

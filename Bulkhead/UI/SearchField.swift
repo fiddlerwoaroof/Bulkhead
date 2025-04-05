@@ -8,27 +8,20 @@ struct SearchOptions {
   var modifiers: EventModifiers = .command
 }
 
-struct SearchConfiguration<T: Identifiable & Equatable> {
+struct SearchField: View {
   let placeholder: String
-  let filter: (T, String) -> Bool
-  var options = SearchOptions()
-}
-
-struct SearchField<T: Identifiable & Equatable>: View {
-  let config: SearchConfiguration<T>
   @Binding var text: String
   @FocusState.Binding var focusBinding: ListViewFocusTarget?
   let focusCase: ListViewFocusTarget
+  let options: SearchOptions?
 
   var body: some View {
     HStack {
       Image(systemName: "magnifyingglass")
         .foregroundStyle(.secondary)
-      TextField(config.placeholder, text: $text)
+      TextField(placeholder, text: $text)
         .textFieldStyle(.plain)
         .onKeyPress(.escape) {
-          print("NOTICE ME: search received escape")
-
           DispatchQueue.main.async {
             text = ""
           }
