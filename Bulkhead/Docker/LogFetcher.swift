@@ -1,5 +1,3 @@
-import Foundation
-
 final class LogFetcher {
   private let executor: DockerExecutor
 

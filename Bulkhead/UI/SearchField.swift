@@ -1,10 +1,19 @@
 import SwiftUI
 
-struct SearchField<T: Identifiable & Equatable, Master: View, Detail: View>: View {
+struct SearchOptions {
+  var caseSensitive = false
+  var matchWholeWords = false
+  // Command-F shortcut
+  var keyboardShortcut: KeyEquivalent = "f"
+  var modifiers: EventModifiers = .command
+}
+
+struct SearchField: View {
   let placeholder: String
   @Binding var text: String
-  var focusBinding: FocusState<ListViewFocusTarget?>.Binding
+  @FocusState.Binding var focusBinding: ListViewFocusTarget?
   let focusCase: ListViewFocusTarget
+  let options: SearchOptions?
 
   var body: some View {
     HStack {
@@ -12,7 +21,14 @@ struct SearchField<T: Identifiable & Equatable, Master: View, Detail: View>: Vie
         .foregroundStyle(.secondary)
       TextField(placeholder, text: $text)
         .textFieldStyle(.plain)
-        .focused(focusBinding, equals: focusCase)
+        .onKeyPress(.escape) {
+          DispatchQueue.main.async {
+            text = ""
+          }
+          return .handled
+        }
+        .focused($focusBinding, equals: focusCase)
+
       if !text.isEmpty {
         Button(action: { text = "" }) {
           Image(systemName: "xmark.circle.fill")

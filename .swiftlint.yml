@@ -9,7 +9,7 @@ excluded:
 analyzer_rules:
   - unused_declaration
   - unused_import
-enabled_rules:
+opt_in_rules:
   - accessibility_label_for_image
   - accessibility_trait_for_button
   - array_init
@@ -104,8 +104,6 @@ enabled_rules:
   - unneeded_parentheses_in_closure_argument
   - unowned_variable_capture
   - untyped_error_in_catch
-  - unused_declaration
-  - unused_import
   - unused_parameter
   - vertical_parameter_alignment_on_call
   - vertical_whitespace_opening_braces
@@ -176,8 +174,6 @@ number_separator:
   minimum_length: 5
 redundant_type_annotation:
   consider_default_literal_types_redundant: true
-trailing_comma:
-  mandatory_comma: true
 type_body_length: 400
 unneeded_override:
   affect_initializers: true

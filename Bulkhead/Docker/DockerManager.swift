@@ -1,6 +1,5 @@
 import Combine
 import Foundation
-import SwiftUI
 
 class DockerPublication: ObservableObject {
   @Published var containers: [DockerContainer] = []
@@ -39,10 +38,10 @@ class DockerPublication: ObservableObject {
     clearImageListError()
   }
 
-  @MainActor
-  func updateSocketPath(_ new: String) {
-    socketPath = new
-  }
+  // @MainActor
+  // func updateSocketPath(_ new: String) {
+  //  socketPath = new
+  // }
 
   @MainActor
   func clearContainerListError() {
@@ -146,12 +145,12 @@ class DockerManager {
     return enriched
   }
 
-  func clearEnrichmentCache() {
-    // Write operation with barrier
-    cacheQueue.async(flags: .barrier) {
-      self.enrichmentCache.removeAll()
-    }
-  }
+  // func clearEnrichmentCache() {
+  //  // Write operation with barrier
+  //  cacheQueue.async(flags: .barrier) {
+  //    self.enrichmentCache.removeAll()
+  //  }
+  // }
 
   // Now async again to await the Task from tryCommand
   func fetchImages() async {

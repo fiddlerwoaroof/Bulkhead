@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 import os.log
 
 func getDateFormatter() -> DateFormatter {
