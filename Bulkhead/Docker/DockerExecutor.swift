@@ -1,6 +1,4 @@
 import Foundation
-import Network
-import SwiftUI  // For URL
 
 struct DockerHTTPRequest {
   let path: String
