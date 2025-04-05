@@ -32,11 +32,14 @@ struct ContentView: View {
   let appEnv: ApplicationEnvironment
   @Binding var selectedTab: MainTabs
   @Environment(\.colorScheme) private var colorScheme
-  @State private var selectedContainer: DockerContainer?
-  @State private var selectedImage: DockerImage?
   @FocusState<ListViewFocusTarget?>.Binding var focusState: ListViewFocusTarget?
 
+  @State private var selectedContainer: DockerContainer?
+  @State private var lastContainer: DockerContainer? = nil
   @State private var containerSearchText = ""
+
+  @State private var selectedImage: DockerImage?
+  @State private var lastImage: DockerImage? = nil
   @State private var imageSearchText = ""
 
   var filteredContainers: [DockerContainer] {
@@ -88,7 +91,7 @@ struct ContentView: View {
             options: nil
           )
 
-          List(filteredContainers, selection: $selectedContainer) { container in
+          List(filteredContainers, id: \.self, selection: $selectedContainer) { container in
             NavigationLink {
               ContainerDetailView(container: container, appEnv: appEnv)
             } label: {
@@ -96,6 +99,15 @@ struct ContentView: View {
                 .focused($focusState, equals: .item(container))
             }
           }
+          .onChange(of: publication.containers) { _, n in
+            guard selectedContainer == nil && lastContainer == nil else { return }
+            if let firstContainer = filteredContainers.first {
+              DispatchQueue.main.async {
+                selectedContainer = firstContainer
+              }
+            }
+          }
+
         }
         .padding(4)
         .tabItem {
@@ -112,7 +124,7 @@ struct ContentView: View {
             options: nil
           )
 
-          List(filteredImages, selection: $selectedImage) { image in
+          List(filteredImages, id: \.self, selection: $selectedImage) { image in
             NavigationLink {
               ImageDetailView(image: image, appEnv: appEnv)
                 .focused($focusState, equals: .item(image))
@@ -120,11 +132,33 @@ struct ContentView: View {
               ImageSummaryView(image: image)
             }
           }
+          .onChange(of: publication.images) { _, n in
+            guard selectedImage == nil && lastImage == nil else { return }
+            if let firstImage = filteredImages.first {
+              DispatchQueue.main.async {
+                selectedImage = firstImage
+              }
+            }
+          }
+
         }
         .tabItem {
           Label("Images", systemImage: "photo.stack.fill")
         }
         .tag(MainTabs.images)
+        .onChange(of: selectedTab) { _, newTab in
+          DispatchQueue.main.async {
+            if newTab == .containers {
+              lastImage = selectedImage
+              selectedContainer = lastContainer ?? publication.containers.first
+              selectedImage = nil
+            } else if newTab == .images {
+              lastContainer = selectedContainer
+              selectedImage = lastImage ?? publication.images.first
+              selectedContainer = nil
+            }
+          }
+        }
       }
     } detail: {
       Text("Select an object")
@@ -134,6 +168,7 @@ struct ContentView: View {
     .onKeyPress(
       .escape,
       action: {
+    .onKeyPress(.escape) {
         if focusState == .search {
           if selectedTab == .containers {
             containerSearchText = ""
@@ -143,6 +178,6 @@ struct ContentView: View {
           return .handled
         }
         return .ignored
-      })
+      }
   }
 }
