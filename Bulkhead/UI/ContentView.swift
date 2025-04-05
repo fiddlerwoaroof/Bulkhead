@@ -36,8 +36,8 @@ struct ContentView: View {
   @State private var selectedImage: DockerImage?
   @FocusState<ListViewFocusTarget?>.Binding var focusState: ListViewFocusTarget?
 
-  @State private var imageSearchText = ""
   @State private var containerSearchText = ""
+  @State private var imageSearchText = ""
 
   var filteredContainers: [DockerContainer] {
     publication.containers.filter { it in
@@ -51,7 +51,7 @@ struct ContentView: View {
     publication.images.filter { it in
       guard imageSearchText != "" else { return true }
       guard let firstTag = it.RepoTags?.first else { return false }
-      return firstTag.contains(containerSearchText)
+      return firstTag.contains(imageSearchText)
     }
   }
 
