@@ -35,16 +35,16 @@ struct ContentView: View {
   @FocusState<ListViewFocusTarget?>.Binding var focusState: ListViewFocusTarget?
 
   @State private var selectedContainer: DockerContainer?
-  @State private var lastContainer: DockerContainer? = nil
+  @State private var lastContainer: DockerContainer?
   @State private var containerSearchText = ""
 
   @State private var selectedImage: DockerImage?
-  @State private var lastImage: DockerImage? = nil
+  @State private var lastImage: DockerImage?
   @State private var imageSearchText = ""
 
   var filteredContainers: [DockerContainer] {
     publication.containers.filter { it in
-      guard containerSearchText != "" else { return true }
+      guard !containerSearchText.isEmpty else { return true }
       guard let firstName = it.names.first else { return false }
       return firstName.contains(containerSearchText)
     }
@@ -52,7 +52,7 @@ struct ContentView: View {
 
   var filteredImages: [DockerImage] {
     publication.images.filter { it in
-      guard imageSearchText != "" else { return true }
+      guard !imageSearchText.isEmpty else { return true }
       guard let firstTag = it.RepoTags?.first else { return false }
       return firstTag.contains(imageSearchText)
     }
@@ -90,20 +90,22 @@ struct ContentView: View {
             focusCase: .search,
             options: nil
           )
+          .focused($focusState, equals: .search)
 
           List(filteredContainers, id: \.self, selection: $selectedContainer) { container in
             NavigationLink {
               ContainerDetailView(container: container, appEnv: appEnv)
             } label: {
               ContainerSummaryView(container: container, manager: appEnv.manager, appEnv: appEnv)
-                .focused($focusState, equals: .item(container))
             }
+            .focused($focusState, equals: .item(container))
           }
-          .onChange(of: publication.containers) { _, n in
+          .onChange(of: publication.containers) { _, _ in
             guard selectedContainer == nil && lastContainer == nil else { return }
             if let firstContainer = filteredContainers.first {
               DispatchQueue.main.async {
                 selectedContainer = firstContainer
+                focusState = .item(firstContainer)
               }
             }
           }
@@ -123,16 +125,18 @@ struct ContentView: View {
             focusCase: .search,
             options: nil
           )
+          .focused($focusState, equals: .search)
 
           List(filteredImages, id: \.self, selection: $selectedImage) { image in
             NavigationLink {
               ImageDetailView(image: image, appEnv: appEnv)
-                .focused($focusState, equals: .item(image))
             } label: {
               ImageSummaryView(image: image)
             }
+            .focused($focusState, equals: .item(image))
+            .focusable(true)
           }
-          .onChange(of: publication.images) { _, n in
+          .onChange(of: publication.images) { _, _ in
             guard selectedImage == nil && lastImage == nil else { return }
             if let firstImage = filteredImages.first {
               DispatchQueue.main.async {
@@ -146,38 +150,70 @@ struct ContentView: View {
           Label("Images", systemImage: "photo.stack.fill")
         }
         .tag(MainTabs.images)
-        .onChange(of: selectedTab) { _, newTab in
-          DispatchQueue.main.async {
-            if newTab == .containers {
-              lastImage = selectedImage
-              selectedContainer = lastContainer ?? publication.containers.first
-              selectedImage = nil
-            } else if newTab == .images {
-              lastContainer = selectedContainer
-              selectedImage = lastImage ?? publication.images.first
-              selectedContainer = nil
-            }
-          }
-        }
       }
     } detail: {
       Text("Select an object")
     }
+    .onChange(of: selectedTab) { _, newTab in
+      DispatchQueue.main.async {
+        if newTab == .containers {
+          lastImage = selectedImage
+          let toFocus = lastContainer ?? publication.containers.first
+          selectedContainer = toFocus
+          if let toFocus {
+            focusState = .item(toFocus)
+          }
+          selectedImage = nil
+        } else if newTab == .images {
+          lastContainer = selectedContainer
+          let toFocus = lastImage ?? publication.images.first
+          selectedImage = toFocus
+          if let toFocus {
+            focusState = .item(toFocus)
+          }
+          selectedContainer = nil
+        }
+      }
+    }
 
     .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
-    .onKeyPress(
-      .escape,
-      action: {
-    .onKeyPress(.escape) {
-        if focusState == .search {
-          if selectedTab == .containers {
-            containerSearchText = ""
-          } else {
-            imageSearchText = ""
-          }
-          return .handled
+    .onKeyPress(.downArrow) {
+      if focusState == .search {
+        if selectedTab == .containers, let firstContainer = publication.containers.first {
+          focusState = .item(firstContainer)
+        } else if let firstImage = publication.images.first {
+          focusState = .item(firstImage)
         }
-        return .ignored
+
+        return .handled
       }
+      return .ignored
+    }
+    .onKeyPress(.upArrow) {
+      if focusState != .search {
+        if selectedTab == .containers, let firstContainer = publication.containers.first,
+          selectedContainer == firstContainer
+        {
+          focusState = .search
+        } else if let firstImage = publication.images.first, selectedImage == firstImage {
+          focusState = .search
+        }
+
+        return .handled
+      }
+      return .ignored
+    }
+    .onKeyPress(.escape) {
+      if let focusState, focusState == .search {
+        if selectedTab == .containers {
+          containerSearchText = ""
+        } else {
+          imageSearchText = ""
+        }
+        return .handled
+      }
+      return .ignored
+    }
   }
+
 }
