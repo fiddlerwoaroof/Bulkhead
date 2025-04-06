@@ -169,6 +169,7 @@ identifier_name:
     - id
     - Id
     - ip
+    - it
 large_tuple: 3
 number_separator:
   minimum_length: 5

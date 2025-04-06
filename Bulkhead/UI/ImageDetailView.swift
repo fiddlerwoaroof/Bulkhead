@@ -206,7 +206,6 @@ class ImageDetailModel: ObservableObject {
 
     do {
       let inspection = try await manager.inspectImage(id: id)
-      print("Image inspection received: \(inspection)")
       parentId = inspection.Parent
       layers = inspection.Config.layers ?? []
       config = inspection.Config

@@ -29,9 +29,6 @@ final class DockerLogStreamParser {
       let payloadLengthData = buffer[4..<8]
       let payloadLength = payloadLengthData.withUnsafeBytes { $0.load(as: UInt32.self).bigEndian }
 
-      print(
-        "parsed \(parsedLines.count) lines and buffer is \(buffer.count) long and payload length is \(payloadLength)"
-      )
       debugPrintBytes([UInt8](payloadLengthData))
       guard buffer.count >= 8 + Int(payloadLength) else { break }
 
@@ -54,7 +51,6 @@ final class DockerLogStreamParser {
       buffer.removeSubrange(0..<(8 + Int(payloadLength)))
     }
 
-    print("parsed \(parsedLines.count) lines and buffer is \(buffer.count) long")
     return parsedLines
   }
 

@@ -251,7 +251,6 @@ class DockerExecutor {
       path: "/v1.41/containers/\(id)/logs?stdout=true&stderr=true&tail=\(tail)&follow=false")
 
     let firstBytes = [UInt8](result.prefix(100))
-    debugPrintBytes(firstBytes, label: "Initial Body")
 
     return result
   }
@@ -279,10 +278,7 @@ class DockerExecutor {
   func inspectImage(id: String) throws -> ImageInspection {
     log("inspecting image \(id)", level: "INFO")
     let data = try makeRequest(path: "/v1.41/images/\(id)/json")
-    print("Raw inspection data: \(String(data: data, encoding: .utf8) ?? "invalid")")
-    let inspection = try JSONDecoder().decode(ImageInspection.self, from: data)
-    print("Decoded inspection: \(inspection)")
-    return inspection
+    return try JSONDecoder().decode(ImageInspection.self, from: data)
   }
 
   func startContainer(id: String) throws {
