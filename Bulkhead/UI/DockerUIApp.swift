@@ -18,7 +18,7 @@ struct DockerUIApp: App {
   @Environment(\.openWindow) private var openWindow
   @State private var selectedTab = MainTabs.containers
 
-  @FocusState private var focusState: ListViewFocusTarget?
+//  @FocusState private var focusState: ListViewFocusTarget?
 
   init() {
     // needed for the protocol
@@ -29,8 +29,8 @@ struct DockerUIApp: App {
       ContentView(
         selectedTab: $selectedTab,
         manager: manager,
-        appEnv: appEnv,
-        focusState: $focusState
+        appEnv: appEnv//,
+//        focusState: $focusState
       )
       .environmentObject(appEnv.logManager)
       .environmentObject(appEnv.publication)
@@ -66,10 +66,10 @@ struct DockerUIApp: App {
           openWindow(id: "Log")
         }
         .keyboardShortcut("l", modifiers: [.command, .shift])
-        Button("Search") {
-          focusState = .search
-        }
-        .keyboardShortcut("f")
+//        Button("Search") {
+//          focusState = .search
+//        }
+//        .keyboardShortcut("f")
 
         Divider()
 

@@ -4,7 +4,8 @@ import SwiftUI
 // Define focus states outside the view struct
 enum ListViewFocusTarget: Hashable {
   case search
-  case list
+  case imageList
+  case containerList
   case item(AnyHashable)
 }
 
@@ -33,7 +34,7 @@ struct ContentView: View {
   let appEnv: ApplicationEnvironment
   @Binding var selectedTab: MainTabs
   @Environment(\.colorScheme) private var colorScheme
-  @FocusState<ListViewFocusTarget?>.Binding var focusState: ListViewFocusTarget?
+  @FocusState<ListViewFocusTarget?> var focusState: ListViewFocusTarget?
 
   @State private var selectedContainer: DockerContainer?
   @State private var selectedImage: DockerImage?
@@ -60,13 +61,13 @@ struct ContentView: View {
   init(
     selectedTab: Binding<MainTabs>,
     manager: DockerManager,
-    appEnv: ApplicationEnvironment,
-    focusState: FocusState<ListViewFocusTarget?>.Binding
+    appEnv: ApplicationEnvironment
+//    ,focusState: FocusState<ListViewFocusTarget?>.Binding
   ) {
     self.manager = manager
     self.appEnv = appEnv
     _selectedTab = selectedTab
-    _focusState = focusState
+//    _focusState = focusState
   }
 
   // Get errors from observed publication
@@ -98,7 +99,7 @@ struct ContentView: View {
               ContainerSummaryView(container: container, manager: appEnv.manager, appEnv: appEnv)
             }
           }
-          .focused($focusState, equals: .list)
+          .focused($focusState, equals: .containerList)
           .onChange(of: publication.containers) { _, _ in
             guard selectedContainer == nil else { return }
             if let firstContainer = filteredContainers.first {
@@ -133,7 +134,7 @@ struct ContentView: View {
               ImageSummaryView(image: image)
             }
           }
-          .focused($focusState, equals: .list)
+          .focused($focusState, equals: .imageList)
           .onChange(of: publication.images) { _, _ in
             guard selectedImage == nil else { return }
             if let firstImage = filteredImages.first {
@@ -143,7 +144,7 @@ struct ContentView: View {
             }
           }
           .onAppear {
-            focusState = .list
+            focusState = .imageList
           }
           .id(searchText)  // FIX: various hangs
         }
@@ -163,16 +164,17 @@ struct ContentView: View {
         switch selectedTab {
         case .containers:
           selectedContainer = filteredContainers.first
+          focusState = .containerList
         case .images:
           selectedImage = filteredImages.first
+          focusState = .imageList
         }
-        focusState = .list
         return .handled
       }
       return .ignored
     }
     .onKeyPress(.upArrow) {
-      if let curFocus = focusState, curFocus == .list {
+      if let curFocus = focusState, curFocus == .imageList || curFocus == .containerList {
         let firstSelected =
           switch selectedTab {
           case .containers:
@@ -180,7 +182,6 @@ struct ContentView: View {
           case .images:
             selectedImage == filteredImages.first
           }
-        print("NOTICE ME: \(firstSelected)")
         if firstSelected {
           focusState = .search
           return .handled
@@ -201,9 +202,9 @@ struct ContentView: View {
       selectedContainer = containers[0]
       let images = await manager.fetchImages()
       selectedImage = images[0]
-    }
-    .onAppear {
-      focusState = .list
+      await MainActor.run {
+          self.focusState = .containerList
+      }
     }
   }
 
