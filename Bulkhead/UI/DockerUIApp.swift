@@ -8,13 +8,6 @@ class ApplicationEnvironment {
   init() {
     self.publication = DockerPublication(logManager: logManager)
     self.manager = DockerManager(logManager: logManager, publication: publication)
-
-    // Start initial data fetch
-    let manager = manager
-    Task {
-      await manager.fetchContainers()
-      await manager.fetchImages()
-    }
   }
 }
 
@@ -82,23 +75,11 @@ struct DockerUIApp: App {
 
         Button("Refresh Containers") {
           Task {
-            await appEnv.manager.fetchContainers()
-            await appEnv.manager.fetchImages()
+            _ = await appEnv.manager.fetchContainers()
+            _ = await appEnv.manager.fetchImages()
           }
         }
         .keyboardShortcut("r")
-
-        Divider()
-
-        Button("Next Item") {
-          // Navigation handled by ListView
-        }
-        .keyboardShortcut(.downArrow)
-
-        Button("Previous Item") {
-          // Navigation handled by ListView
-        }
-        .keyboardShortcut(.upArrow)
       }
       CommandGroup(replacing: .help) { /* remove help */  }
       CommandGroup(replacing: .newItem) { /* remove new */  }
