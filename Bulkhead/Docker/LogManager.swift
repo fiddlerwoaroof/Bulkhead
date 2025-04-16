@@ -38,7 +38,7 @@ class LogManager: ObservableObject {
   init() {
     self.loggers = [:]
     self.logs = []
-    self.loggersAccessQueue = DispatchQueue(label: "com.yourapp.loggersAccessQueue")
+    self.loggersAccessQueue = DispatchQueue(label: "co.fwoar.DockerUI.loggersAccessQueue")
   }
 
   func addLog(_ message: String, level: String = "INFO", source: String = "main") {
