@@ -98,8 +98,7 @@ class DockerManager {
     logManager.addLog(message, level: level, source: "docker-manager")
   }
 
-  // Now async again to await the Task from tryCommand
-  func fetchContainers() async {
+  func fetchContainers() async -> [DockerContainer] {
     // Clear previous error on MainActor
     await publication.clearContainerListError()
 
@@ -114,6 +113,7 @@ class DockerManager {
     do {
       let list = try await fetchTask.value  // Await result, throws if task failed
       await publication.updateContainerList(list)
+      return list
     } catch let dockerError as DockerError {
       // Handle specific DockerError
       await self.publication.setError(dockerError)
@@ -122,6 +122,7 @@ class DockerManager {
       // Handle other errors
       await self.publication.setError(.unknownError(error))
     }
+    return []
   }
 
   func enrichContainer(_ container: DockerContainer) async throws -> DockerContainer {
@@ -153,7 +154,7 @@ class DockerManager {
   // }
 
   // Now async again to await the Task from tryCommand
-  func fetchImages() async {
+  func fetchImages() async -> [DockerImage] {
     await publication.clearImageListError()
 
     let fetchTask: Task<[DockerImage], Error> = tryCommand { [weak self] in
@@ -164,6 +165,7 @@ class DockerManager {
     do {
       let list = try await fetchTask.value  // Await result, throws if task failed
       await publication.updateImageList(list)
+      return list
     } catch let dockerError as DockerError {
       // Handle specific DockerError
       await self.publication.setImageListError(dockerError)
@@ -171,6 +173,7 @@ class DockerManager {
       // Handle other errors
       await self.publication.setImageListError(.unknownError(error))
     }
+    return []
   }
 
   // Make async to await task and handle errors
@@ -184,7 +187,7 @@ class DockerManager {
     do {
       _ = try await task.value  // Throws if the task failed
       // Optionally trigger a refresh or UI update on success
-      await self.fetchContainers()  // Refresh list after action
+      _ = await self.fetchContainers()  // Refresh list after action
     } catch {
       // Error is already logged by tryCommand
       // Optionally update some general status property here if needed
@@ -203,7 +206,7 @@ class DockerManager {
     do {
       _ = try await task.value  // Throws if the task failed
       // Optionally trigger a refresh or UI update on success
-      await self.fetchContainers()  // Refresh list after action
+      _ = await self.fetchContainers()  // Refresh list after action
     } catch {
       // Error is already logged by tryCommand
       // Optionally update some general status property here if needed
@@ -253,8 +256,8 @@ class DockerManager {
     timer = Timer.scheduledTimer(withTimeInterval: publication.refreshInterval, repeats: true) {
       [weak self] _ in
       Task {  // Wrap async calls
-        await self?.fetchContainers()
-        await self?.fetchImages()
+        _ = await self?.fetchContainers()
+        _ = await self?.fetchImages()
       }
     }
   }
