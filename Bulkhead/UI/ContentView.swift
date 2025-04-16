@@ -4,6 +4,7 @@ import SwiftUI
 // Define focus states outside the view struct
 enum ListViewFocusTarget: Hashable {
   case search
+  case list
   case item(AnyHashable)
 }
 
@@ -35,26 +36,23 @@ struct ContentView: View {
   @FocusState<ListViewFocusTarget?>.Binding var focusState: ListViewFocusTarget?
 
   @State private var selectedContainer: DockerContainer?
-  @State private var lastContainer: DockerContainer?
-  @State private var containerSearchText = ""
-
   @State private var selectedImage: DockerImage?
-  @State private var lastImage: DockerImage?
-  @State private var imageSearchText = ""
+
+  @State private var searchText = ""
 
   var filteredContainers: [DockerContainer] {
     publication.containers.filter { it in
-      guard !containerSearchText.isEmpty else { return true }
+      guard !searchText.isEmpty else { return true }
       guard let firstName = it.names.first else { return false }
-      return firstName.contains(containerSearchText)
+      return firstName.localizedCaseInsensitiveContains(searchText)
     }
   }
 
   var filteredImages: [DockerImage] {
     publication.images.filter { it in
-      guard !imageSearchText.isEmpty else { return true }
+      guard !searchText.isEmpty else { return true }
       guard let firstTag = it.RepoTags?.first else { return false }
-      return firstTag.contains(imageSearchText)
+      return firstTag.localizedCaseInsensitiveContains(searchText)
     }
   }
 
@@ -85,7 +83,7 @@ struct ContentView: View {
         VStack {
           SearchField(
             placeholder: "Search Containers . . .",
-            text: $containerSearchText,
+            text: $searchText,
             focusBinding: $focusState,
             focusCase: .search,
             options: nil
@@ -95,21 +93,21 @@ struct ContentView: View {
           List(filteredContainers, id: \.self, selection: $selectedContainer) { container in
             NavigationLink {
               ContainerDetailView(container: container, appEnv: appEnv)
+                .navigationTitle(container.title)
             } label: {
               ContainerSummaryView(container: container, manager: appEnv.manager, appEnv: appEnv)
             }
-            .focused($focusState, equals: .item(container))
           }
+          .focused($focusState, equals: .list)
           .onChange(of: publication.containers) { _, _ in
-            guard selectedContainer == nil && lastContainer == nil else { return }
+            guard selectedContainer == nil else { return }
             if let firstContainer = filteredContainers.first {
               DispatchQueue.main.async {
                 selectedContainer = firstContainer
-                focusState = .item(firstContainer)
               }
             }
           }
-
+          .id(searchText)  // FIX: various hangs
         }
         .padding(4)
         .tabItem {
@@ -120,7 +118,7 @@ struct ContentView: View {
         VStack {
           SearchField(
             placeholder: "Search Images . . .",
-            text: $imageSearchText,
+            text: $searchText,
             focusBinding: $focusState,
             focusCase: .search,
             options: nil
@@ -130,22 +128,26 @@ struct ContentView: View {
           List(filteredImages, id: \.self, selection: $selectedImage) { image in
             NavigationLink {
               ImageDetailView(image: image, appEnv: appEnv)
+                .navigationTitle(image.title)
             } label: {
               ImageSummaryView(image: image)
             }
-            .focused($focusState, equals: .item(image))
-            .focusable(true)
           }
+          .focused($focusState, equals: .list)
           .onChange(of: publication.images) { _, _ in
-            guard selectedImage == nil && lastImage == nil else { return }
+            guard selectedImage == nil else { return }
             if let firstImage = filteredImages.first {
               DispatchQueue.main.async {
                 selectedImage = firstImage
               }
             }
           }
-
+          .onAppear {
+            focusState = .list
+          }
+          .id(searchText)  // FIX: various hangs
         }
+        .padding(4)
         .tabItem {
           Label("Images", systemImage: "photo.stack.fill")
         }
@@ -154,65 +156,54 @@ struct ContentView: View {
     } detail: {
       Text("Select an object")
     }
-    .onChange(of: selectedTab) { _, newTab in
-      DispatchQueue.main.async {
-        if newTab == .containers {
-          lastImage = selectedImage
-          let toFocus = lastContainer ?? publication.containers.first
-          selectedContainer = toFocus
-          if let toFocus {
-            focusState = .item(toFocus)
-          }
-          selectedImage = nil
-        } else if newTab == .images {
-          lastContainer = selectedContainer
-          let toFocus = lastImage ?? publication.images.first
-          selectedImage = toFocus
-          if let toFocus {
-            focusState = .item(toFocus)
-          }
-          selectedContainer = nil
-        }
-      }
-    }
 
     .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 800)
     .onKeyPress(.downArrow) {
-      if focusState == .search {
-        if selectedTab == .containers, let firstContainer = publication.containers.first {
-          focusState = .item(firstContainer)
-        } else if let firstImage = publication.images.first {
-          focusState = .item(firstImage)
+      if let curFocus = focusState, curFocus == .search {
+        switch selectedTab {
+        case .containers:
+          selectedContainer = filteredContainers.first
+        case .images:
+          selectedImage = filteredImages.first
         }
-
+        focusState = .list
         return .handled
       }
       return .ignored
     }
     .onKeyPress(.upArrow) {
-      if focusState != .search {
-        if selectedTab == .containers, let firstContainer = publication.containers.first,
-          selectedContainer == firstContainer
-        {
+      if let curFocus = focusState, curFocus == .list {
+        let firstSelected =
+          switch selectedTab {
+          case .containers:
+            selectedContainer == filteredContainers.first
+          case .images:
+            selectedImage == filteredImages.first
+          }
+        print("NOTICE ME: \(firstSelected)")
+        if firstSelected {
           focusState = .search
-        } else if let firstImage = publication.images.first, selectedImage == firstImage {
-          focusState = .search
+          return .handled
         }
-
-        return .handled
+        return .ignored
       }
       return .ignored
     }
     .onKeyPress(.escape) {
       if let focusState, focusState == .search {
-        if selectedTab == .containers {
-          containerSearchText = ""
-        } else {
-          imageSearchText = ""
-        }
+        searchText = ""
         return .handled
       }
       return .ignored
+    }
+    .task {
+      let containers = await manager.fetchContainers()
+      selectedContainer = containers[0]
+      let images = await manager.fetchImages()
+      selectedImage = images[0]
+    }
+    .onAppear {
+      focusState = .list
     }
   }
 

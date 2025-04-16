@@ -6,6 +6,10 @@ struct DockerContainer: Identifiable, Codable, Hashable, Sendable {
   let image: String
   let status: String
 
+  var title: String {
+    names.first ?? id
+  }
+
   // Optional detail fields
   var created: Date?
   var command: String?
@@ -14,6 +18,13 @@ struct DockerContainer: Identifiable, Codable, Hashable, Sendable {
   var env: [String] = []
   var health: String?
   var state: ContainerState?
+
+  static func == (lhs: Self, rhs: Self) -> Bool {
+    lhs.id == rhs.id
+  }
+  func hash(into hasher: inout Hasher) {
+    hasher.combine(id)  // Only hash the ID
+  }
 
   enum CodingKeys: String, CodingKey {
     case id = "Id"
@@ -91,6 +102,10 @@ struct DockerImage: Identifiable, Codable, Hashable {
   let RepoTags: [String]?
   let Created: Int
   let Size: Int
+
+  var title: String {
+    RepoTags?.first ?? id
+  }
 }
 
 struct ImageInspection: Codable {
@@ -145,7 +160,7 @@ struct ImageConfig: Codable {
   }
 }
 
-enum ContainerState: String {
+enum ContainerState: String, Codable {
   case created
   case running
   case paused
