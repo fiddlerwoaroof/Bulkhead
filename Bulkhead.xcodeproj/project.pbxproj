@@ -7,22 +7,89 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A3325E112DA77676004280D2 /* DockerMain in CopyFiles */ = {isa = PBXBuildFile; fileRef = A3325DF62DA77178004280D2 /* DockerMain */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A370613C2D9525ED0091DC02 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = A370613B2D9525ED0091DC02 /* SwiftTerm */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		A3325E0D2DA7764C004280D2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A3B602A92D94D89700BE8D6A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A3325DF52DA77178004280D2;
+			remoteInfo = DockerMain;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A3325DF42DA77178004280D2 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		A3325E102DA77669004280D2 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				A3325E112DA77676004280D2 /* DockerMain in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		A3325DF62DA77178004280D2 /* DockerMain */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = DockerMain; sourceTree = BUILT_PRODUCTS_DIR; };
 		A3B602B12D94D89700BE8D6A /* Bulkhead.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bulkhead.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A3325E0A2DA775A4004280D2 /* Exceptions for "Bulkhead" folder in "DockerMain" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				DebugUtils.swift,
+				Docker/DockerEnvironmentDetector.swift,
+				Docker/DockerExecutor.swift,
+				Docker/DockerLogStreamParser.swift,
+				Docker/DockerManager.swift,
+				Docker/DockerRawLogParser.swift,
+				Docker/LogFetcher.swift,
+				Docker/LogManager.swift,
+				Docker/Model.swift,
+			);
+			target = A3325DF52DA77178004280D2 /* DockerMain */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		A3325DF72DA77178004280D2 /* DockerMain */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DockerMain;
+			sourceTree = "<group>";
+		};
 		A3B602B32D94D89700BE8D6A /* Bulkhead */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A3325E0A2DA775A4004280D2 /* Exceptions for "Bulkhead" folder in "DockerMain" target */,
+			);
 			path = Bulkhead;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		A3325DF32DA77178004280D2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A3B602AE2D94D89700BE8D6A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -38,6 +105,7 @@
 			isa = PBXGroup;
 			children = (
 				A3B602B32D94D89700BE8D6A /* Bulkhead */,
+				A3325DF72DA77178004280D2 /* DockerMain */,
 				A3B602B22D94D89700BE8D6A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -46,6 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				A3B602B12D94D89700BE8D6A /* Bulkhead.app */,
+				A3325DF62DA77178004280D2 /* DockerMain */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,6 +122,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		A3325DF52DA77178004280D2 /* DockerMain */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A3325DFA2DA77178004280D2 /* Build configuration list for PBXNativeTarget "DockerMain" */;
+			buildPhases = (
+				A3325DF22DA77178004280D2 /* Sources */,
+				A3325DF32DA77178004280D2 /* Frameworks */,
+				A3325DF42DA77178004280D2 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A3325DF72DA77178004280D2 /* DockerMain */,
+			);
+			name = DockerMain;
+			packageProductDependencies = (
+			);
+			productName = DockerMain;
+			productReference = A3325DF62DA77178004280D2 /* DockerMain */;
+			productType = "com.apple.product-type.tool";
+		};
 		A3B602B02D94D89700BE8D6A /* Bulkhead */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A3B602C02D94D89800BE8D6A /* Build configuration list for PBXNativeTarget "Bulkhead" */;
@@ -60,10 +151,12 @@
 				A3B602AD2D94D89700BE8D6A /* Sources */,
 				A3B602AE2D94D89700BE8D6A /* Frameworks */,
 				A3B602AF2D94D89700BE8D6A /* Resources */,
+				A3325E102DA77669004280D2 /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A3325E0E2DA7764C004280D2 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A3B602B32D94D89700BE8D6A /* Bulkhead */,
@@ -86,6 +179,9 @@
 				LastSwiftUpdateCheck = 1610;
 				LastUpgradeCheck = 1610;
 				TargetAttributes = {
+					A3325DF52DA77178004280D2 = {
+						CreatedOnToolsVersion = 16.1;
+					};
 					A3B602B02D94D89700BE8D6A = {
 						CreatedOnToolsVersion = 16.1;
 					};
@@ -109,6 +205,7 @@
 			projectRoot = "";
 			targets = (
 				A3B602B02D94D89700BE8D6A /* Bulkhead */,
+				A3325DF52DA77178004280D2 /* DockerMain */,
 			);
 		};
 /* End PBXProject section */
@@ -124,6 +221,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		A3325DF22DA77178004280D2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A3B602AD2D94D89700BE8D6A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -133,7 +237,41 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		A3325E0E2DA7764C004280D2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A3325DF52DA77178004280D2 /* DockerMain */;
+			targetProxy = A3325E0D2DA7764C004280D2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		A3325DFB2DA77178004280D2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = DockerMain/DockerMain.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 95L5D2X59B;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A3325DFC2DA77178004280D2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = DockerMain/DockerMain.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 95L5D2X59B;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		A3B602BE2D94D89800BE8D6A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -321,6 +459,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		A3325DFA2DA77178004280D2 /* Build configuration list for PBXNativeTarget "DockerMain" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A3325DFB2DA77178004280D2 /* Debug */,
+				A3325DFC2DA77178004280D2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		A3B602AC2D94D89700BE8D6A /* Build configuration list for PBXProject "Bulkhead" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
