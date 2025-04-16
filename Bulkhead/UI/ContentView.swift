@@ -62,12 +62,12 @@ struct ContentView: View {
     selectedTab: Binding<MainTabs>,
     manager: DockerManager,
     appEnv: ApplicationEnvironment
-//    ,focusState: FocusState<ListViewFocusTarget?>.Binding
+      //    ,focusState: FocusState<ListViewFocusTarget?>.Binding
   ) {
     self.manager = manager
     self.appEnv = appEnv
     _selectedTab = selectedTab
-//    _focusState = focusState
+    //    _focusState = focusState
   }
 
   // Get errors from observed publication
@@ -203,7 +203,7 @@ struct ContentView: View {
       let images = await manager.fetchImages()
       selectedImage = images[0]
       await MainActor.run {
-          self.focusState = .containerList
+        self.focusState = .containerList
       }
     }
   }

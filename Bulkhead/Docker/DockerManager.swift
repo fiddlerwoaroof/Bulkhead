@@ -76,7 +76,8 @@ class DockerManager {
   private var timer: Timer?
   private var enrichmentCache: [String: (container: DockerContainer, timestamp: Date)] = [:]
   private let enrichmentTTL: TimeInterval = 10
-  private let cacheQueue = DispatchQueue(label: "co.fwoar.Bulkhead.cacheQueue", attributes: .concurrent)
+  private let cacheQueue = DispatchQueue(
+    label: "co.fwoar.Bulkhead.cacheQueue", attributes: .concurrent)
 
   init(logManager: LogManager, publication: DockerPublication) {
     self.logManager = logManager
